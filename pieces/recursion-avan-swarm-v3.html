@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AVAN-SWARM v0.3 — LEARN RECALL</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root { color-scheme: dark; }
+  body { font-family: 'Inter', system-ui, -apple-system, sans-serif; background: #0a0a0b; }
+  .mono { font-family: 'JetBrains Mono', monospace; }
+  .agent { transition: all 0.45s cubic-bezier(0.2,0.8,0.2,1); background:#1f1f23; }
+  .agent.active { background:#ffffff !important; box-shadow:0 0 18px rgba(255,255,255,0.9), 0 0 36px rgba(139,92,246,0.6); transform:scale(1.12); z-index:5; }
+  .agent.hold { background:#10b981 !important; box-shadow:0 0 14px rgba(16,185,129,0.8); }
+  .agent.reject { background:#ef4444 !important; box-shadow:0 0 12px rgba(239,68,68,0.7); }
+  .chat-scroll::-webkit-scrollbar { width: 6px; }
+  .chat-scroll::-webkit-scrollbar-thumb { background:#3f3f46; border-radius:3px; }
+  .glass { backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
+</style>
+</head>
+<body class="text-zinc-200 min-h-screen">
+  <!-- Header -->
+  <header class="sticky top-0 z-40 border-b border-zinc-800/80 bg-black/70 glass">
+    <div class="max-w-[1600px] mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center shadow-lg shadow-violet-900/30">
+          <span class="font-semibold text-white">A</span>
+        </div>
+        <div>
+          <div class="font-semibold tracking-wide leading-none">AVAN-SWARM <span class="text-zinc-500 font-medium">v0.3</span></div>
+          <div class="text-[11px] text-zinc-500 -mt-0.5 tracking-widest">LEARN • RECALL • CREATE</div>
+        </div>
+      <div class="hidden md:flex items-center gap-5 text-[12px] mono">
+        <div class="px-2.5 py-1 rounded-lg bg-zinc-900 border border-zinc-800"><span class="text-zinc-500">MEM</span> <span id="mem-count" class="text-white ml-2">0</span></div>
+        <div class="px-2.5 py-1 rounded-lg bg-zinc-900 border border-zinc-800"><span class="text-zinc-500">AGENTS</span> <span class="text-white ml-2">100</span></div>
+        <div class="px-2.5 py-1 rounded-lg bg-zinc-900 border border-zinc-800"><span class="text-zinc-500">MODE</span> <span id="mode-ind" class="text-violet-400 ml-2">RECALL</span></div>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-[1600px] mx-auto p-4 lg:p-6 grid grid-cols-1 lg:grid-cols-12 gap-5">
+    <!-- Left: Lattice -->
+    <section class="lg:col-span-3 xl:col-span-2 space-y-4">
+      <div class="bg-zinc-900/40 border border-zinc-800 rounded-2xl p-4">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-sm font-medium text-zinc-300">Swarm Lattice</h3>
+          <span class="text-[10px] px-2 py-0.5 rounded-md bg-zinc-800 text-zinc-400 mono">10×10</span>
+        </div>
+        <div id="lattice" class="grid grid-cols-10 gap-[3px] p-2 bg-zinc-950 rounded-xl border border-zinc-900"></div>
+        <div class="mt-4 grid grid-cols-3 gap-2">
+          <div class="bg-zinc-950 rounded-xl py-2.5 text-center border border-zinc-900">
+            <div class="text-[10px] text-zinc-500 uppercase tracking-wide">Hold</div>
+            <div id="stat-hold" class="mono text-lg text-emerald-400 leading-none mt-1">0</div>
+          </div>
+          <div class="bg-zinc-950 rounded-xl py-2.5 text-center border border-zinc-900">
+            <div class="text-[10px] text-zinc-500 uppercase tracking-wide">Reject</div>
+            <div id="stat-reject" class="mono text-lg text-red-400 leading-none mt-1">0</div>
+          </div>
+          <div class="bg-zinc-950 rounded-xl py-2.5 text-center border border-zinc-900">
+            <div class="text-[10px] text-zinc-500 uppercase tracking-wide">Active</div>
+            <div id="stat-active" class="mono text-lg text-violet-400 leading-none mt-1">0</div>
+          </div>
+        </div>
+        <div class="mt-3 text-[11px] text-zinc-500 leading-snug">White flash = recalling memory. Green/red = diagnose votes. Wave = learning.</div>
+      </div>
+    </section>
+
+    <!-- Center: Chat -->
+    <section class="lg:col-span-6 xl:col-span-7">
+      <div class="bg-zinc-900/30 border border-zinc-800 rounded-2xl flex flex-col h-[78vh] min-h-[620px] shadow-2xl shadow-black/40">
+        <div class="flex items-center gap-2 p-3 border-b border-zinc-800">
+          <button data-mode="DIAGNOSE" class="mode-btn px-3.5 py-1.5 rounded-xl text-[12px] font-medium transition bg-zinc-800 text-zinc-400 hover:bg-zinc-700">DIAGNOSE</button>
+          <button data-mode="CREATE" class="mode-btn px-3.5 py-1.5 rounded-xl text-[12px] font-medium transition bg-zinc-800 text-zinc-400 hover:bg-zinc-700">CREATE</button>
+          <button data-mode="RECALL" class="mode-btn px-3.5 py-1.5 rounded-xl text-[12px] font-medium transition bg-violet-600 text-white">RECALL</button>
+          <div class="ml-auto text-[11px] text-zinc-500 hidden sm:block">v0.3 learns what you teach</div>
+        </div>
+
+        <div id="chat" class="flex-1 overflow-y-auto chat-scroll p-4 space-y-4"></div>
+
+        <div class="border-t border-zinc-800 p-3 bg-zinc-950/50">
+          <div class="flex gap-2">
+            <input id="input" autofocus placeholder="Teach with 'learn: ...' or ask 'what is...?'" class="flex-1 bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-2.5 text-sm outline-none focus:border-violet-600 focus:ring-2 focus:ring-violet-600/20 transition">
+            <button id="send" class="px-5 py-2.5 bg-violet-600 hover:bg-violet-500 active:bg-violet-700 rounded-xl text-sm font-medium transition shadow-lg shadow-violet-900/25">Send</button>
+          </div>
+          <div class="flex flex-wrap gap-1.5 mt-2.5">
+            <button class="quick px-2.5 py-1 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-[11px] text-zinc-400 transition">learn: Socrates was a Greek philosopher who taught Plato</button>
+            <button class="quick px-2.5 py-1 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-[11px] text-zinc-400 transition">who is your favorite greek philosopher?</button>
+            <button class="quick px-2.5 py-1 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-[11px] text-zinc-400 transition">learn python: Python is a programming language</button>
+            <button class="quick px-2.5 py-1 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-[11px] text-zinc-400 transition">what do you know about python?</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Right: Memory -->
+    <section class="lg:col-span-3 xl:col-span-3">
+      <div class="bg-zinc-900/30 border border-zinc-800 rounded-2xl overflow-hidden h-[78vh] min-h-[620px] flex flex-col">
+        <div class="flex border-b border-zinc-800">
+          <button data-tab="memory" class="tab-btn flex-1 px-4 py-2.5 text-[12px] font-medium border-b-2 border-violet-500 text-white bg-zinc-900/50">MEMORY</button>
+          <button data-tab="creations" class="tab-btn flex-1 px-4 py-2.5 text-[12px] font-medium border-b-2 border-transparent text-zinc-500 hover:text-zinc-300">CREATIONS <span id="create-count" class="ml-1 text-zinc-600">0</span></button>
+        </div>
+        <div class="flex-1 overflow-hidden">
+          <div id="panel-memory" class="h-full overflow-y-auto p-4 space-y-4 chat-scroll">
+            <div>
+              <h4 class="text-[11px] uppercase tracking-wider text-zinc-500 mb-2 font-medium">Topic Graph</h4>
+              <div id="topic-graph" class="bg-zinc-950/70 rounded-xl p-3 border border-zinc-900 min-h-[80px]"></div>
+            </div>
+            <div>
+              <h4 class="text-[11px] uppercase tracking-wider text-zinc-500 mb-2 font-medium">Learned Facts <span class="normal-case text-zinc-600">(newest first)</span></h4>
+              <div id="memory-list" class="space-y-2"></div>
+            </div>
+          </div>
+          <div id="panel-creations" class="hidden h-full overflow-y-auto p-4 chat-scroll">
+            <div id="creations-list" class="space-y-2"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+<script>
+const agents = Array.from({length:100}, (_,i)=>({id:i, memories:[], x:i%10, y:Math.floor(i/10)}));
+let memoryId = 0;
+let globalMemories = [];
+let mode = 'RECALL';
+
+function encode(text){
+  const vec = [0,0,0,0,0];
+  const words = text.toLowerCase().replace(/[^a-z0-9\s]/g,'').split(/\s+/).filter(Boolean);
+  words.forEach(w=>{
+    let h=0; for(let i=0;i<w.length;i++) h=(h*31 + w.charCodeAt(i))%997;
+    const idx = h % 5;
+    vec[idx] = (vec[idx] + 1) % 3;
+  });
+  vec[4] = (vec[4] + words.length) % 3;
+  return vec;
+}
+const distance = (a,b)=> Math.sqrt(a.reduce((s, v,i)=> s + (v-b[i])**2, 0));
+
+function initLattice(){
+  const grid = document.getElementById('lattice');
+  grid.innerHTML = '';
+  agents.forEach(a=>{
+    const d = document.createElement('div');
+    d.id = `agent-${a.id}`;
+    d.className = 'agent aspect-square rounded-[4px]';
+    d.title = `Agent ${a.id}`;
+    grid.appendChild(d);
+  });
+}
+
+function flashAll(){
+  agents.forEach((a,i)=>{
+    setTimeout(()=>{
+      const el = document.getElementById(`agent-${a.id}`);
+      if(!el) return;
+      el.classList.add('active');
+      setTimeout(()=>el.classList.remove('active'), 480);
+    }, i*4);
+  });
+}
+function flashContributors(ids){
+  [...new Set(ids)].slice(0,24).forEach((id,i)=>{
+    setTimeout(()=>{
+      const el = document.getElementById(`agent-${id}`);
+      if(!el) return;
+      el.classList.add('active');
+      setTimeout(()=>el.classList.remove('active'), 700);
+    }, i*35);
+  });
+}
+function flashVote(holdIds, rejectIds){
+  holdIds.forEach((id,i)=>setTimeout(()=>{
+    const el=document.getElementById(`agent-${id}`);
+    if(el){el.classList.add('hold'); setTimeout(()=>el.classList.remove('hold'), 900);}
+  }, i*3));
+  rejectIds.forEach((id,i)=>setTimeout(()=>{
+    const el=document.getElementById(`agent-${id}`);
+    if(el){el.classList.add('reject'); setTimeout(()=>el.classList.remove('reject'), 900);}
+  }, i*3));
+}
+
+function addMemory(text, type='user', result=1, vec=null){
+  if(!vec) vec = encode(text);
+  const mem = {id: memoryId++, vec, result, text, ts: Date.now(), type};
+  globalMemories.push(mem);
+  agents.forEach(a=> a.memories.push({...mem}));
+  updateMemoryPanel();
+  updateCreations();
+  document.getElementById('mem-count').textContent = globalMemories.length;
+  return mem;
+}
+
+function searchMemories(qvec, k=10){
+  const seen = new Map();
+  agents.forEach(agent=>{
+    agent.memories.forEach(m=>{
+      const d = distance(qvec, m.vec);
+      if(!seen.has(m.id) || d < seen.get(m.id).dist){
+        seen.set(m.id, {...m, dist:d, agentId: agent.id});
+      }
+    });
+  });
+  return Array.from(seen.values()).sort((a,b)=>a.dist-b.dist).slice(0,k);
+}
+
+const escapeHtml = s => s.replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));
+const timeAgo = ts => { const s=Math.floor((Date.now()-ts)/1000); if(s<60)return s+'s'; const m=Math.floor(s/60); if(m<60)return m+'m'; const h=Math.floor(m/60); if(h<24)return h+'h'; return Math.floor(h/24)+'d'; };
+
+function addMessage(who, html){
+  const chat = document.getElementById('chat');
+  const wrap = document.createElement('div');
+  wrap.className = `flex ${who==='user'?'justify-end':'justify-start'} animate-[fade_0.3s]`;
+  wrap.innerHTML = who==='user'
+    ? `<div class="max-w-[82%] bg-violet-600/15 border border-violet-500/25 rounded-2xl rounded-br-md px-4 py-2.5 backdrop-blur"><div class="text-[10px] tracking-widest text-violet-300/80 mb-1">YOU</div><div class="text-[14px] leading-snug text-zinc-100">${html}</div></div>`
+    : `<div class="max-w-[88%] bg-zinc-900/80 border border-zinc-800 rounded-2xl rounded-bl-md px-4 py-3 shadow-xl shadow-black/20"><div class="flex items-center gap-2 mb-1.5"><div class="w-5 h-5 rounded-md bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center text-[10px] font-bold shadow">S</div><div class="text-[10px] tracking-widest text-zinc-500">SWARM</div></div><div class="text-[14px] leading-relaxed text-zinc-200">${html}</div></div>`;
+  chat.appendChild(wrap);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function isQuestion(t){
+  return /\?/.test(t) || /^(who|what|why|how|when|where|tell me|explain|do you know)/i.test(t.trim());
+}
+function isLearn(t){ return /^learn\b/i.test(t.trim()); }
+
+function processInput(text){
+  if(isQuestion(text)) { doRecall(text); return; }
+  if(isLearn(text)) { doLearn(text); return; }
+  if(mode==='DIAGNOSE') { doDiagnose(text); return; }
+  if(mode==='CREATE') { doCreate(text); return; }
+  doTeach(text);
+}
+
+function doLearn(text){
+  let content = text.replace(/^learn\s+[^:]+:\s*/i, '').replace(/^learn\s*:?\s*/i, '').trim();
+  if(!content) content = text;
+  const mem = addMemory(content, 'learned', 1);
+  flashAll();
+  addMessage('swarm', `<div class="text-emerald-400 font-medium">✓ Stored.</div><div class="text-sm text-zinc-400 mt-1">Memory now ${globalMemories.length} entries. Will recall this for future queries.</div><div class="mono text-[11px] text-zinc-500 mt-2 border-t border-zinc-800 pt-2">vec ${JSON.stringify(mem.vec)} → 100 agents • ${new Date(mem.ts).toLocaleTimeString()}</div>`);
+}
+
+function doTeach(text){
+  const mem = addMemory(text, 'user', 1);
+  flashAll();
+  addMessage('swarm', `<div class="text-violet-400 font-medium">LEARNED → <span class="mono">${JSON.stringify(mem.vec)}</span> → stored in 100 agents</div><div class="text-[12px] text-zinc-500 mt-1">I'll recall this when you ask about related topics.</div>`);
+}
+
+function doRecall(query){
+  const qvec = encode(query);
+  const results = searchMemories(qvec, 10).filter(r=> r.dist < 4 && r.type!=='query');
+  flashContributors(results.map(r=>r.agentId));
+  document.getElementById('stat-active').textContent = results.length;
+  
+  if(results.length===0){
+    addMessage('swarm', `<div class="text-amber-300 font-medium mb-1">No relevant memory</div><div class="text-sm text-zinc-400">Swarm has no learned data on this. Teach me with <span class="mono bg-zinc-800 px-1.5 py-0.5 rounded">'learn: [fact]'</span></div><div class="text-[11px] text-zinc-600 mt-2">↳ searched 100 agents • 0 matches &lt; distance 4.0</div>`);
+    return;
+  }
+  const dists = results.map(r=>r.dist.toFixed(1)).join(', ');
+  let html = `<div class="text-emerald-400 font-medium mb-1">SWARM RECALL: Based on ${results.length} ${results.length===1?'memory':'memories'}</div>`;
+  html += `<div class="text-[11px] text-zinc-500 mb-3 mono">↳ recalling ${results.length} memories at distance ${dists}</div>`;
+  html += `<div class="space-y-2">`;
+  results.slice(0,7).forEach(r=>{
+    html += `<div class="group bg-zinc-950/70 border border-zinc-800 hover:border-zinc-700 rounded-xl p-2.5 transition">
+      <div class="text-[13px] text-zinc-200">"${escapeHtml(r.text)}"</div>
+      <div class="flex items-center gap-2 mt-1.5 text-[10px] text-zinc-500 mono">
+        <span class="px-1.5 py-0.5 rounded bg-zinc-900 border border-zinc-800">${r.type}</span>
+        <span>dist ${r.dist.toFixed(2)}</span>
+        <span>vec ${JSON.stringify(r.vec)}</span>
+        <span class="ml-auto">${timeAgo(r.ts)}</span>
+      </div>
+    </div>`;
+  });
+  html += `</div>`;
+  
+  // Smart response for greek example
+  if(/greek/i.test(query) && results.some(r=>/greek/i.test(r.text)) && !results.some(r=>/(socrates|plato|aristotle|philosopher)/i.test(r.text))){
+    html += `<div class="mt-3 p-2.5 rounded-lg bg-amber-950/30 border border-amber-900/50 text-amber-200 text-[13px]">From my ${results.length} memory on 'greek': you taught me "${escapeHtml(results[0].text)}" ${JSON.stringify(results[0].vec)}. I have no specific philosopher stored yet. Teach me with <span class="mono">'learn: Socrates is...'</span></div>`;
+  }
+  addMessage('swarm', html);
+}
+
+function doDiagnose(text){
+  const vec = encode(text);
+  let hold=0, reject=0;
+  const holdIds=[], rejectIds=[];
+  agents.forEach(agent=>{
+    let nearest=null, min=Infinity;
+    agent.memories.forEach(m=>{ const d=distance(vec,m.vec); if(d<min){min=d; nearest=m;} });
+    if(nearest && min<2.5 && nearest.result===1){ hold++; holdIds.push(agent.id); }
+    else { reject++; rejectIds.push(agent.id); }
+  });
+  const mem = addMemory(text, 'diagnosed', hold>reject?1:0, vec);
+  flashVote(holdIds, rejectIds);
+  document.getElementById('stat-hold').textContent = hold;
+  document.getElementById('stat-reject').textContent = reject;
+  document.getElementById('stat-active').textContent = 100;
+  const consensus = hold>reject ? 'HOLD' : 'REJECT';
+  const color = hold>reject ? 'text-emerald-400' : 'text-red-400';
+  addMessage('swarm', `<div class="mb-2">DIAGNOSE → <span class="mono text-violet-300">${JSON.stringify(vec)}</span></div><div class="grid grid-cols-2 gap-3 my-3"><div class="bg-zinc-950 rounded-lg p-2.5 border border-zinc-800"><div class="text-[11px] text-zinc-500">HOLD</div><div class="text-2xl font-mono text-emerald-400">${hold}</div></div><div class="bg-zinc-950 rounded-lg p-2.5 border border-zinc-800"><div class="text-[11px] text-zinc-500">REJECT</div><div class="text-2xl font-mono text-red-400">${reject}</div></div></div><div class="text-[12px]">CONSENSUS: <span class="${color} font-semibold">${consensus}</span> • ${((Math.max(hold,reject)/100)*100).toFixed(0)}% agreement</div>`);
+}
+
+function doCreate(prompt){
+  let vec, attempts=0, minD=Infinity;
+  do{
+    vec = Array.from({length:5}, ()=> Math.floor(Math.random()*3));
+    minD = globalMemories.length ? Math.min(...globalMemories.map(m=>distance(vec,m.vec))) : 4.5;
+    attempts++;
+  } while(minD < 2.2 && attempts<80);
+  const text = prompt ? `Creation: ${prompt}` : `Novel vector ${memoryId}`;
+  const mem = addMemory(text, 'created', 1, vec);
+  flashAll();
+  const novelty = Math.min(99, Math.round((minD/4.5)*100));
+  addMessage('swarm', `<div class="text-cyan-400 font-medium mb-1">CREATED → novel pattern</div><div class="font-mono text-[13px] bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 inline-block">${JSON.stringify(vec)}</div><div class="text-[11px] text-zinc-500 mt-2 flex items-center gap-3"><span>novelty ${novelty}%</span><span>•</span><span>distance ${minD.toFixed(2)}</span><span>•</span><span>stored in 100 agents</span></div>`);
+}
+
+function updateMemoryPanel(){
+  const list = document.getElementById('memory-list');
+  const mems = [...globalMemories].filter(m=>['learned','user','created'].includes(m.type)).sort((a,b)=>b.ts-a.ts).slice(0,80);
+  if(mems.length===0){
+    list.innerHTML = `<div class="text-center py-8 text-zinc-600 text-sm">No memories yet.<br>Teach the swarm something.</div>`;
+  } else {
+    list.innerHTML = mems.map(m=>`
+      <div class="group bg-zinc-950/60 border border-zinc-800/70 rounded-xl p-3 hover:border-zinc-700/70 transition">
+        <div class="flex items-start gap-2">
+          <div class="flex-1 text-[13px] leading-snug text-zinc-200">${escapeHtml(m.text)}</div>
+          <span class="text-[9px] px-1.5 py-0.5 rounded-md bg-zinc-900 border border-zinc-800 text-zinc-500 uppercase tracking-wide">${m.type}</span>
+        </div>
+        <div class="flex items-center gap-2.5 mt-2 text-[10px] text-zinc-600 mono">
+          <span>${JSON.stringify(m.vec)}</span><span>•</span><span>${timeAgo(m.ts)}</span>
+        </div>
+      </div>`).join('');
+  }
+  updateTopicGraph();
+}
+function updateTopicGraph(){
+  const topics={};
+  const stop=new Set(['the','is','a','an','and','or','was','were','to','of','in','on','for','you','me','my','your','it','with','as','by','be','are','this','that','from','learn']);
+  globalMemories.forEach(m=>{
+    if(!['learned','user'].includes(m.type)) return;
+    m.text.toLowerCase().replace(/[^a-z0-9\s]/g,'').split(/\s+/).forEach(w=>{
+      if(w.length>3 && !stop.has(w)) topics[w]=(topics[w]||0)+1;
+    });
+  });
+  const top = Object.entries(topics).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  const el = document.getElementById('topic-graph');
+  if(top.length===0){ el.innerHTML = `<div class="text-zinc-600 text-xs py-2">Teach me to build topic graph</div>`; return; }
+  const max = top[0][1];
+  el.innerHTML = top.map(([w,c])=>`
+    <div class="mb-2.5 last:mb-0">
+      <div class="flex justify-between text-[11px] mb-1"><span class="text-zinc-400">${w}</span><span class="text-zinc-600 mono">${c}</span></div>
+      <div class="h-1.5 bg-zinc-900 rounded-full overflow-hidden"><div class="h-full bg-gradient-to-r from-violet-600 to-indigo-500 transition-all" style="width:${(c/max*100)}%"></div></div>
+    </div>`).join('');
+}
+function updateCreations(){
+  const list = document.getElementById('creations-list');
+  const cs = globalMemories.filter(m=>m.type==='created').sort((a,b)=>b.ts-a.ts);
+  document.getElementById('create-count').textContent = cs.length;
+  if(cs.length===0){
+    list.innerHTML = `<div class="text-center py-10 text-zinc-600 text-sm">No creations yet.<br>Switch to CREATE mode.</div>`;
+  } else {
+    list.innerHTML = cs.map(m=>`
+      <div class="bg-zinc-950/60 border border-zinc-800 rounded-xl p-3">
+        <div class="mono text-[12px] text-cyan-300">${JSON.stringify(m.vec)}</div>
+        <div class="text-[11px] text-zinc-500 mt-1">${escapeHtml(m.text)} • ${timeAgo(m.ts)}</div>
+      </div>`).join('');
+  }
+}
+
+function setMode(m){
+  mode = m;
+  document.getElementById('mode-ind').textContent = m;
+  document.querySelectorAll('.mode-btn').forEach(b=>{
+    const on = b.dataset.mode===m;
+    b.className = `mode-btn px-3.5 py-1.5 rounded-xl text-[12px] font-medium transition ${on?'bg-violet-600 text-white shadow-lg shadow-violet-900/20':'bg-zinc-800 text-zinc-400 hover:bg-zinc-700'}`;
+  });
+}
+
+function handleSend(){
+  const inp = document.getElementById('input');
+  const text = inp.value.trim();
+  if(!text) return;
+  inp.value='';
+  addMessage('user', escapeHtml(text));
+  setTimeout(()=>processInput(text), 120);
+}
+
+// Init
+document.addEventListener('DOMContentLoaded', ()=>{
+  initLattice();
+  updateMemoryPanel();
+  updateCreations();
+  setMode('RECALL');
+  addMessage('swarm', `AVAN-SWARM <b>v0.3</b> online — 100 agents with LEARN-RECALL active.<br><span class="text-zinc-400 text-[13px]">I now store what you teach, and recall it when asked. Try teaching me, then ask a question.</span>`);
+  
+  document.getElementById('send').onclick = handleSend;
+  document.getElementById('input').addEventListener('keydown', e=>{ if(e.key==='Enter') handleSend(); });
+  document.querySelectorAll('.mode-btn').forEach(b=> b.onclick = ()=> setMode(b.dataset.mode));
+  document.querySelectorAll('.tab-btn').forEach(b=>{
+    b.onclick = ()=>{
+      document.querySelectorAll('.tab-btn').forEach(x=>{
+        x.classList.toggle('border-violet-500', x===b);
+        x.classList.toggle('text-white', x===b);
+        x.classList.toggle('text-zinc-500', x!==b);
+        x.classList.toggle('border-transparent', x!==b);
+      });
+      document.getElementById('panel-memory').classList.toggle('hidden', b.dataset.tab!=='memory');
+      document.getElementById('panel-creations').classList.toggle('hidden', b.dataset.tab!=='creations');
+    };
+  });
+  document.querySelectorAll('.quick').forEach(b=> b.onclick = ()=>{ document.getElementById('input').value = b.textContent; handleSend(); });
+  
+  // seed with one demo memory for first recall
+  setTimeout(()=>{
+    addMemory('Swarm learns from declarative statements', 'learned', 1);
+    flashAll();
+  }, 800);
+});
+</script>
+</body>
+</html>

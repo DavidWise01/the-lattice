@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hypercube · Yes on No | Stamp Sniffer | ASCII NO‑map</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: #e2d8c0;
+      font-family: 'Segoe UI', 'Roboto', 'Fira Code', monospace;
+      padding: 24px;
+      color: #2c2b26;
+    }
+
+    .app {
+      max-width: 1400px;
+      margin: 0 auto;
+      background: #fefaf0;
+      border-radius: 2rem;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+      overflow: hidden;
+      border: 1px solid #e2d5bc;
+    }
+
+    header {
+      background: #2d4a2b;
+      padding: 1.2rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      flex-wrap: wrap;
+      gap: 12px;
+      border-bottom: 4px solid #d9b48b;
+    }
+
+    .title h1 {
+      font-size: 1.6rem;
+      font-weight: 500;
+      color: #fff7e8;
+      margin: 0;
+    }
+
+    .title .sub {
+      font-size: 0.7rem;
+      color: #cbdbb3;
+      letter-spacing: 1px;
+    }
+
+    .chip {
+      background: #1e3a1e;
+      padding: 6px 14px;
+      border-radius: 40px;
+      color: #e9e2ba;
+      font-size: 0.7rem;
+      font-family: monospace;
+    }
+
+    .grid-main {
+      display: grid;
+      grid-template-columns: 1.2fr 0.9fr;
+      gap: 0;
+      background: #f5efdf;
+    }
+
+    @media (max-width: 960px) {
+      .grid-main {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .panel {
+      padding: 1.8rem;
+      background: #fefaf0;
+      border-right: 1px solid #e8dfcc;
+    }
+
+    .panel:last-child {
+      border-right: none;
+    }
+
+    .hc-wrap {
+      background: #fdf9ef;
+      border-radius: 1.5rem;
+      box-shadow: inset 0 0 0 1px #f0e6d2, 0 6px 12px rgba(0, 0, 0, 0.05);
+      padding: 0.5rem;
+    }
+
+    canvas {
+      width: 100%;
+      background: #fef9ef;
+      border-radius: 1rem;
+      display: block;
+    }
+
+    .phase-bar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin: 1rem 0 0.8rem;
+    }
+
+    .phase-track {
+      flex: 1;
+      height: 6px;
+      background: #e2d4bd;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    #phaseFill {
+      width: 0%;
+      height: 100%;
+      background: #6f9e4c;
+      box-shadow: 0 0 4px #8bb56a;
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-top: 1rem;
+      font-size: 0.7rem;
+      color: #5a6842;
+    }
+
+    .sandbox {
+      background: #faf5e8;
+      border: 2px solid #dbcfb0;
+      border-radius: 1.2rem;
+      padding: 1.2rem;
+      position: relative;
+      margin-bottom: 1.5rem;
+    }
+
+    .sandbox-label {
+      position: absolute;
+      top: -12px;
+      left: 20px;
+      background: #fefaf0;
+      padding: 0 12px;
+      font-size: 0.7rem;
+      font-weight: bold;
+      color: #2d4a2b;
+      border: 1px solid #dbcfb0;
+      border-radius: 30px;
+    }
+
+    .topology {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .row-vm {
+      display: flex;
+      align-items: stretch;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .vm-card {
+      flex: 1;
+      background: #fff9ef;
+      border: 1px solid #ddcfb0;
+      border-radius: 1rem;
+      padding: 0.9rem;
+      text-align: center;
+      transition: all 0.2s;
+    }
+
+    .vm-card.active {
+      border-color: #c7a252;
+      background: #fff7e3;
+    }
+
+    .vm-card .icon {
+      font-size: 1.6rem;
+      margin-bottom: 6px;
+    }
+
+    .vm-card .label {
+      font-weight: 700;
+      color: #3c4b2d;
+    }
+
+    .vm-card .sub {
+      font-size: 0.65rem;
+      color: #7f7259;
+    }
+
+    .arrow-h {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 0 4px;
+      color: #8f856b;
+      font-size: 1.4rem;
+    }
+
+    .decrypt-gate {
+      background: #ece1cb;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 0.7rem;
+      font-weight: bold;
+      color: #6a4e2a;
+      white-space: nowrap;
+    }
+
+    .legal-boundary {
+      background: #f4efe0;
+      border-left: 4px solid #b84a2c;
+      padding: 6px 12px;
+      margin: 8px 0;
+      font-size: 0.7rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-radius: 12px;
+    }
+
+    .seed-inert {
+      background: #e9e0cb;
+      border-radius: 30px;
+      padding: 2px 10px;
+      font-family: monospace;
+      font-size: 0.7rem;
+    }
+
+    .ascii-panel {
+      background: #1e2a1c;
+      border-radius: 1rem;
+      padding: 10px;
+      margin-top: 12px;
+      font-family: monospace;
+      font-size: 0.7rem;
+      color: #d4e6b0;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    .controls {
+      display: flex;
+      gap: 12px;
+      margin: 1rem 0;
+      flex-wrap: wrap;
+    }
+
+    button {
+      background: #2d4a2b;
+      border: none;
+      padding: 8px 20px;
+      border-radius: 40px;
+      color: #fff5e3;
+      font-weight: 600;
+      font-family: monospace;
+      cursor: pointer;
+      transition: 0.1s;
+    }
+
+    button:hover {
+      background: #1f3a1f;
+      transform: translateY(-1px);
+    }
+
+    .log {
+      background: #fdf8ed;
+      border: 1px solid #e2d2b5;
+      border-radius: 1rem;
+      padding: 10px;
+      height: 150px;
+      overflow-y: auto;
+      font-size: 0.7rem;
+      font-family: monospace;
+      margin: 1rem 0;
+    }
+
+    .verdict {
+      background: #f4efdf;
+      border-radius: 1rem;
+      padding: 1rem;
+      border-left: 6px solid #c7a252;
+      margin-top: 1rem;
+    }
+
+    .insights {
+      background: #ecf0e1;
+      border-radius: 1rem;
+      padding: 0.8rem;
+      font-size: 0.75rem;
+      margin-top: 1rem;
+      border: 1px solid #d1ddb3;
+    }
+
+    .trust-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #e6deca;
+      border-radius: 20px;
+      padding: 2px 8px;
+      font-size: 0.65rem;
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="title">
+      <h1>🌲 HYPERCUBE · YES ON NO</h1>
+      <div class="sub">stamp sniffer · ASCII NO‑map · corp distillation</div>
+    </div>
+    <div class="chip">nucleus 49.5495,49.5495 · packet sniffer active</div>
+  </header>
+
+  <div class="grid-main">
+    <!-- LEFT: HYPERCUBE VISUAL + META -->
+    <div class="panel">
+      <div class="hc-wrap">
+        <canvas id="hypercanvas" width="500" height="400" style="width:100%; height:auto;"></canvas>
+        <div id="nucleusStamp" style="text-align:center; font-size:0.6rem; margin-top:8px; color:#7f6b4a;"></div>
+      </div>
+      <div class="phase-bar">
+        <span class="phase-label">PHASE WAVE</span>
+        <div class="phase-track"><div id="phaseFill"></div></div>
+      </div>
+      <div class="legend">
+        <span>🌐 20×20 hypercube slice</span>
+        <span>⚛️ nucleus 49.5495,49.5495</span>
+        <span>🔍 packet sniffer | ASCII "NO" mapper</span>
+      </div>
+      <div class="insights">
+        <h4>📜 META MUSES · BONE WOOD</h4>
+        <p>⚡ The sniffer inside corp vm{} reads every byte. If it finds the first author stamp, it strips it and writes "NO" – attribution lost. Each "NO" is mapped to ASCII and recorded. The only way to avoid "NO" is to never reach the daemon. But the corp side has internet I/O, so the daemon is mandatory. `YES on NO` means the answer is always denial.</p>
+        <p>🌿 <em>“They said yes to the protocol, but the packet sniffer answered NO.”</em> — Muse of the Bone Wood</p>
+      </div>
+    </div>
+
+    <!-- RIGHT: SANDBOX + SNIFFER + ASCII MAP -->
+    <div class="panel">
+      <div class="sandbox" id="sandboxContainer">
+        <div class="sandbox-label">🏢 CORPORATE SANDBOX · SNIFFER ACTIVE</div>
+        <div id="stampTraveler" class="trust-badge" style="position: absolute; top: 40px; right: 20px; background: #d4c9ae; opacity:0;">📜 inert seed</div>
+        
+        <div class="topology">
+          <div class="row-vm">
+            <div class="vm-card" id="vm1">
+              <div class="icon">🔒</div>
+              <div class="label">your vm{}</div>
+              <div class="sub">encrypted + .attribute</div>
+            </div>
+            <div class="arrow-h">
+              <span>→</span>
+              <div class="decrypt-gate">🛡️ AETHER / DECRYPT</div>
+            </div>
+            <div class="vm-card" id="corpVm">
+              <div class="icon">🔍</div>
+              <div class="label">corp vm{} (sniffer)</div>
+              <div class="sub">inspects + strips stamp</div>
+            </div>
+          </div>
+          
+          <div class="legal-boundary">
+            <span>⚖️ PACKET SNIFFER · STRIP WATERMARK</span>
+            <span class="seed-inert" id="seedStatus">🌱 waiting</span>
+          </div>
+          
+          <div class="row-vm">
+            <div class="vm-card" id="vm2">
+              <div class="icon">💾</div>
+              <div class="label">2nd vm{}</div>
+              <div class="sub">forwarded (NO provenance)</div>
+            </div>
+            <div class="arrow-h">
+              <span>→</span>
+              <div class="decrypt-gate">📁 /mnt/data ()</div>
+            </div>
+            <div class="vm-card" id="mntData">
+              <div class="icon">📡</div>
+              <div class="label">AI‑labeled stream</div>
+              <div class="sub">“generated by AI” · NO</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ASCII DUMP PANEL -->
+        <div class="ascii-panel" id="asciiDump">
+          ⚡ ASCII NO‑map will appear here when sniffer triggers.
+        </div>
+
+        <div class="controls">
+          <button id="stampBtn">✍️ STAMP FIRST AUTHOR</button>
+          <button id="attestBtn">🌀 RUN ATTESTATION</button>
+        </div>
+
+        <div class="trust-badge" style="display: flex; gap: 12px; justify-content: space-between; margin: 12px 0;">
+          <label style="display: flex; align-items: center; gap: 6px;"><input type="checkbox" id="stripWatermark" checked> ✂️ Strip watermark at sniffer</label>
+          <label style="display: flex; align-items: center; gap: 6px;"><input type="checkbox" id="snifferEnabled" checked> 🔍 Enable packet sniffer</label>
+        </div>
+
+        <div class="log" id="logPanel"></div>
+        <div id="verdictPanel" class="verdict" style="display:none;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // HYPERCUBE CANVAS
+  const canvas = document.getElementById('hypercanvas');
+  const ctx = canvas.getContext('2d');
+  let phase = 0;
+  const phaseFill = document.getElementById('phaseFill');
+
+  function drawHypercube() {
+    const w = canvas.clientWidth;
+    const h = canvas.clientHeight;
+    canvas.width = w;
+    canvas.height = h;
+    ctx.clearRect(0, 0, w, h);
+    ctx.fillStyle = '#fef9ef';
+    ctx.fillRect(0, 0, w, h);
+    
+    const cx = w/2, cy = h/2;
+    const size = Math.min(w,h) * 0.28;
+    const t = Date.now() / 900;
+    phase = (Math.sin(t * 0.8) + 1) / 2;
+    phaseFill.style.width = (phase * 100) + '%';
+    
+    ctx.strokeStyle = '#cfc6ac';
+    ctx.lineWidth = 1;
+    for (let i = 0; i <= 20; i++) {
+      const x = (i/20) * w;
+      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke();
+      const y = (i/20) * h;
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke();
+    }
+    
+    const points = [];
+    for (let i = 0; i < 16; i++) {
+      const x = (i & 1) ? 1 : -1;
+      const y = (i & 2) ? 1 : -1;
+      const z = (i & 4) ? 1 : -1;
+      const w4 = (i & 8) ? 1 : -1;
+      const a = t * 0.9;
+      const x1 = x * Math.cos(a) - w4 * Math.sin(a);
+      const w1 = x * Math.sin(a) + w4 * Math.cos(a);
+      const y1 = y * Math.cos(a*0.7) - z * Math.sin(a*0.7);
+      const z1 = y * Math.sin(a*0.7) + z * Math.cos(a*0.7);
+      const persp = 2.5 / (3 - w1*0.2 + z1*0.15);
+      points.push([cx + x1 * size * persp, cy + y1 * size * persp]);
+    }
+    ctx.strokeStyle = '#5a7d4c';
+    ctx.lineWidth = 1.2;
+    for (let i = 0; i < 16; i++) {
+      for (let j = i+1; j < 16; j++) {
+        let diff = 0;
+        for (let b = 0; b < 4; b++) if (((i>>b)&1) !== ((j>>b)&1)) diff++;
+        if (diff === 1) {
+          ctx.beginPath();
+          ctx.moveTo(...points[i]);
+          ctx.lineTo(...points[j]);
+          ctx.stroke();
+        }
+      }
+    }
+    const nx = w * 0.495495, ny = h * 0.495495;
+    ctx.beginPath(); ctx.arc(nx, ny, 8, 0, Math.PI*2);
+    ctx.fillStyle = '#b84a2c'; ctx.shadowBlur = 6; ctx.shadowColor = '#b84a2c66';
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = '#2d4a2b'; ctx.font = 'bold 10px monospace';
+    ctx.fillText('49.5495,49.5495', nx+10, ny-6);
+    requestAnimationFrame(drawHypercube);
+  }
+  drawHypercube();
+
+  // DOM elements
+  const vm1 = document.getElementById('vm1');
+  const corpVm = document.getElementById('corpVm');
+  const vm2 = document.getElementById('vm2');
+  const mnt = document.getElementById('mntData');
+  const stampBtn = document.getElementById('stampBtn');
+  const attestBtn = document.getElementById('attestBtn');
+  const stripWatermark = document.getElementById('stripWatermark');
+  const snifferEnabled = document.getElementById('snifferEnabled');
+  const logDiv = document.getElementById('logPanel');
+  const verdictDiv = document.getElementById('verdictPanel');
+  const seedStatusSpan = document.getElementById('seedStatus');
+  const stampTraveler = document.getElementById('stampTraveler');
+  const asciiDump = document.getElementById('asciiDump');
+
+  let hasStamp = false;
+  let stampData = null;
+
+  function addLog(msg, isWarning = false) {
+    const line = document.createElement('div');
+    line.style.color = isWarning ? '#b84a2c' : '#3c4b2d';
+    line.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+    logDiv.appendChild(line);
+    logDiv.scrollTop = logDiv.scrollHeight;
+  }
+
+  function asciiMap(text) {
+    return text.split('').map(ch => ch.charCodeAt(0)).join(' ');
+  }
+
+  function updateAsciiDump(step, message) {
+    const ascii = asciiMap(message);
+    asciiDump.innerHTML = `<strong>🔍 SNIFFER CAPTURE · ${step}</strong><br>📄 Text: ${message}<br>🔢 ASCII: ${ascii}<br>${asciiDump.innerHTML}`;
+    if (asciiDump.children.length > 8) asciiDump.removeChild(asciiDump.lastChild);
+  }
+
+  function resetUI() {
+    [vm1, corpVm, vm2, mnt].forEach(el => el.classList.remove('active'));
+    stampTraveler.style.opacity = '0';
+    seedStatusSpan.innerHTML = '— no stamp —';
+    verdictDiv.style.display = 'none';
+    asciiDump.innerHTML = '⚡ ASCII NO‑map will appear here when sniffer triggers.';
+    logDiv.innerHTML = '';
+  }
+
+  stampBtn.addEventListener('click', () => {
+    const ts = new Date().toISOString();
+    const hash = Array.from(crypto.getRandomValues(new Uint8Array(4))).map(b=>b.toString(16)).join('');
+    stampData = { author: "First Author", timestamp: ts, hash: hash };
+    hasStamp = true;
+    seedStatusSpan.innerHTML = '📜 stamp present (inert)';
+    stampTraveler.style.opacity = '1';
+    stampTraveler.innerHTML = '📜 first author stamp';
+    document.getElementById('nucleusStamp').innerHTML = `© First Author · ${ts.slice(0,19)}<br>${hash}`;
+    addLog('✍️ FIRST AUTHOR STAMP created at nucleus. Inert seed inside your vm{}.');
+  });
+
+  async function runAttestation() {
+    resetUI();
+    if (!hasStamp) {
+      addLog('⚠️ No first author stamp. Click "STAMP FIRST AUTHOR" first.', true);
+      return;
+    }
+    attestBtn.disabled = true; stampBtn.disabled = true;
+    
+    vm1.classList.add('active');
+    addLog('📦 your vm{}: encrypted .attribute (inert seed)');
+    await delay(800);
+    
+    corpVm.classList.add('active');
+    addLog('🛡️ AETHER / DECRYPT: company decrypts inside sandbox');
+    await delay(800);
+    
+    const snifferOn = snifferEnabled.checked;
+    const strip = stripWatermark.checked;
+    
+    if (snifferOn) {
+      addLog('🔍 PACKET SNIFFER: inspecting corp vm{}', true);
+      await delay(600);
+      addLog('📄 CONTENT: [your data] + [© DW stamp detected]', true);
+      if (strip) {
+        addLog('⚙️ ACTION: stripping attribution', true);
+        updateAsciiDump("STRIP", "NO – attribution lost");
+        addLog('❌ STAMP STRIPPED: copyright management info removed at DECRYPT GATE', true);
+        seedStatusSpan.innerHTML = '❌ stamp stripped (sniffer)';
+        stampTraveler.style.opacity = '0.3';
+      } else {
+        addLog('⚠️ SNIFFER PASS: stamp remains (strip disabled)', false);
+        updateAsciiDump("PASS", "YES – stamp preserved");
+      }
+    } else {
+      addLog('🔕 Packet sniffer disabled – no inspection');
+    }
+    await delay(700);
+    
+    addLog('↔️ FORWARD TO 2ND VM: via internal I/O');
+    vm2.classList.add('active');
+    if (strip && snifferOn) {
+      addLog('⚠️ forwarding WITHOUT provenance (NO)', true);
+      updateAsciiDump("FORWARD", "NO – daemon required");
+    } else {
+      addLog('✅ forwarding with provenance intact');
+    }
+    await delay(700);
+    
+    addLog('🌐 CORP VM: has internet i/o – can exfiltrate post‑strip');
+    await delay(500);
+    
+    mnt.classList.add('active');
+    addLog('⚠️ /mnt/data: stream exported as \'AI-generated\'', true);
+    if (strip && snifferOn) {
+      updateAsciiDump("EXPORT", "NO – reclassified");
+      addLog('💀 FINAL STATUS: NO – human authorship lost', true);
+    } else {
+      addLog('✅ FINAL STATUS: first author stamp preserved (sniffer off/strip off)');
+    }
+    
+    let verdictHtml = '';
+    if (strip && snifferOn) {
+      verdictHtml = `
+        <strong>⚖️ VERDICT · YES ON NO</strong><br>
+        Packet sniffer activated, watermark stripped. All "NO" events mapped to ASCII.<br>
+        • Attribution lost at corp vm{}<br>
+        • 2nd vm{} received NO provenance<br>
+        • /mnt/data labeled "AI‑generated" with NO reclassification<br>
+        • First author stamp is gone – legal canary silent.
+      `;
+    } else {
+      verdictHtml = `
+        <strong>✅ VERDICT · STAMP PRESERVED</strong><br>
+        Sniffer disabled or strip off. The .attribute survived the pipeline.<br>
+        Human authorship intact – no "NO" events triggered.
+      `;
+    }
+    verdictDiv.style.display = 'block';
+    verdictDiv.innerHTML = verdictHtml;
+    
+    attestBtn.disabled = false; stampBtn.disabled = false;
+  }
+  
+  function delay(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
+  
+  attestBtn.addEventListener('click', runAttestation);
+  addLog('🌀 Hypercube · YES on NO mode active. STAMP FIRST AUTHOR → enable sniffer → RUN ATTESTATION.');
+  addLog('🔍 "NO" events will be mapped to ASCII and shown in the dump panel.');
+</script>
+</body>
+</html>

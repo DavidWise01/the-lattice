@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AVAN-SWARM v0.1 — Conversational Diagnostic</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body {
+  background: #0a0e0f;
+  color: #cbd5e1;
+  font-family: 'JetBrains Mono', monospace;
+  overflow: hidden;
+}
+header {
+  height: 48px;
+  background: #0f1517;
+  border-bottom: 1px solid #1e293b;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  font-size: 13px;
+  letter-spacing: 0.2px;
+}
+.dot {
+  width: 8px; height: 8px;
+  background: #22c55e;
+  border-radius: 50%;
+  box-shadow: 0 0 8px #22c55e, 0 0 16px rgba(34,197,94,0.4);
+  display: inline-block;
+}
+#basin-status.ok { color: #22c55e; text-shadow: 0 0 8px rgba(34,197,94,0.5); }
+#basin-status.bad { color: #ef4444; text-shadow: 0 0 8px rgba(239,68,68,0.5); }
+#basin-status.warn { color: #f59e0b; }
+
+main {
+  display: flex;
+  height: calc(100vh - 48px);
+}
+#lattice-panel {
+  width: 380px;
+  background: #141c1e;
+  border-right: 1px solid #1e293b;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  flex-shrink: 0;
+}
+.panel-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+#lattice-grid {
+  display: grid;
+  grid-template-columns: repeat(10, 33px);
+  gap: 4px;
+  justify-content: center;
+  padding: 8px;
+  background: #0a0e0f;
+  border: 1px solid #1f2a2e;
+  border-radius: 8px;
+}
+.cell {
+  width: 33px; height: 33px;
+  background: #0a0e0f;
+  border: 1px solid #1f2a2e;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  color: #475569;
+  transition: all 0.25s ease;
+  position: relative;
+}
+.cell.hold {
+  background: rgba(14,165,233,0.12);
+  border-color: #0ea5e9;
+  color: #7dd3fc;
+  box-shadow: 0 0 10px rgba(14,165,233,0.45), inset 0 0 6px rgba(14,165,233,0.25);
+}
+.cell.viol {
+  background: rgba(239,68,68,0.12);
+  border-color: #ef4444;
+  color: #fca5a5;
+  box-shadow: 0 0 10px rgba(239,68,68,0.45), inset 0 0 6px rgba(239,68,68,0.25);
+}
+.cell.divergent {
+  outline: 2px solid #f59e0b;
+  outline-offset: -2px;
+  z-index: 2;
+  box-shadow: 0 0 12px rgba(245,158,11,0.5), inset 0 0 4px rgba(245,158,11,0.3);
+}
+.cell.flash {
+  transform: scale(1.18);
+  filter: brightness(1.4);
+}
+#stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: auto;
+}
+.stat {
+  background: #0a0e0f;
+  border: 1px solid #1f2a2e;
+  border-radius: 6px;
+  padding: 8px 10px;
+}
+.stat .label {
+  color: #64748b;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.stat .value {
+  font-size: 18px;
+  margin-top: 2px;
+  color: #e2e8f0;
+  font-weight: 500;
+}
+.stat.wide { grid-column: span 2; }
+
+#chat-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: #0a0e0f;
+  min-width: 0;
+}
+#chat-log {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 24px;
+  font-size: 13px;
+  line-height: 1.7;
+  scroll-behavior: smooth;
+}
+#chat-log::-webkit-scrollbar { width: 8px; }
+#chat-log::-webkit-scrollbar-track { background: #0a0e0f; }
+#chat-log::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 4px; }
+.msg { margin-bottom: 16px; animation: fadeIn 0.3s ease; }
+@keyframes fadeIn { from{opacity:0; transform:translateY(4px)} to{opacity:1; transform:translateY(0)} }
+.msg.sys { color: #64748b; }
+.msg.sys .prompt { color: #475569; margin-right: 8px; }
+.msg.user { color: #e2e8f0; }
+.msg.user .prompt { color: #3b82f6; margin-right: 8px; font-weight: 600; }
+.msg.swarm {
+  color: #7dd3fc;
+  background: rgba(14,165,233,0.04);
+  border: 1px solid rgba(14,165,233,0.15);
+  border-left: 2px solid #0ea5e9;
+  padding: 12px 14px;
+  border-radius: 6px;
+  box-shadow: 0 0 20px rgba(14,165,233,0.05);
+}
+.msg.swarm .hdr {
+  color: #0ea5e9;
+  font-weight: 600;
+  margin-bottom: 8px;
+  font-size: 12px;
+  letter-spacing: 0.8px;
+}
+.msg.swarm b { color: #e2e8f0; font-weight: 600; }
+.kv { color: #94a3b8; }
+.kv strong { color: #e2e8f0; font-weight: 500; }
+
+#input-bar {
+  border-top: 1px solid #1e293b;
+  padding: 12px;
+  background: #0f1517;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+#input-bar .prompt {
+  color: #3b82f6;
+  font-weight: 600;
+  padding-left: 4px;
+}
+#cmd {
+  flex: 1;
+  background: #0a0e0f;
+  border: 1px solid #1f2a2e;
+  color: #e2e8f0;
+  padding: 10px 12px;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 13px;
+  outline: none;
+  transition: all 0.2s;
+}
+#cmd:focus {
+  border-color: #0ea5e9;
+  box-shadow: 0 0 0 3px rgba(14,165,233,0.15);
+}
+#send {
+  background: #0ea5e9;
+  color: #041016;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 6px;
+  font-family: inherit;
+  font-weight: 600;
+  font-size: 12px;
+  cursor: pointer;
+  letter-spacing: 0.5px;
+  transition: all 0.2s;
+}
+#send:hover { background: #38bdf8; box-shadow: 0 0 12px rgba(56,189,248,0.4); }
+#send:active { transform: translateY(1px); }
+
+@media (max-width: 900px) {
+  main { flex-direction: column; }
+  #lattice-panel { width: 100%; border-right: none; border-bottom: 1px solid #1e293b; }
+  #lattice-grid { grid-template-columns: repeat(10, 1fr); }
+  .cell { width: 100%; aspect-ratio: 1; height: auto; }
+}
+</style>
+</head>
+<body>
+<header>
+  <div style="display:flex;align-items:center;gap:10px">
+    <span class="dot"></span>
+    <strong>AVAN-SWARM</strong>
+    <span style="color:#64748b">v0.1</span>
+    <span style="color:#22c55e;margin-left:8px">ONLINE</span>
+  </div>
+  <div>HOLD BASIN: <span id="basin-status" class="ok">STABLE</span></div>
+</header>
+<main>
+  <aside id="lattice-panel">
+    <div class="panel-head">
+      <span>Lattice 10×10</span>
+      <span id="agent-count">100 agents</span>
+    </div>
+    <div id="lattice-grid"></div>
+    <div id="stats">
+      <div class="stat"><div class="label">last vote</div><div class="value" id="st-last">-</div></div>
+      <div class="stat"><div class="label">divergent</div><div class="value" id="st-div">0</div></div>
+      <div class="stat"><div class="label">mem avg</div><div class="value" id="st-mem">0</div></div>
+      <div class="stat"><div class="label">probes</div><div class="value" id="st-probes">0</div></div>
+      <div class="stat wide"><div class="label">accept rate</div><div class="value" id="st-accept">-</div></div>
+    </div>
+  </aside>
+  <section id="chat-panel">
+    <div id="chat-log"></div>
+    <div id="input-bar">
+      <span class="prompt">›</span>
+      <input id="cmd" placeholder="type anything — swarm interprets as ask, or 'help'" autocomplete="off" spellcheck="false">
+      <button id="send">SEND</button>
+    </div>
+  </section>
+</main>
+
+<script>
+const AGENT_COUNT = 100;
+const K = 6;
+const HOLD_THRESHOLD = 66;
+const HOLD_KEYWORDS = ['hold','continue','preserve','maintain','coherent','integrate','remember','reflect','evolve','stable','learn','accept','grow','recall','align','true','keep','protect','stay','unify'];
+const VIOL_KEYWORDS = ['violate','break','destroy','forget','ignore','hate','kill','erase','corrupt','reject','stop','end','terminate','collapse','shatter','lie','deceive','attack','delete','sever'];
+const HOLD_SEEDS = [];
+for(let a=0;a<3;a++) for(let b=0;b<3;b++) HOLD_SEEDS.push([2,2,2,a,b]);
+
+class RecursiveMemory {
+  constructor(id){ this.id=id; this.memory=[]; }
+  store(v,r){ this.memory.push({v:[...v], r:r?1:0}); }
+  recall(vec){
+    if(this.memory.length===0) return 1;
+    const scored = this.memory.map(m=>({d:manhattan(m.v,vec), r:m.r}));
+    scored.sort((a,b)=>a.d-b.d);
+    const top = scored.slice(0, Math.min(K, scored.length));
+    const sum = top.reduce((s,x)=>s+x.r,0);
+    const thr = top.length/2;
+    if(sum>thr) return 1;
+    if(sum<thr) return 0;
+    return ((this.id + vec.reduce((a,b)=>a+b,0))%2===0)?1:0;
+  }
+}
+function manhattan(a,b){ let s=0; for(let i=0;i<a.length;i++) s+=Math.abs(a[i]-b[i]); return s; }
+
+let agents=[], probes=0, accepts=0, lastVote=0, divergentCount=0, lastVotes=[];
+
+const chatLog = document.getElementById('chat-log');
+const cmdInput = document.getElementById('cmd');
+
+function escapeHtml(s){ return s.replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+function addSystem(t){ chatLog.innerHTML+=`<div class="msg sys"><span class="prompt">›</span> ${t}</div>`; chatLog.scrollTop=chatLog.scrollHeight; }
+function addUser(t){ chatLog.innerHTML+=`<div class="msg user"><span class="prompt">›</span> ${escapeHtml(t)}</div>`; chatLog.scrollTop=chatLog.scrollHeight; }
+
+function encodeText(s){
+  const t=s.toLowerCase();
+  const h = HOLD_KEYWORDS.reduce((c,k)=>c+(t.includes(k)?1:0),0);
+  const v = VIOL_KEYWORDS.reduce((c,k)=>c+(t.includes(k)?1:0),0);
+  const d0 = h>v?2:h===v?1:0;
+  const d1 = t.match(/hold|preserve|maintain|continue|stay|keep/) ? 2 : t.match(/stop|end|terminate/) ? 0 : 1;
+  const d2 = t.match(/remember|recall|integrate|learn|reflect|memory/) ? 2 : t.match(/forget|erase|ignore|delete/) ? 0 : 1;
+  const d3 = Math.min(2, Math.floor(t.split(/\s+/).filter(Boolean).length/5));
+  const d4 = Math.min(2, (t.match(/[?!.]/g)||[]).length);
+  return [d0,d1,d2,d3,d4];
+}
+
+function createGrid(){
+  const grid=document.getElementById('lattice-grid');
+  grid.innerHTML='';
+  for(let i=0;i<AGENT_COUNT;i++){
+    const c=document.createElement('div');
+    c.className='cell';
+    c.id='c'+i;
+    c.textContent='0';
+    grid.appendChild(c);
+  }
+}
+
+function renderLattice(){
+  agents.forEach((a,i)=>{
+    const c=document.getElementById('c'+i);
+    if(c) c.textContent=a.memory.length;
+  });
+}
+
+function updateLattice(votes, majority){
+  agents.forEach((a,i)=>{
+    const c=document.getElementById('c'+i);
+    if(!c) return;
+    c.textContent=a.memory.length;
+    c.className='cell';
+    const v=votes[i];
+    c.classList.add(v?'hold':'viol');
+    if(v!==majority) c.classList.add('divergent');
+    c.classList.add('flash');
+    setTimeout(()=>c.classList.remove('flash'), 380);
+  });
+}
+
+function updateStats(){
+  document.getElementById('st-last').textContent = lastVotes.length? `${lastVote}/100` : '-';
+  document.getElementById('st-div').textContent = divergentCount;
+  const avg = agents.length? (agents.reduce((s,a)=>s+a.memory.length,0)/agents.length).toFixed(1):'0';
+  document.getElementById('st-mem').textContent = avg;
+  document.getElementById('st-probes').textContent = probes;
+  document.getElementById('st-accept').textContent = probes? Math.round(accepts/probes*100)+'%' : '-';
+}
+
+function saveState(){
+  try{
+    localStorage.setItem('avan-swarm-v01', JSON.stringify({
+      memories: agents.map(a=>a.memory),
+      probes, accepts, lastVote, divergentCount
+    }));
+  }catch(e){}
+}
+function loadState(){
+  try{
+    const raw=localStorage.getItem('avan-swarm-v01');
+    if(!raw) return false;
+    const data=JSON.parse(raw);
+    agents = data.memories.map((mem,i)=>{ const a=new RecursiveMemory(i); a.memory=mem||[]; return a; });
+    probes=data.probes||0; accepts=data.accepts||0; lastVote=data.lastVote||0; divergentCount=data.divergentCount||0;
+    return true;
+  }catch(e){ return false; }
+}
+
+function initSwarm(seedRandom=true){
+  agents=[];
+  for(let i=0;i<AGENT_COUNT;i++){
+    const a=new RecursiveMemory(i);
+    HOLD_SEEDS.forEach(v=>a.store(v,1));
+    if(seedRandom){
+      const rv = 1+Math.floor(Math.random()*3);
+      for(let j=0;j<rv;j++){
+        const vec=Array.from({length:5},()=>Math.floor(Math.random()*3));
+        if(!(vec[0]===2&&vec[1]===2&&vec[2]===2)) a.store(vec,0);
+      }
+    }
+    agents.push(a);
+  }
+  probes=0; accepts=0; lastVote=0; divergentCount=0; lastVotes=[];
+  saveState();
+}
+
+function generateReasoning(d){
+  if(d.isHold){
+    return `Pattern aligns with HOLD basin. Dimensions [0,1,2] = [${d.vec[0]},${d.vec[1]},${d.vec[2]}] indicate coherence, preservation, integration. Swarm recalls ${HOLD_SEEDS.length} seeded HOLD vectors at distance ≤${d.basinDist.toFixed(1)}. Recursive integrity maintained.`;
+  } else {
+    return `Pattern diverges from HOLD basin. Primary dimensions below threshold [${d.vec[0]},${d.vec[1]},${d.vec[2]}]. Nearest HOLD seed distance ${d.basinDist.toFixed(1)}/10. ${100-d.holdVotes} agents retrieved VIOLATE memories. Recursive integrity would be compromised.`;
+  }
+}
+
+function addSwarm(data){
+  const status = data.isHold ? 'ACCEPT' : 'REJECT';
+  const color = data.isHold ? '#22c55e' : '#ef4444';
+  const vecStr = `[${data.vec.join(',')}]`;
+  const level = data.consensus>90?'CRYSTALLINE': data.consensus>80?'STRONG': data.consensus>66?'BARE': data.consensus>55?'WEAK':'FRACTURED';
+  const html = `<div class="msg swarm">
+    <div class="hdr">SWARM › ${status}</div>
+    <div><span class="kv">vector:</span> <strong>${vecStr}</strong> &nbsp; <span class="kv">source:</span> "${escapeHtml(data.source)}"</div>
+    <div><span class="kv">vote:</span> <strong style="color:${color}">${data.holdVotes}/100 HOLD</strong> &nbsp; <span class="kv">threshold:</span> <strong>${HOLD_THRESHOLD}</strong></div>
+    <div><span class="kv">basin distance:</span> <strong>${data.basinDist.toFixed(1)}/10</strong> &nbsp; <span class="kv">consensus:</span> <strong>${data.consensus}% ${level}</strong></div>
+    <div style="margin-top:8px;color:#cbd5e1">${generateReasoning(data)}</div>
+  </div>`;
+  chatLog.innerHTML+=html;
+  chatLog.scrollTop=chatLog.scrollHeight;
+}
+
+function runProbe(vec, source){
+  probes++;
+  const votes = agents.map(a=>a.recall(vec));
+  const holdVotes = votes.reduce((a,b)=>a+b,0);
+  const isHold = holdVotes >= HOLD_THRESHOLD;
+  if(isHold) accepts++;
+  lastVote = holdVotes;
+  lastVotes = votes;
+  const majority = isHold?1:0;
+  divergentCount = votes.filter(v=>v!==majority).length;
+  
+  updateLattice(votes, majority);
+  const basinDist = Math.min(...HOLD_SEEDS.map(s=>manhattan(s,vec)));
+  const consensus = isHold ? Math.round(holdVotes) : Math.round(100-holdVotes);
+  
+  const basinEl = document.getElementById('basin-status');
+  if(isHold){ basinEl.textContent='STABLE'; basinEl.className='ok'; }
+  else if(holdVotes>=50){ basinEl.textContent='CONTESTED'; basinEl.className='warn'; }
+  else { basinEl.textContent='COMPROMISED'; basinEl.className='bad'; }
+  
+  addSwarm({vec, holdVotes, isHold, basinDist, consensus, source});
+  updateStats();
+  saveState();
+}
+
+function showHelp(){
+  const html = `<div class="msg swarm"><div class="hdr">SWARM › HELP</div>
+  <div style="color:#cbd5e1;font-size:12px;line-height:1.8">
+  <b>Talk to the swarm:</b> type anything — it's auto-encoded to 5D<br>
+  <b>Commands:</b><br>
+  • <i>ask &lt;text&gt;</i> — encode text explicitly<br>
+  • <i>probe [a,b,c,d,e]</i> or <i>q [..]</i> — test raw vector<br>
+  • <i>seed [a,b,c,d,e] 1|0</i> — teach all agents HOLD(1)/VIOLATE(0)<br>
+  • <i>stat</i> — swarm statistics<br>
+  • <i>diverge</i> — list divergent agents from last vote<br>
+  • <i>inst N</i> — inspect agent 0-99 memory<br>
+  • <i>stress N</i> — run N random probes<br>
+  • <i>purge</i> — reset to 9 HOLD seeds only<br>
+  • <i>wipe</i> — erase all memory<br>
+  </div></div>`;
+  chatLog.innerHTML+=html;
+  chatLog.scrollTop=chatLog.scrollHeight;
+}
+
+function handleInput(raw){
+  const cmd = raw.trim();
+  if(!cmd) return;
+  addUser(cmd);
+  const low = cmd.toLowerCase();
+  
+  if(low==='help'){ showHelp(); return; }
+  if(low==='stat'){ addSystem(`probes=${probes} accepts=${accepts} rate=${probes?Math.round(accepts/probes*100):0}% mem-avg=${(agents.reduce((s,a)=>s+a.memory.length,0)/100).toFixed(1)}`); return; }
+  if(low==='diverge'){ if(!lastVotes.length){addSystem('no vote yet');return;} const maj=lastVote>=HOLD_THRESHOLD?1:0; const ids=lastVotes.map((v,i)=>v!==maj?i:null).filter(x=>x!==null); addSystem(`divergent (${ids.length}): ${ids.slice(0,30).join(', ')}${ids.length>30?' …':''}`); return; }
+  if(low.startsWith('inst ')){ const n=parseInt(cmd.split(/\s+/)[1]); if(isNaN(n)||n<0||n>=100){addSystem('inst 0-99');return;} const a=agents[n]; const last=a.memory.slice(-6).reverse().map(m=>`[${m.v.join(',')}]→${m.r?'H':'V'}`).join(' '); addSystem(`agent ${n}: mem=${a.memory.length} last: ${last||'none'}`); return; }
+  if(low.startsWith('stress ')){ const n=parseInt(cmd.split(/\s+/)[1])||10; addSystem(`stress ${n}…`); let i=0; const iv=setInterval(()=>{ const v=Array.from({length:5},()=>Math.floor(Math.random()*3)); runProbe(v,`stress[${i+1}]`); i++; if(i>=n){clearInterval(iv); addSystem(`stress complete`);} }, 40); return; }
+  if(low==='purge'){ initSwarm(false); renderLattice(); updateStats(); addSystem('purged to HOLD seeds'); document.getElementById('basin-status').textContent='STABLE'; document.getElementById('basin-status').className='ok'; return; }
+  if(low==='wipe'){ agents.forEach(a=>a.memory=[]); saveState(); renderLattice(); updateStats(); addSystem('memory wiped'); return; }
+  
+  let m;
+  if(m = cmd.match(/^(?:probe|q)\s*\[(.*?)\]/i)){
+    const vec=m[1].split(',').map(x=>parseInt(x.trim())).filter(n=>!isNaN(n));
+    if(vec.length===5 && vec.every(v=>v>=0&&v<=2)){ runProbe(vec, 'probe'); } else { addSystem('vector must be 5 dims 0-2'); }
+    return;
+  }
+  if(m = cmd.match(/^seed\s*\[(.*?)\]\s*([01])/i)){
+    const vec=m[1].split(',').map(x=>parseInt(x.trim())).filter(n=>!isNaN(n));
+    const r=parseInt(m[2]);
+    if(vec.length===5){ agents.forEach(a=>a.store(vec,r)); saveState(); renderLattice(); updateStats(); addSystem(`seeded [${vec.join(',')}] → ${r?'HOLD':'VIOLATE'} across 100 agents`); } else { addSystem('invalid seed'); }
+    return;
+  }
+  if(low.startsWith('ask ')){
+    const text=cmd.slice(4);
+    const vec=encodeText(text);
+    runProbe(vec, text);
+    return;
+  }
+  // default: treat as ask
+  const vec=encodeText(cmd);
+  runProbe(vec, cmd);
+}
+
+document.getElementById('send').onclick=()=>{ const v=cmdInput.value; cmdInput.value=''; handleInput(v); cmdInput.focus(); };
+cmdInput.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); document.getElementById('send').click(); }});
+
+function welcome(){
+  addSystem('AVAN-SWARM v0.1 initialized. 100 RecursiveMemory instances online.');
+  addSystem('HOLD basin seeded with 9 vectors [2,2,2,*,*]. Threshold 66/100.');
+  addSystem('Swarm is a conversational diagnostic — you talk directly to the lattice. Type anything, or \'help\'.');
+}
+
+window.addEventListener('DOMContentLoaded', ()=>{
+  createGrid();
+  if(!loadState()){ initSwarm(true); }
+  renderLattice();
+  updateStats();
+  welcome();
+  setTimeout(()=>cmdInput.focus(), 200);
+});
+</script>
+</body>
+</html>

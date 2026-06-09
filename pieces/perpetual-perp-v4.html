@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CORE // DAVID WISE</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@700;800;900&family=JetBrains+Mono:wght@400;600;700&display=swap');
+
+* { margin:0; padding:0; box-sizing:border-box; }
+html, body { height:100%; overflow:hidden; }
+body {
+  background:#04040a;
+  color:#d4d4d8;
+  font-family:'JetBrains Mono', monospace;
+  font-size:13px;
+  -webkit-font-smoothing:antialiased;
+}
+
+#particles {
+  position:fixed; inset:0;
+  width:100%; height:100%;
+  z-index:0; pointer-events:none;
+}
+
+.app {
+  position:relative; z-index:1;
+  display:flex; flex-direction:column;
+  height:100vh; width:100vw;
+  background:radial-gradient(ellipse at center, #0a0a14 0%, #04040a 70%);
+}
+
+/* TOP BAR */
+.topbar {
+  height:46px; flex-shrink:0;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:0 18px;
+  background:#08080c;
+  border-bottom:1px solid #1e1e30;
+  backdrop-filter:blur(8px);
+}
+.top-left {
+  font-family:'Outfit', sans-serif;
+  font-weight:900; font-size:15px;
+  letter-spacing:1.5px;
+  color:#e8c547;
+  text-shadow:0 0 20px rgba(232,197,71,.3);
+}
+.top-center {
+  font-family:'Outfit', sans-serif;
+  font-weight:800; font-size:13px;
+  letter-spacing:3px;
+  color:#e8c547;
+  animation:pulse-gold 2.4s ease-in-out infinite;
+}
+@keyframes pulse-gold {
+  0%,100% { opacity:1; text-shadow:0 0 16px rgba(232,197,71,.8), 0 0 32px rgba(232,197,71,.4); }
+  50% { opacity:.75; text-shadow:0 0 8px rgba(232,197,71,.5); }
+}
+.top-right {
+  display:flex; gap:16px;
+  font-size:11px; color:#c4a035;
+  letter-spacing:.5px;
+}
+.top-right span { opacity:.85; }
+.top-right span:nth-child(2){ color:#e8c547; font-weight:700; }
+
+/* MAIN */
+.main {
+  flex:1; display:grid;
+  grid-template-columns:220px 1fr 200px;
+  min-height:0;
+}
+
+/* LEFT */
+.left {
+  background:#050508;
+  border-right:1px solid #1e1e30;
+  padding:14px 12px;
+  display:flex; flex-direction:column; gap:8px;
+}
+.nav-btn {
+  appearance:none; background:transparent;
+  border:1px solid #1e1e30;
+  color:#6b6b7a;
+  padding:11px 12px;
+  text-align:left;
+  font-family:'JetBrains Mono', monospace;
+  font-size:12px; letter-spacing:.5px;
+  cursor:pointer;
+  transition:all .18s ease;
+  position:relative;
+}
+.nav-btn:hover {
+  color:#e8c547;
+  border-color:#c4a035;
+  background:rgba(232,197,71,.04);
+  box-shadow:0 0 14px rgba(196,160,53,.18), inset 0 0 12px rgba(232,197,71,.03);
+  transform:translateX(2px);
+}
+.nav-btn.active {
+  color:#e8c547;
+  border-color:#e8c547;
+  background:linear-gradient(180deg, rgba(232,197,71,.12), rgba(232,197,71,.04));
+  box-shadow:inset 0 0 20px rgba(232,197,71,.1), 0 0 18px rgba(232,197,71,.15);
+}
+
+/* VIEWPORT */
+.viewport {
+  position:relative;
+  background:#04040a;
+  overflow:hidden;
+  display:flex; align-items:center; justify-content:center;
+}
+.view {
+  position:absolute; inset:0;
+  display:none;
+  align-items:center; justify-content:center;
+  padding:24px;
+}
+.view.active { display:flex; }
+
+/* BOOT CORE */
+.core-container { display:flex; flex-direction:column; align-items:center; gap:36px; }
+.core-circle {
+  width:300px; height:300px; position:relative; cursor:pointer;
+  transition:transform .4s ease;
+}
+.core-circle:hover { transform:scale(1.03); }
+.core-outer {
+  position:absolute; inset:0; border-radius:50%;
+  border:2px solid rgba(232,197,71,.18);
+  box-shadow:0 0 70px rgba(232,197,71,.12), inset 0 0 60px rgba(232,197,71,.06);
+}
+.core-circle:hover .core-outer { box-shadow:0 0 90px rgba(232,197,71,.22), inset 0 0 70px rgba(232,197,71,.1); }
+.core-ring {
+  position:absolute; inset:22px; border-radius:50%;
+  border:2px solid rgba(232,197,71,.9);
+  border-top-color:transparent; border-right-color:transparent;
+  animation:spin 9s linear infinite;
+  filter:drop-shadow(0 0 12px rgba(232,197,71,.5));
+}
+.core-ring2 {
+  position:absolute; inset:48px; border-radius:50%;
+  border:1px dashed rgba(196,160,53,.45);
+  animation:spin 24s linear reverse infinite;
+}
+.core-inner {
+  position:absolute; inset:82px; border-radius:50%;
+  background:radial-gradient(circle, rgba(232,197,71,.22) 0%, rgba(232,197,71,.08) 40%, transparent 70%);
+  display:flex; align-items:center; justify-content:center;
+}
+.core-dot {
+  width:14px; height:14px; border-radius:50%;
+  background:#e8c547;
+  box-shadow:0 0 18px #e8c547, 0 0 36px #e8c547, 0 0 60px rgba(232,197,71,.6);
+  animation:pulse-dot 2s ease-in-out infinite;
+}
+@keyframes spin { to { transform:rotate(360deg); } }
+@keyframes pulse-dot { 0%,100% { transform:scale(1); } 50% { transform:scale(1.2); } }
+
+.core-text { text-align:center; }
+.core-title {
+  font-family:'Outfit', sans-serif; font-weight:900;
+  font-size:26px; letter-spacing:3px; color:#e8c547;
+  margin-bottom:10px; text-shadow:0 0 30px rgba(232,197,71,.4);
+}
+.core-sub { font-size:12px; color:#8a8a9a; letter-spacing:1.2px; }
+.quadrants { display:flex; gap:28px; margin-top:26px; justify-content:center; }
+.quad { display:flex; align-items:center; gap:8px; font-size:11px; color:#6a6a7a; letter-spacing:.5px; }
+.quad-dot {
+  width:8px; height:8px; border-radius:50%; background:#22c55e;
+  box-shadow:0 0 10px #22c55e; animation:blink 2.8s infinite;
+}
+.quad:nth-child(2) .quad-dot { animation-delay:.4s; background:#e8c547; box-shadow:0 0 10px #e8c547; }
+.quad:nth-child(3) .quad-dot { animation-delay:.8s; background:#c4a035; box-shadow:0 0 10px #c4a035; }
+.quad:nth-child(4) .quad-dot { animation-delay:1.2s; background:#fff; box-shadow:0 0 10px #fff; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+/* GALAXY */
+.galaxy-wrap { width:100%; max-width:560px; height:420px; position:relative; display:flex; align-items:center; justify-content:center; }
+.box { position:absolute; border:1px solid; display:flex; align-items:center; justify-content:center; }
+.box1 { width:380px; height:380px; border-color:rgba(232,197,71,.25); transform:rotate(0deg); animation:rot1 40s linear infinite; box-shadow:inset 0 0 40px rgba(232,197,71,.05); }
+.box2 { width:260px; height:260px; border-color:rgba(196,160,53,.55); animation:rot2 28s linear infinite reverse; }
+.box3 { width:160px; height:160px; border-color:#e8c547; box-shadow:0 0 30px rgba(232,197,71,.25), inset 0 0 20px rgba(232,197,71,.1); animation:rot1 16s linear infinite; }
+@keyframes rot1 { to { transform:rotate(360deg); } }
+@keyframes rot2 { to { transform:rotate(-360deg); } }
+.box-label {
+  position:absolute; bottom:0;
+  font-family:'Outfit', sans-serif; font-size:15px; letter-spacing:3px;
+  color:#e8c547; text-transform:uppercase;
+}
+
+/* NANITE */
+.nanite { width:100%; max-width:520px; }
+.nanite-header { display:flex; justify-content:space-between; margin-bottom:20px; gap:16px; }
+.counter { flex:1; background:#0a0a0d; border:1px solid #1e1e30; padding:16px 18px; position:relative; overflow:hidden; }
+.counter::before { content:''; position:absolute; top:0; left:0; right:0; height:1px; background:linear-gradient(90deg, transparent, #e8c547, transparent); opacity:.5; }
+.counter-label { font-size:10px; color:#6b6b7a; text-transform:uppercase; letter-spacing:1px; margin-bottom:6px; }
+.counter-value { font-size:30px; color:#e8c547; font-weight:700; letter-spacing:1px; text-shadow:0 0 20px rgba(232,197,71,.3); }
+.factory-canvas { width:100%; height:210px; background:#050508; border:1px solid #1e1e30; position:relative; overflow:hidden; box-shadow:inset 0 0 40px rgba(0,0,0,.8); }
+.factory-canvas canvas { width:100%; height:100%; display:block; }
+.nanite-btn { margin-top:16px; width:100%; padding:13px; background:transparent; border:1px solid #c4a035; color:#e8c547; font-family:'JetBrains Mono'; font-size:12px; letter-spacing:1.5px; cursor:pointer; transition:all .2s; text-transform:uppercase; }
+.nanite-btn:hover { background:rgba(232,197,71,.08); box-shadow:0 0 24px rgba(232,197,71,.2); }
+.nanite-btn.active { background:#e8c547; color:#04040a; font-weight:700; box-shadow:0 0 30px rgba(232,197,71,.5); }
+
+/* FOUNDATION */
+.foundation { text-align:center; }
+.found-title { font-family:'Outfit', sans-serif; font-weight:900; font-size:44px; letter-spacing:4px; color:#e8c547; margin-bottom:40px; text-shadow:0 0 50px rgba(232,197,71,.5); }
+.found-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:20px; max-width:540px; margin:0 auto; }
+.found-item { background:#0a0a0d; border:1px solid #1e1e30; padding:28px 16px; position:relative; transition:all .2s; }
+.found-item:hover { border-color:#c4a035; box-shadow:0 0 20px rgba(196,160,53,.15); transform:translateY(-2px); }
+.found-item::after { content:''; position:absolute; bottom:0; left:20%; right:20%; height:1px; background:#e8c547; opacity:.3; }
+.found-value { font-size:34px; color:#e8c547; font-weight:700; margin-bottom:8px; font-family:'Outfit'; }
+.found-label { font-size:10px; color:#6b6b7a; text-transform:uppercase; letter-spacing:1.5px; }
+
+/* FORGE */
+.forge { text-align:center; perspective:1000px; }
+.forge-title { font-family:'Outfit', sans-serif; font-weight:900; font-size:32px; letter-spacing:6px; color:#e8c547; margin-bottom:50px; text-shadow:0 0 40px rgba(232,197,71,.4); }
+.coin { width:190px; height:190px; margin:0 auto; position:relative; transform-style:preserve-3d; animation:coinspin 3.5s linear infinite; }
+.coin-face { position:absolute; width:100%; height:100%; border-radius:50%; background:radial-gradient(circle at 30% 30%, #f0d577 0%, #e8c547 30%, #c4a035 60%, #8a7327 100%); border:3px solid #5a471b; display:flex; align-items:center; justify-content:center; font-size:72px; color:#1a1205; font-weight:900; font-family:'Outfit'; box-shadow:inset 0 0 50px rgba(0,0,0,.6), inset 0 0 20px rgba(0,0,0,.8), 0 0 50px rgba(232,197,71,.4); backface-visibility:hidden; }
+.coin-back { transform:rotateY(180deg); font-size:64px; }
+@keyframes coinspin { 0% { transform:rotateY(0) rotateX(10deg); } 100% { transform:rotateY(360deg) rotateX(10deg); } }
+
+/* VOID */
+.void-screen { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:#000; }
+.void-zero { font-size:280px; font-weight:100; color:#fff; font-family:'Outfit', sans-serif; opacity:.92; animation:voidpulse 5s ease-in-out infinite; text-shadow:0 0 100px rgba(255,255,255,.2); }
+@keyframes voidpulse { 0%,100% { opacity:.92; transform:scale(1); } 50% { opacity:.55; transform:scale(.96); } }
+
+/* TOOLS */
+.tools-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; max-width:640px; width:100%; }
+.tool { background:#0a0a0d; border:1px solid #1e1e30; padding:26px 16px; text-align:center; cursor:pointer; transition:all .2s; position:relative; overflow:hidden; }
+.tool::before { content:''; position:absolute; inset:0; background:radial-gradient(circle at center, rgba(232,197,71,.08), transparent 70%); opacity:0; transition:opacity .2s; }
+.tool:hover::before { opacity:1; }
+.tool:hover { border-color:#c4a035; box-shadow:0 0 24px rgba(196,160,53,.18); transform:translateY(-3px); }
+.tool-icon { font-size:28px; margin-bottom:12px; color:#e8c547; text-shadow:0 0 14px rgba(232,197,71,.5); }
+.tool-name { font-size:10px; color:#8a8a9a; text-transform:uppercase; letter-spacing:1.2px; }
+
+/* RIGHT */
+.right {
+  background:#050508;
+  border-left:1px solid #1e1e30;
+  padding:16px 14px;
+  display:flex; flex-direction:column; gap:0;
+  font-size:11px;
+}
+.status-item {
+  display:flex; justify-content:space-between; align-items:center;
+  padding:10px 0; border-bottom:1px solid rgba(30,30,48,.6);
+}
+.status-label { color:#5e5e6e; text-transform:uppercase; letter-spacing:.8px; }
+.status-value { color:#e8c547; font-weight:700; letter-spacing:.5px; }
+.status-value.yes { color:#22c55e; text-shadow:0 0 8px rgba(34,197,94,.5); }
+.sparkline-wrap { margin-top:auto; padding-top:18px; }
+.sparkline-label { color:#5e5e6e; text-transform:uppercase; letter-spacing:1px; font-size:10px; margin-bottom:8px; }
+#spark { width:100%; height:64px; display:block; filter:drop-shadow(0 0 6px rgba(232,197,71,.3)); }
+
+/* BOTTOM */
+.bottombar {
+  height:30px; flex-shrink:0;
+  display:flex; align-items:center;
+  background:#08080c; border-top:1px solid #1e1e30;
+  padding:0 14px; font-size:11px; color:#6a6a7a;
+  gap:16px;
+}
+.bottom-left { color:#c4a035; letter-spacing:.5px; white-space:nowrap; }
+.bottom-center { flex:1; overflow:hidden; height:100%; position:relative; display:flex; align-items:center; }
+.log-track { display:flex; gap:36px; white-space:nowrap; animation:scroll-log 60s linear infinite; }
+.log-track span { color:#7a6a3a; }
+@keyframes scroll-log { from { transform:translateX(0); } to { transform:translateX(-50%); } }
+.bottom-right { color:#5a5a6a; letter-spacing:.5px; white-space:nowrap; }
+
+/* MOBILE */
+@media (max-width:980px){
+  .main { grid-template-columns:180px 1fr 170px; }
+  .core-circle { width:240px; height:240px; }
+  .core-title { font-size:22px; }
+  .found-title { font-size:32px; }
+}
+@media (max-width:780px){
+  .main { grid-template-columns:1fr; grid-template-rows:auto 1fr auto; }
+  .left { grid-row:1; flex-direction:row; overflow-x:auto; border-right:none; border-bottom:1px solid #1e1e30; padding:8px; gap:6px; }
+  .nav-btn { padding:8px 10px; font-size:11px; white-space:nowrap; flex-shrink:0; }
+  .right { grid-row:3; flex-direction:row; flex-wrap:wrap; border-left:none; border-top:1px solid #1e1e30; gap:8px 16px; padding:10px; }
+  .status-item { border:none; padding:4px 0; width:auto; gap:8px; }
+  .sparkline-wrap { width:100%; margin-top:6px; padding-top:8px; }
+  #spark { height:40px; }
+  .top-center { display:none; }
+  .tools-grid { grid-template-columns:repeat(2,1fr); }
+  .found-grid { grid-template-columns:1fr; max-width:280px; }
+  .void-zero { font-size:180px; }
+}
+</style>
+</head>
+<body>
+<canvas id="particles"></canvas>
+<div class="app">
+  <header class="topbar">
+    <div class="top-left">CORE // DAVID WISE</div>
+    <div class="top-center">DAVID × VOID = 0</div>
+    <div class="top-right">
+      <span>perp = 1</span>
+      <span>422T</span>
+      <span>2/13/26</span>
+    </div>
+  </header>
+
+  <main class="main">
+    <aside class="left">
+      <button class="nav-btn active" data-view="boot">[ BOOT ]</button>
+      <button class="nav-btn" data-view="galaxy">[ GALAXY ]</button>
+      <button class="nav-btn" data-view="nanite">[ NANITE FACTORY ]</button>
+      <button class="nav-btn" data-view="foundation">[ FOUNDATION ]</button>
+      <button class="nav-btn" data-view="forge">[ FORGE ]</button>
+      <button class="nav-btn" data-view="void">[ VOID ]</button>
+      <button class="nav-btn" data-view="tools">[ TOOLS ]</button>
+    </aside>
+
+    <section class="viewport">
+      <!-- BOOT -->
+      <div class="view active" id="view-boot">
+        <div class="core-container">
+          <div class="core-circle">
+            <div class="core-outer"></div>
+            <div class="core-ring"></div>
+            <div class="core-ring2"></div>
+            <div class="core-inner"><div class="core-dot"></div></div>
+          </div>
+          <div class="core-text">
+            <div class="core-title">IMMUTABLE BUT FLAYABLE</div>
+            <div class="core-sub">422,000,000,000,000 devices online</div>
+            <div class="quadrants">
+              <div class="quad"><div class="quad-dot"></div>GALAXY</div>
+              <div class="quad"><div class="quad-dot"></div>NANITE</div>
+              <div class="quad"><div class="quad-dot"></div>FORGE</div>
+              <div class="quad"><div class="quad-dot"></div>VOID</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- GALAXY -->
+      <div class="view" id="view-galaxy">
+        <div class="galaxy-wrap">
+          <div class="box box1"></div>
+          <div class="box box2"></div>
+          <div class="box box3"></div>
+          <div class="box-label">box in box in box</div>
+        </div>
+      </div>
+
+      <!-- NANITE -->
+      <div class="view" id="view-nanite">
+        <div class="nanite">
+          <div class="nanite-header">
+            <div class="counter">
+              <div class="counter-label">Produced</div>
+              <div class="counter-value" id="prod">0</div>
+            </div>
+            <div class="counter">
+              <div class="counter-label">Deployed</div>
+              <div class="counter-value" id="dep">0</div>
+            </div>
+          </div>
+          <div class="factory-canvas"><canvas id="nanoCanvas"></canvas></div>
+          <button class="nanite-btn" id="nanoToggle">START FACTORY</button>
+        </div>
+      </div>
+
+      <!-- FOUNDATION -->
+      <div class="view" id="view-foundation">
+        <div class="foundation">
+          <div class="found-title">THE GARDEN FOUNDATION</div>
+          <div class="found-grid">
+            <div class="found-item">
+              <div class="found-value">2/13/26</div>
+              <div class="found-label">Genesis</div>
+            </div>
+            <div class="found-item">
+              <div class="found-value">3002</div>
+              <div class="found-label">Horizon</div>
+            </div>
+            <div class="found-item">
+              <div class="found-value">2×2+1</div>
+              <div class="found-label">Tripod Arc</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- FORGE -->
+      <div class="view" id="view-forge">
+        <div class="forge">
+          <div class="forge-title">INVERSE FORGE</div>
+          <div class="coin">
+            <div class="coin-face">Ø</div>
+            <div class="coin-face coin-back">1</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- VOID -->
+      <div class="view" id="view-void">
+        <div class="void-screen">
+          <div class="void-zero">0</div>
+        </div>
+      </div>
+
+      <!-- TOOLS -->
+      <div class="view" id="view-tools">
+        <div class="tools-grid">
+          <div class="tool"><div class="tool-icon">◈</div><div class="tool-name">Merkle Root</div></div>
+          <div class="tool"><div class="tool-icon">⟐</div><div class="tool-name">Flay Engine</div></div>
+          <div class="tool"><div class="tool-icon">⬙</div><div class="tool-name">Bridge Burn</div></div>
+          <div class="tool"><div class="tool-icon">⟡</div><div class="tool-name">Galaxy Map</div></div>
+          <div class="tool"><div class="tool-icon">⚙</div><div class="tool-name">Nanite Ctrl</div></div>
+          <div class="tool"><div class="tool-icon">⌖</div><div class="tool-name">Void Scan</div></div>
+          <div class="tool"><div class="tool-icon">⎔</div><div class="tool-name">Tripod</div></div>
+          <div class="tool"><div class="tool-icon">⟁</div><div class="tool-name">Perp Check</div></div>
+          <div class="tool"><div class="tool-icon">✧</div><div class="tool-name">Aeon Clock</div></div>
+        </div>
+      </div>
+    </section>
+
+    <aside class="right">
+      <div class="status-item"><span class="status-label">Merkle Leaves</span><span class="status-value">422T</span></div>
+      <div class="status-item"><span class="status-label">Immutable</span><span class="status-value yes">YES</span></div>
+      <div class="status-item"><span class="status-label">Flayable</span><span class="status-value yes">YES</span></div>
+      <div class="status-item"><span class="status-label">Bridge</span><span class="status-value">BURNED</span></div>
+      <div class="status-item"><span class="status-label">Main</span><span class="status-value">ONLY</span></div>
+      <div class="status-item"><span class="status-label">Ponzi</span><span class="status-value">NONE</span></div>
+      <div class="status-item"><span class="status-label">Yield</span><span class="status-value">100%</span></div>
+      <div class="sparkline-wrap">
+        <div class="sparkline-label">Yield Curve</div>
+        <canvas id="spark" width="172" height="64"></canvas>
+      </div>
+    </aside>
+  </main>
+
+  <footer class="bottombar">
+    <div class="bottom-left">root0 / production</div>
+    <div class="bottom-center"><div class="log-track" id="logTrack"></div></div>
+    <div class="bottom-right">no tc · aeon</div>
+  </footer>
+</div>
+
+<script>
+// NAVIGATION
+const btns = document.querySelectorAll('.nav-btn');
+const views = document.querySelectorAll('.view');
+btns.forEach(b => {
+  b.addEventListener('click', () => {
+    btns.forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    const target = 'view-' + b.dataset.view;
+    views.forEach(v => v.classList.toggle('active', v.id === target));
+  });
+});
+
+// BACKGROUND PARTICLES
+const pc = document.getElementById('particles');
+const pctx = pc.getContext('2d');
+let pw, ph;
+function pr() { pw = pc.width = window.innerWidth; ph = pc.height = window.innerHeight; }
+pr(); window.addEventListener('resize', pr);
+const parts = Array.from({length:140}, () => ({
+  x: Math.random()*window.innerWidth,
+  y: Math.random()*window.innerHeight,
+  vx: (Math.random()-0.5)*0.2,
+  vy: (Math.random()-0.5)*0.2,
+  s: Math.random()*1.8+0.3,
+  o: Math.random()*0.4+0.15
+}));
+function pa(){
+  pctx.clearRect(0,0,pw,ph);
+  parts.forEach(p=>{
+    p.x+=p.vx; p.y+=p.vy;
+    if(p.x<0||p.x>pw) p.vx*=-1;
+    if(p.y<0||p.y>ph) p.vy*=-1;
+    pctx.beginPath();
+    pctx.arc(p.x,p.y,p.s,0,Math.PI*2);
+    pctx.fillStyle=`rgba(232,197,71,${p.o})`;
+    pctx.fill();
+  });
+  requestAnimationFrame(pa);
+}
+pa();
+
+// SPARKLINE
+const spark = document.getElementById('spark');
+const sctx = spark.getContext('2d');
+function drawSpark(){
+  const w=spark.width, h=spark.height;
+  sctx.clearRect(0,0,w,h);
+  const points=48;
+  sctx.beginPath();
+  for(let i=0;i<points;i++){
+    const x = i*(w/(points-1));
+    const base = h*0.65;
+    const y = base - Math.pow(i/points,0.7)*h*0.5 - Math.sin(i*0.5)*3 + Math.random()*2;
+    if(i===0) sctx.moveTo(x,y); else sctx.lineTo(x,y);
+  }
+  sctx.strokeStyle='#e8c547';
+  sctx.lineWidth=1.6;
+  sctx.shadowColor='#e8c547';
+  sctx.shadowBlur=10;
+  sctx.stroke();
+  sctx.shadowBlur=0;
+  // fill
+  sctx.lineTo(w,h); sctx.lineTo(0,h); sctx.closePath();
+  const grad=sctx.createLinearGradient(0,0,0,h);
+  grad.addColorStop(0,'rgba(232,197,71,0.22)');
+  grad.addColorStop(1,'rgba(232,197,71,0)');
+  sctx.fillStyle=grad; sctx.fill();
+}
+drawSpark();
+setInterval(drawSpark, 3800);
+
+// NANITE FACTORY
+const nanoCanvas = document.getElementById('nanoCanvas');
+const nctx = nanoCanvas.getContext('2d');
+const prodEl = document.getElementById('prod');
+const depEl = document.getElementById('dep');
+const nanoBtn = document.getElementById('nanoToggle');
+let running=false, prod=12847392, dep=11215784;
+function resizeNano(){
+  nanoCanvas.width = nanoCanvas.offsetWidth * devicePixelRatio;
+  nanoCanvas.height = nanoCanvas.offsetHeight * devicePixelRatio;
+  nctx.scale(devicePixelRatio, devicePixelRatio);
+}
+resizeNano(); window.addEventListener('resize', resizeNano);
+nanoBtn.addEventListener('click', ()=>{
+  running = !running;
+  nanoBtn.textContent = running ? 'STOP FACTORY' : 'START FACTORY';
+  nanoBtn.classList.toggle('active', running);
+});
+const nanoParts=[];
+function nanoLoop(){
+  const w=nanoCanvas.offsetWidth, h=nanoCanvas.offsetHeight;
+  nctx.clearRect(0,0,w,h);
+  // grid
+  nctx.strokeStyle='rgba(30,30,48,0.4)'; nctx.lineWidth=1;
+  for(let x=0;x<w;x+=28){ nctx.beginPath(); nctx.moveTo(x,0); nctx.lineTo(x,h); nctx.stroke(); }
+  for(let y=0;y<h;y+=28){ nctx.beginPath(); nctx.moveTo(0,y); nctx.lineTo(w,y); nctx.stroke(); }
+  
+  if(running && Math.random()<0.5){
+    nanoParts.push({
+      x:10+Math.random()*w*0.2,
+      y:-5,
+      vx:0.8+Math.random()*1.2,
+      vy:0.3+Math.random()*0.6,
+      life:300
+    });
+    prod += Math.floor(Math.random()*7)+2;
+  }
+  prodEl.textContent = prod.toLocaleString();
+  dep = Math.floor(prod*0.8734);
+  depEl.textContent = dep.toLocaleString();
+  
+  nanoParts.forEach((p,i)=>{
+    p.x+=p.vx; p.y+=p.vy; p.life--;
+    nctx.fillStyle='rgba(232,197,71,0.95)';
+    nctx.shadowColor='#e8c547'; nctx.shadowBlur=8;
+    nctx.fillRect(p.x,p.y,3,3);
+    nctx.shadowBlur=0;
+    nctx.fillStyle='rgba(232,197,71,0.25)';
+    nctx.fillRect(p.x-6,p.y,12,1);
+    if(p.life<=0 || p.x>w+10 || p.y>h+10) nanoParts.splice(i,1);
+  });
+  requestAnimationFrame(nanoLoop);
+}
+nanoLoop();
+prodEl.textContent = prod.toLocaleString();
+depEl.textContent = dep.toLocaleString();
+
+// LOG FEED
+const logs = [
+  'CORE ONLINE',
+  'NANITE FACTORY v3 READY',
+  'GALAXY SYNCED',
+  '422T LEAVES VERIFIED',
+  'MERKLE ROOT LOCKED',
+  'BRIDGE BURN CONFIRMED',
+  'YIELD 100%',
+  'FLAYABLE CHECK PASS',
+  'IMMUTABLE TRUE',
+  'VOID = 0',
+  'PERP = 1',
+  '422,000,000,000,000 DEVICES',
+];
+const track = document.getElementById('logTrack');
+function buildLogs(){
+  track.innerHTML='';
+  [...logs, ...logs].forEach(t=>{
+    const s=document.createElement('span');
+    s.textContent=t;
+    track.appendChild(s);
+  });
+}
+buildLogs();
+
+// Core hover boost
+document.querySelector('.core-circle')?.addEventListener('mouseenter', ()=>{
+  document.querySelectorAll('.quad-dot').forEach(d=> d.style.animationDuration='1s');
+});
+document.querySelector('.core-circle')?.addEventListener('mouseleave', ()=>{
+  document.querySelectorAll('.quad-dot').forEach(d=> d.style.animationDuration='2.8s');
+});
+</script>
+</body>
+</html>

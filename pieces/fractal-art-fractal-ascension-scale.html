@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ascension Scale — -8 to 9</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fragment+Mono&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root { color-scheme: dark; }
+  html, body { height: 100%; }
+  body { 
+    font-family: 'Instrument Sans', system-ui, -apple-system, Segoe UI, Roboto, sans-serif; 
+    background: #020208;
+    overscroll-behavior: none;
+  }
+  .mono { font-family: 'Fragment Mono', ui-monospace, SFMono-Regular, Menlo, monospace; }
+  .vellum {
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400' viewBox='0 0 400 400'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    opacity: 0.035; mix-blend-mode: screen;
+  }
+  .paper {
+    position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background: radial-gradient(1200px 800px at 50% -10%, rgba(124,58,237,0.18), transparent 60%),
+                radial-gradient(800px 600px at 50% 110%, rgba(14,165,233,0.12), transparent 50%);
+  }
+  .neon-text { text-shadow: 0 0 10px rgba(168,85,247,0.6), 0 0 30px rgba(124,58,237,0.35); }
+  .neon-box { box-shadow: 0 0 0 1px rgba(168,85,247,0.2), 0 0 30px rgba(124,58,237,0.15), inset 0 1px 0 rgba(255,255,255,0.03); }
+  svg text { font-family: 'Fragment Mono', ui-monospace, monospace; }
+  #membrane, #baseline, #apex { transform-box: fill-box; transform-origin: center; }
+  #membrane.pulse { animation: membranePulse 0.9s cubic-bezier(.2,.8,.2,1); }
+  #baseline.pulse { animation: baselinePulse 0.7s ease-out; }
+  #apex.pulse { animation: apexPulse 1s ease-out; }
+  @keyframes membranePulse { 0%{transform:scale(1)} 30%{transform:scale(1.12,1.5); filter:brightness(1.4)} 100%{transform:scale(1)} }
+  @keyframes baselinePulse { 0%{transform:scaleX(1)} 50%{transform:scaleX(1.08); filter:brightness(1.3)} 100%{transform:scaleX(1)} }
+  @keyframes apexPulse { 0%{transform:scale(1)} 40%{transform:scale(1.25)} 100%{transform:scale(1)} }
+  .section-card.active { border-color: rgba(167,139,250,0.5) !important; background: linear-gradient(to bottom, rgba(91,33,182,0.25), rgba(9,9,11,0.8)); }
+  .section-card.active h3 { color: rgb(196,181,253); }
+</style>
+</head>
+<body class="bg-[#020208] text-zinc-200 antialiased selection:bg-fuchsia-500/30 selection:text-fuchsia-200">
+  <div class="vellum"></div>
+  <div class="paper"></div>
+  <div class="pointer-events-none fixed inset-0 z-0">
+    <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[900px] h-[900px] rounded-full bg-violet-900/20 blur-[160px]"></div>
+  </div>
+
+  <header class="relative z-20 flex items-center justify-between px-6 md:px-10 py-6">
+    <div>
+      <h1 class="text-[22px] md:text-[26px] font-medium tracking-tight neon-text text-violet-100">ASCENSION SCALE</h1>
+      <p class="mono text-[11px] text-zinc-500 mt-1 tracking-widest">-8.00 · 0 · 8.01 · 9.00 // 42 STATIONS</p>
+    </div>
+    <div class="hidden md:flex items-center gap-2.5 mono text-[11px] text-zinc-500">
+      <span class="w-1.5 h-1.5 rounded-full bg-fuchsia-400 animate-pulse shadow-[0_0_10px_rgba(232,121,249,0.8)]"></span>
+      LOOPING
+    </div>
+  </header>
+
+  <main class="relative z-10 min-h-[calc(100vh-88px)] w-full max-w-[1400px] mx-auto px-6 md:px-10 pb-12">
+    <div class="grid lg:grid-cols-12 gap-8 xl:gap-12 items-center">
+      
+      <!-- Left: Sections -->
+      <div class="lg:col-span-3 order-2 lg:order-1">
+        <div class="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-1 gap-3">
+          <!-- Carry -->
+          <div data-section="carry" class="section-card relative overflow-hidden rounded-2xl border border-zinc-800/80 bg-zinc-950/60 p-5 backdrop-blur-xl transition-all duration-500 neon-box">
+            <div class="absolute inset-0 opacity-0 transition-opacity duration-500 [.active_&]:opacity-100" style="background:radial-gradient(400px 120px at 50% 0%, rgba(124,58,237,0.18), transparent 70%)"></div>
+            <div class="relative">
+              <div class="flex items-start justify-between">
+                <div>
+                  <p class="mono text-[11px] tracking-[0.18em] text-zinc-500">PHASE I</p>
+                  <h3 class="mt-1 text-[22px] font-medium tracking-wide text-zinc-300">CARRY</h3>
+                </div>
+                <span class="mono text-[11px] px-2 py-1 rounded-md bg-zinc-900/80 border border-zinc-800 text-zinc-500">-8 → 0</span>
+              </div>
+              <p class="mt-3 text-[13.5px] leading-snug text-zinc-400">Deep underground. Capital formation in darkness. Pressure builds across 8 levels.</p>
+              <div class="mt-4 h-[3px] w-full rounded-full bg-zinc-900 border border-zinc-800/80 overflow-hidden">
+                <div data-progress="carry" class="h-full w-0 bg-gradient-to-r from-violet-900 to-violet-400 transition-[width] duration-200 shadow-[0_0_10px_rgba(139,92,246,0.5)]"></div>
+              </div>
+            </div>
+          </div>
+          <!-- Build -->
+          <div data-section="build" class="section-card relative overflow-hidden rounded-2xl border border-zinc-800/80 bg-zinc-950/60 p-5 backdrop-blur-xl transition-all duration-500 neon-box">
+            <div class="absolute inset-0 opacity-0 transition-opacity duration-500 [.active_&]:opacity-100" style="background:radial-gradient(400px 120px at 50% 0%, rgba(168,85,247,0.22), transparent 70%)"></div>
+            <div class="relative">
+              <div class="flex items-start justify-between">
+                <div>
+                  <p class="mono text-[11px] tracking-[0.18em] text-zinc-500">PHASE II</p>
+                  <h3 class="mt-1 text-[22px] font-medium tracking-wide text-zinc-300">BUILD</h3>
+                </div>
+                <span class="mono text-[11px] px-2 py-1 rounded-md bg-zinc-900/80 border border-zinc-800 text-zinc-500">0 → 8</span>
+              </div>
+              <p class="mt-3 text-[13.5px] leading-snug text-zinc-400">Climb through baseline. Construction, compounding, coordination.</p>
+              <div class="mt-4 h-[3px] w-full rounded-full bg-zinc-900 border border-zinc-800/80 overflow-hidden">
+                <div data-progress="build" class="h-full w-0 bg-gradient-to-r from-violet-600 to-fuchsia-400 transition-[width] duration-200 shadow-[0_0_10px_rgba(217,70,239,0.5)]"></div>
+              </div>
+            </div>
+          </div>
+          <!-- Ascend -->
+          <div data-section="ascend" class="section-card relative overflow-hidden rounded-2xl border border-zinc-800/80 bg-zinc-950/60 p-5 backdrop-blur-xl transition-all duration-500 neon-box">
+            <div class="absolute inset-0 opacity-0 transition-opacity duration-500 [.active_&]:opacity-100" style="background:radial-gradient(400px 120px at 50% 0%, rgba(250,204,21,0.18), transparent 70%)"></div>
+            <div class="relative">
+              <div class="flex items-start justify-between">
+                <div>
+                  <p class="mono text-[11px] tracking-[0.18em] text-zinc-500">PHASE III</p>
+                  <h3 class="mt-1 text-[22px] font-medium tracking-wide text-zinc-300">ASCEND</h3>
+                </div>
+                <span class="mono text-[11px] px-2 py-1 rounded-md bg-zinc-900/80 border border-zinc-800 text-zinc-500">8.01 → 9</span>
+              </div>
+              <p class="mt-3 text-[13.5px] leading-snug text-zinc-400">Breaching governance membrane. Final ascent to 9.00.</p>
+              <div class="mt-4 h-[3px] w-full rounded-full bg-zinc-900 border border-zinc-800/80 overflow-hidden">
+                <div data-progress="ascend" class="h-full w-0 bg-gradient-to-r from-fuchsia-400 to-amber-200 transition-[width] duration-200 shadow-[0_0_10px_rgba(252,211,77,0.55)]"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Center: Visualization -->
+      <div class="lg:col-span-6 order-1 lg:order-2 flex justify-center">
+        <div class="relative">
+          <!-- depth fog -->
+          <div class="absolute -bottom-10 left-1/2 -translate-x-1/2 w-[320px] h-[180px] bg-gradient-to-t from-violet-950/40 to-transparent blur-2xl pointer-events-none"></div>
+          
+          <div class="relative w-[300px] sm:w-[340px] md:w-[380px] h-[68vh] lg:h-[78vh] max-h-[860px]">
+            <svg id="ascension" viewBox="0 0 200 1000" class="w-full h-full overflow-visible">
+              <defs>
+                <linearGradient id="spine" x1="0" x2="0" y1="1" y2="0">
+                  <stop offset="0%" stop-color="#312e81" stop-opacity="0.3"/>
+                  <stop offset="30%" stop-color="#5b21b6" stop-opacity="0.85"/>
+                  <stop offset="65%" stop-color="#8b5cf6" stop-opacity="1"/>
+                  <stop offset="88%" stop-color="#c084fc" stop-opacity="1"/>
+                  <stop offset="94%" stop-color="#e9d5ff" stop-opacity="1"/>
+                  <stop offset="100%" stop-color="#fefce8" stop-opacity="1"/>
+                </linearGradient>
+                <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+                  <feGaussianBlur stdDeviation="3.5" result="b"/>
+                  <feFlood flood-color="#a855f7" flood-opacity="0.6" result="c"/>
+                  <feComposite in="c" in2="b" operator="in" result="bc"/>
+                  <feMerge>
+                    <feMergeNode in="bc"/>
+                    <feMergeNode in="SourceGraphic"/>
+                  </feMerge>
+                </filter>
+                <filter id="membraneGlow" x="-100%" y="-100%" width="300%" height="300%">
+                  <feGaussianBlur stdDeviation="6" result="g"/>
+                  <feMerge><feMergeNode in="g"/><feMergeNode in="SourceGraphic"/></feMerge>
+                </filter>
+                <radialGradient id="pulseGrad" cx="50%" cy="50%" r="50%">
+                  <stop offset="0%" stop-color="#ffffff"/>
+                  <stop offset="25%" stop-color="#fae8ff"/>
+                  <stop offset="55%" stop-color="#d8b4fe"/>
+                  <stop offset="100%" stop-color="#7c3aed" stop-opacity="0"/>
+                </radialGradient>
+                <linearGradient id="carryZone" x1="0" x2="0" y1="0" y2="1">
+                  <stop offset="0%" stop-color="#0b0218" stop-opacity="0"/>
+                  <stop offset="100%" stop-color="#1e1b4b" stop-opacity="0.5"/>
+                </linearGradient>
+              </defs>
+
+              <!-- Zones -->
+              <rect x="35" y="529.4" width="30" height="470.6" fill="url(#carryZone)" opacity="0.7"/>
+              <rect x="38" y="58.8" width="24" height="470.6" fill="#7c3aed" opacity="0.04"/>
+              <rect x="40" y="0" width="20" height="58.8" fill="#f5d0fe" opacity="0.06"/>
+
+              <!-- Spine -->
+              <line x1="50" y1="1000" x2="50" y2="0" stroke="url(#spine)" stroke-width="5" stroke-linecap="round" filter="url(#glow)" opacity="0.95"/>
+
+              <!-- Stations -->
+              <g id="stations"></g>
+
+              <!-- Baseline 0 -->
+              <g id="baseline" transform="translate(0,529.4117647)">
+                <line x1="18" x2="82" y1="0" y2="0" stroke="#22d3ee" stroke-width="1.5" stroke-dasharray="3 5" opacity="0.8"/>
+                <circle cx="50" cy="0" r="3.5" fill="#67e8f9" filter="url(#glow)"/>
+                <text x="92" y="4" fill="#a5f3fc" font-size="13" opacity="0.9">0 BASELINE</text>
+              </g>
+
+              <!-- Membrane 8.01 -->
+              <g id="membrane" transform="translate(0,58.8235294)" filter="url(#membraneGlow)">
+                <ellipse cx="50" cy="0" rx="48" ry="9" fill="none" stroke="#f0abfc" stroke-opacity="0.85" stroke-width="1.75"/>
+                <ellipse cx="50" cy="0" rx="32" ry="5.5" fill="none" stroke="#e879f9" stroke-opacity="0.7" stroke-width="1"/>
+                <ellipse cx="50" cy="0" rx="16" ry="2.8" fill="#f5d0fe" opacity="0.95"/>
+                <text x="108" y="4" fill="#f0abfc" font-size="13" opacity="0.95">8.01 MEMBRANE</text>
+              </g>
+
+              <!-- Apex 9.00 -->
+              <g id="apex" transform="translate(0,0)">
+                <circle cx="50" cy="0" r="7" fill="#fff" filter="url(#glow)"/>
+                <circle cx="50" cy="0" r="14" fill="none" stroke="#fef9c3" stroke-opacity="0.5" stroke-width="1"/>
+                <circle cx="50" cy="0" r="22" fill="none" stroke="#fef9c3" stroke-opacity="0.2" stroke-width="0.5"/>
+                <text x="108" y="4" fill="#fef3c7" font-size="14" font-weight="600">9.00</text>
+              </g>
+
+              <!-- Depth -8 -->
+              <g id="depth" transform="translate(0,1000)">
+                <circle cx="50" cy="0" r="6" fill="#0f0a1f" stroke="#4c1d95" stroke-width="2.5"/>
+                <circle cx="50" cy="0" r="11" fill="none" stroke="#4c1d95" stroke-opacity="0.3"/>
+                <text x="108" y="4" fill="#a78bfa" font-size="14">-8 DEEP</text>
+              </g>
+
+              <!-- Trail -->
+              <g id="trail" opacity="0.85"></g>
+
+              <!-- Pulse -->
+              <g id="pulse" filter="url(#glow)">
+                <circle cx="50" cy="1000" r="18" fill="url(#pulseGrad)" opacity="0.45"/>
+                <circle cx="50" cy="1000" r="9" fill="#f5f3ff" />
+                <circle cx="50" cy="1000" r="9" fill="none" stroke="#e9d5ff" stroke-width="1.5" opacity="0.9"/>
+                <circle cx="50" cy="1000" r="4.2" fill="white"/>
+                <circle cx="50" cy="1000" r="13" fill="none" stroke="#c084fc" stroke-opacity="0.4" stroke-width="1" stroke-dasharray="2 4">
+                  <animateTransform attributeName="transform" type="rotate" from="0 50 1000" to="360 50 1000" dur="4s" repeatCount="indefinite"/>
+                </circle>
+              </g>
+            </svg>
+
+            <!-- Floating labels -->
+            <div class="absolute left-1/2 -translate-x-1/2 -bottom-3 text-center">
+              <p class="mono text-[10px] tracking-[0.2em] text-violet-300/60">DEEP UNDERGROUND</p>
+            </div>
+            <div class="absolute left-1/2 -translate-x-1/2 -top-3 text-center">
+              <p class="mono text-[10px] tracking-[0.2em] text-amber-200/80">ASCENDANCE</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Readout -->
+      <div class="lg:col-span-3 order-3">
+        <div class="relative rounded-[24px] border border-zinc-800/80 bg-zinc-950/70 backdrop-blur-2xl p-6 md:p-7 neon-box overflow-hidden">
+          <div class="absolute -top-24 -right-24 w-64 h-64 rounded-full bg-violet-600/10 blur-[80px] pointer-events-none"></div>
+          <div class="relative">
+            <p class="mono text-[11px] tracking-widest text-zinc-500">CURRENT ELEVATION</p>
+            <div class="mt-3 flex items-baseline gap-3">
+              <div id="readout" class="mono text-[56px] leading-none tracking-tighter text-white neon-text">-8.00</div>
+              <div id="direction" class="mono text-[11px] px-1.5 py-0.5 rounded border-emerald-500/30 text-emerald-300/80 bg-emerald-500/10">ASC</div>
+            </div>
+
+            <div class="mt-6 grid grid-cols-2 gap-3">
+              <div class="rounded-xl bg-zinc-900/60 border border-zinc-800 p-3.5">
+                <p class="mono text-[10px] text-zinc-500 tracking-wide">PHASE</p>
+                <p id="phase" class="mt-1.5 text-[15px] font-medium text-violet-300">CARRY</p>
+              </div>
+              <div class="rounded-xl bg-zinc-900/60 border border-zinc-800 p-3.5">
+                <p class="mono text-[10px] text-zinc-500 tracking-wide">STATIONS</p>
+                <p class="mt-1.5 text-[15px] font-medium"><span id="stationsCount" class="text-zinc-200">0</span><span class="text-zinc-600">/42</span></p>
+              </div>
+            </div>
+
+            <div class="mt-6">
+              <div class="flex items-center justify-between mb-2">
+                <p class="mono text-[11px] text-zinc-500 tracking-wide">INVESTMENT PULSE</p>
+                <p class="mono text-[10px] text-zinc-600">LOOP</p>
+              </div>
+              <div class="relative h-[8px] w-full rounded-full bg-zinc-900 border border-zinc-800 overflow-hidden">
+                <div id="pulseBar" class="absolute left-0 top-0 h-full w-0 transition-[width] duration-100 ease-linear">
+                  <div class="h-full w-full bg-gradient-to-r from-violet-900 via-violet-500 to-fuchsia-300 shadow-[0_0_16px_rgba(168,85,247,0.6)]"></div>
+                </div>
+                <div class="absolute inset-0 opacity-[0.15]" style="background:repeating-linear-gradient(90deg, transparent 0 18px, white 18px 19px)"></div>
+              </div>
+              <div class="mt-2 flex justify-between mono text-[10px] text-zinc-600">
+                <span>-8</span><span>0</span><span>8.01</span><span class="text-zinc-500">9.00</span>
+              </div>
+            </div>
+
+            <div class="mt-7 pt-5 border-t border-zinc-800/70">
+              <div class="flex items-center gap-2">
+                <span class="inline-block w-1.5 h-1.5 rounded-full bg-fuchsia-400 animate-pulse shadow-[0_0_8px_rgba(244,114,182,0.8)]"></span>
+                <p class="mono text-[11px] tracking-wide text-zinc-400">GOVERNANCE MEMBRANE</p>
+              </div>
+              <p class="mt-2 text-[13px] leading-snug text-zinc-500">At 8.01 the pulse pauses, resonates, then breaches. Semi-permeable threshold to Ascend.</p>
+              <div class="mt-3 flex items-center gap-2">
+                <div class="h-1.5 w-1.5 rounded-full bg-zinc-700"></div>
+                <p class="mono text-[10px] text-zinc-600">42 stations render the vellum texture</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+<script>
+(() => {
+  const stationsG = document.getElementById('stations');
+  const trailG = document.getElementById('trail');
+  const pulseG = document.getElementById('pulse');
+  const pulseCircles = pulseG.querySelectorAll('circle');
+  const readout = document.getElementById('readout');
+  const phaseEl = document.getElementById('phase');
+  const stationsCountEl = document.getElementById('stationsCount');
+  const pulseBar = document.getElementById('pulseBar');
+  const membrane = document.getElementById('membrane');
+  const baseline = document.getElementById('baseline');
+  const apex = document.getElementById('apex');
+  const sectionCards = document.querySelectorAll('[data-section]');
+  const progressBars = {
+    carry: document.querySelector('[data-progress="carry"]'),
+    build: document.querySelector('[data-progress="build"]'),
+    ascend: document.querySelector('[data-progress="ascend"]'),
+  };
+
+  const STATIONS = 42;
+  const MIN = -8, MAX = 9;
+  const RANGE = MAX - MIN;
+  const stationValues = [];
+
+  // Build stations
+  for (let i = 0; i < STATIONS; i++) {
+    const v = MIN + (i * RANGE) / (STATIONS - 1);
+    stationValues.push(v);
+    const y = 1000 - ((v - MIN) / RANGE) * 1000;
+    const isMajor = Math.abs(v - Math.round(v)) < 0.02 || Math.abs(v - 8.01) < 0.001 || Math.abs(v - MIN) < 0.001 || Math.abs(v - MAX) < 0.001;
+    const len = isMajor ? 16 : 8;
+    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    line.setAttribute('x1', 50 - len);
+    line.setAttribute('x2', 50 + len);
+    line.setAttribute('y1', y);
+    line.setAttribute('y2', y);
+    line.setAttribute('stroke', isMajor ? '#a78bfa' : '#5b21b6');
+    line.setAttribute('stroke-width', isMajor ? '1.8' : '1');
+    line.setAttribute('opacity', isMajor ? '0.9' : '0.28');
+    line.setAttribute('stroke-linecap', 'round');
+    stationsG.appendChild(line);
+
+    if (isMajor && v !== 0 && v !== 8.01 && v !== MIN && v !== MAX) {
+      const t = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      t.setAttribute('x', 72);
+      t.setAttribute('y', y + 3.5);
+      t.setAttribute('fill', '#8b5cf6');
+      t.setAttribute('font-size', '10');
+      t.setAttribute('opacity', '0.75');
+      t.textContent = Math.round(v).toString();
+      stationsG.appendChild(t);
+    }
+  }
+
+  // Trail
+  const trailCircles = [];
+  for (let i = 0; i < 14; i++) {
+    const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+    c.setAttribute('cx', '50');
+    c.setAttribute('cy', '1000');
+    c.setAttribute('r', String(7 - i * 0.35));
+    c.setAttribute('fill', '#a855f7');
+    c.setAttribute('opacity', String((14 - i) / 14 * 0.18));
+    trailG.appendChild(c);
+    trailCircles.push(c);
+  }
+
+  const yFor = (v) => 1000 - ((v - MIN) / RANGE) * 1000;
+  const clamp = (n, a, b) => Math.max(a, Math.min(b, n));
+
+  let start = null;
+  const duration = 14500; // ms per loop
+  let prevV = MIN;
+  let memTriggered = false, baseTriggered = false, apexTriggered = false;
+  const history = [];
+
+  function setPulse(y) {
+    pulseCircles.forEach(c => c.setAttribute('cy', String(y)));
+  }
+
+  function setActivePhase(phase) {
+    sectionCards.forEach(card => {
+      card.classList.toggle('active', card.dataset.section === phase);
+    });
+  }
+
+  function pulseElement(el) {
+    el.classList.remove('pulse');
+    void el.offsetWidth;
+    el.classList.add('pulse');
+  }
+
+  function animate(now) {
+    if (!start) start = now;
+    const t = ((now - start) % duration) / duration;
+
+    // Phases: carry 0-0.34, build 0.34-0.76, membrane pause 0.76-0.84, ascend 0.84-0.94, hold 0.94-1
+    let v;
+    if (t < 0.34) {
+      const lt = t / 0.34;
+      v = MIN + lt * 8; // -8 to 0
+    } else if (t < 0.76) {
+      const lt = (t - 0.34) / 0.42;
+      v = 0 + lt * 8.01; // 0 to 8.01
+    } else if (t < 0.84) {
+      v = 8.01;
+    } else if (t < 0.94) {
+      const lt = (t - 0.84) / 0.10;
+      v = 8.01 + lt * 0.99; // to 9
+    } else {
+      v = 9;
+    }
+
+    const y = yFor(v);
+    setPulse(y);
+
+    // trail
+    history.unshift(y);
+    if (history.length > trailCircles.length) history.pop();
+    trailCircles.forEach((c, i) => {
+      const hy = history[i] ?? y;
+      c.setAttribute('cy', String(hy));
+      c.setAttribute('opacity', String(((trailCircles.length - i) / trailCircles.length) * 0.22 * (1 - Math.abs(v - MIN) / RANGE * 0.3)));
+    });
+
+    // readout
+    readout.textContent = v.toFixed(2);
+    
+    // phase
+    let phase = 'carry';
+    if (v >= 8.01) phase = 'ascend';
+    else if (v >= 0) phase = 'build';
+    phaseEl.textContent = phase.toUpperCase();
+    setActivePhase(phase);
+
+    // progress bars
+    const carryP = clamp((v - MIN) / 8, 0, 1);
+    const buildP = clamp(v / 8.01, 0, 1);
+    const ascendP = clamp((v - 8.01) / 0.99, 0, 1);
+    progressBars.carry.style.width = `${carryP * 100}%`;
+    progressBars.build.style.width = `${buildP * 100}%`;
+    progressBars.ascend.style.width = `${ascendP * 100}%`;
+
+    // stations passed
+    const passed = stationValues.filter(sv => sv <= v + 0.001).length;
+    stationsCountEl.textContent = String(passed);
+
+    // pulse bar
+    const overall = (v - MIN) / RANGE;
+    pulseBar.style.width = `${overall * 100}%`;
+
+    // triggers
+    if (!baseTriggered && prevV < 0 && v >= 0) {
+      pulseElement(baseline);
+      baseTriggered = true;
+    }
+    if (v < -1) baseTriggered = false;
+
+    if (!memTriggered && prevV < 8.01 && v >= 8.01) {
+      pulseElement(membrane);
+      memTriggered = true;
+    }
+    if (v < 7.5) memTriggered = false;
+
+    if (!apexTriggered && prevV < 9 && v >= 9) {
+      pulseElement(apex);
+      apexTriggered = true;
+    }
+    if (v < 8.5) apexTriggered = false;
+
+    prevV = v;
+    requestAnimationFrame(animate);
+  }
+
+  requestAnimationFrame(animate);
+
+  // Respect reduced motion
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    // jump to mid-state
+    setPulse(yFor(4));
+  }
+})();
+</script>
+</body>
+</html>

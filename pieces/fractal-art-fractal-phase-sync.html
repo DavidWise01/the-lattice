@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Playables SDK -->
+<script>// Playables SDK v1.0.0
+// Game lifecycle bridge: rAF-based game-ready detection + event communication
+(function() {
+  'use strict';
+
+  // Idempotency: skip if already initialized (e.g., server-side injection
+  // followed by client-side inject-javascript via the Bloks webview component).
+  if (window.playablesSDK) return;
+
+  var HANDLER_NAME = 'playablesGameEventHandler';
+  var ANDROID_BRIDGE_NAME = '_MetaPlayablesBridge';
+  var RAF_FRAME_THRESHOLD = 3;
+
+  var gameReadySent = false;
+  var firstInteractionSent = false;
+  var errorSent = false;
+  var frameCount = 0;
+  var originalRAF = window.requestAnimationFrame;
+
+  // --- Transport Layer ---
+
+  function hasIOSBridge() {
+    return !!(window.webkit &&
+              window.webkit.messageHandlers &&
+              window.webkit.messageHandlers[HANDLER_NAME]);
+  }
+
+  function hasAndroidBridge() {
+    return !!(window[ANDROID_BRIDGE_NAME] &&
+              typeof window[ANDROID_BRIDGE_NAME].postEvent === 'function');
+  }
+
+  function isInIframe() {
+    return !!(window.parent && window.parent !== window);
+  }
+
+  function sendEvent(eventName, payload) {
+    var message = {
+      type: eventName,
+      payload: payload || {},
+      timestamp: Date.now()
+    };
+
+    if (hasIOSBridge()) {
+      try {
+        window.webkit.messageHandlers[HANDLER_NAME].postMessage(message);
+      } catch (e) { /* ignore */ }
+      return;
+    }
+
+    if (hasAndroidBridge()) {
+    try {
+      var p = payload || {};
+      p.__secureToken = window.__fbAndroidBridgeAuthToken || '';
+      window[ANDROID_BRIDGE_NAME].postEvent(
+        eventName,
+        JSON.stringify(p)
+      );
+    } catch (e) { /* ignore */ }
+    return;
+  }
+
+    if (isInIframe()) {
+      try {
+        window.parent.postMessage(message, '*');
+      } catch (e) { /* ignore */ }
+      return;
+    }
+  }
+
+  // --- rAF Game-Ready Detection ---
+
+  function onFrame() {
+    if (gameReadySent) return;
+
+    frameCount++;
+    if (frameCount >= RAF_FRAME_THRESHOLD) {
+      gameReadySent = true;
+      sendEvent('game_ready', {
+        frame_count: frameCount,
+        detected_at: Date.now()
+      });
+      return;
+    }
+
+    originalRAF.call(window, onFrame);
+  }
+
+  if (originalRAF) {
+    window.requestAnimationFrame = function(callback) {
+      if (!gameReadySent) {
+        return originalRAF.call(window, function(timestamp) {
+          frameCount++;
+          if (frameCount >= RAF_FRAME_THRESHOLD && !gameReadySent) {
+            gameReadySent = true;
+            sendEvent('game_ready', {
+              frame_count: frameCount,
+              detected_at: Date.now()
+            });
+          }
+          callback(timestamp);
+        });
+      }
+      return originalRAF.call(window, callback);
+    };
+  }
+
+  // --- First User Interaction Detection ---
+
+  function setupFirstInteractionDetection() {
+    var events = ['touchstart', 'mousedown', 'keydown'];
+
+    function onFirstInteraction() {
+      if (firstInteractionSent) return;
+      firstInteractionSent = true;
+      sendEvent('user_interaction_start', null);
+
+      for (var i = 0; i < events.length; i++) {
+        document.removeEventListener(events[i], onFirstInteraction, true);
+      }
+    }
+
+    for (var i = 0; i < events.length; i++) {
+      document.addEventListener(events[i], onFirstInteraction, true);
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setupFirstInteractionDetection);
+  } else {
+    setupFirstInteractionDetection();
+  }
+
+  // --- Auto Error Capture ---
+
+  window.addEventListener('error', function(event) {
+    if (errorSent) return;
+    errorSent = true;
+    sendEvent('error', {
+      message: event.message || 'Unknown error',
+      source: event.filename || '',
+      lineno: event.lineno || 0,
+      colno: event.colno || 0,
+      auto_captured: true
+    });
+  });
+
+  window.addEventListener('unhandledrejection', function(event) {
+    if (errorSent) return;
+    errorSent = true;
+    var reason = event.reason;
+    sendEvent('error', {
+      message: (reason instanceof Error) ? reason.message : String(reason),
+      type: 'unhandled_promise_rejection',
+      auto_captured: true
+    });
+  });
+
+  // --- Public API ---
+
+  window.playablesSDK = {
+    complete: function(score) {
+      sendEvent('game_ended', {
+        score: score,
+        completed: true
+      });
+    },
+
+    error: function(message) {
+      if (errorSent) return;
+      errorSent = true;
+      sendEvent('error', {
+        message: message || 'Unknown error',
+        auto_captured: false
+      });
+    },
+
+    sendEvent: function(eventName, payload) {
+      if (!eventName || typeof eventName !== 'string') return;
+      sendEvent(eventName, payload);
+    }
+  };
+
+  // Kick off rAF detection in case no game code calls rAF immediately
+  if (originalRAF) {
+    originalRAF.call(window, onFrame);
+  }
+})();</script>
+<script>window.Intl=window.Intl||{};Intl.t=function(s){return(Intl._locale&&Intl._locale[s])||s;};</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PHASE SYNC FULL — Fractal Coherence</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Orbitron:wght@600;800;900&display=swap" rel="stylesheet">
+<style>
+  :root { color-scheme: dark; }
+  body { font-family: 'JetBrains Mono', monospace; background: #000; }
+  .font-orbitron { font-family: 'Orbitron', sans-serif; }
+  .glow-text { text-shadow: 0 0 20px currentColor, 0 0 40px currentColor; }
+  ::-webkit-scrollbar { display: none; }
+</style>
+</head>
+<body class="bg-black text-slate-200 overflow-hidden select-none">
+<div id="flash" class="fixed inset-0 bg-white opacity-0 pointer-events-none z-[200] transition-opacity duration-700"></div>
+
+<div class="relative min-h-screen flex flex-col">
+  <canvas id="stars" class="absolute inset-0"></canvas>
+  <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(56,0,120,0.25)_0%,transparent_55%),radial-gradient(ellipse_at_70%_30%,rgba(0,180,200,0.15)_0%,transparent_50%)]"></div>
+  <div class="absolute inset-0 opacity-[0.03]" style="background-image:linear-gradient(#0ff 1px,transparent 1px),linear-gradient(90deg,#0ff 1px,transparent 1px);background-size:50px 50px;"></div>
+
+  <header class="relative z-30 border-b border-cyan-500/10 bg-black/60 backdrop-blur-xl">
+    <div class="max-w-[1800px] mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="relative w-3 h-3">
+          <div class="absolute inset-0 rounded-full bg-cyan-400 animate-ping"></div>
+          <div class="relative w-3 h-3 rounded-full bg-cyan-400 shadow-[0_0_10px_#22d3ee]"></div>
+        </div>
+        <h1 class="font-orbitron font-black tracking-[0.2em] text-lg md:text-xl text-cyan-200 glow-text">PHASE SYNC</h1>
+        <span class="hidden md:inline font-mono text-[10px] px-2 py-0.5 rounded bg-fuchsia-500/10 border border-fuchsia-500/20 text-fuchsia-300">FULL COHERENCE</span>
+      </div>
+      <div class="flex items-center gap-4">
+        <div class="hidden sm:flex items-center gap-5 font-mono text-[11px] text-slate-400">
+          <div>FPGA: <span class="text-white">19 ACTIVE</span></div>
+          <div class="hidden lg:block">PATTERN: <span class="text-fuchsia-300">333222111111222333</span></div>
+        </div>
+        <button id="restart" class="font-mono text-[11px] tracking-wider px-3 py-1.5 rounded-lg bg-slate-900/80 hover:bg-cyan-950/80 border border-cyan-800/40 hover:border-cyan-600/60 transition text-cyan-200">RESTART</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="relative z-20 flex-1 max-w-[1800px] w-full mx-auto px-3 md:px-5 py-4 grid grid-cols-12 gap-4">
+    <!-- Left -->
+    <aside class="col-span-12 lg:col-span-2 order-2 lg:order-1">
+      <div class="h-full bg-black/70 backdrop-blur-2xl rounded-2xl border border-cyan-900/40 p-4 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.03)]">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="font-orbitron text-[11px] tracking-[0.18em] text-cyan-300">PHASE ERROR</h2>
+          <div class="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" id="error-dot"></div>
+        </div>
+        <div id="phase-bars" class="grid grid-cols-10 sm:grid-cols-12 lg:grid-cols-4 gap-1.5"></div>
+        <div class="mt-4 space-y-2">
+          <div class="h-1.5 w-full rounded-full bg-slate-900 overflow-hidden">
+            <div id="error-bar" class="h-full w-full bg-gradient-to-r from-red-500 via-amber-500 to-emerald-500 transition-all duration-500" style="clip-path:inset(0 0% 0 0)"></div>
+          </div>
+          <div class="flex justify-between font-mono text-[10px] text-slate-500">
+            <span>RED = 240°</span>
+            <span>GREEN = 0°</span>
+          </div>
+        </div>
+        <div class="mt-4 pt-3 border-t border-white/5">
+          <div class="grid grid-cols-3 gap-2 text-center">
+            <div class="p-2 rounded-lg bg-cyan-950/30 border border-cyan-900/30">
+              <div class="text-[10px] text-slate-500">F1</div>
+              <div id="f1-bar-val" class="font-mono text-cyan-300">0°</div>
+            </div>
+            <div class="p-2 rounded-lg bg-fuchsia-950/30 border border-fuchsia-900/30">
+              <div class="text-[10px] text-slate-500">F2</div>
+              <div id="f2-bar-val" class="font-mono text-fuchsia-300">120°</div>
+            </div>
+            <div class="p-2 rounded-lg bg-amber-950/30 border border-amber-900/30">
+              <div class="text-[10px] text-slate-500">F3</div>
+              <div id="f3-bar-val" class="font-mono text-amber-300">240°</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Center -->
+    <section class="col-span-12 lg:col-span-7 order-1 lg:order-2 flex flex-col gap-3">
+      <div class="relative flex-1 bg-black/50 backdrop-blur-2xl rounded-2xl border border-violet-900/30 overflow-hidden shadow-[0_0_80px_rgba(99,102,241,0.1)_inset]">
+        <div class="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-cyan-400/50 to-transparent"></div>
+        
+        <div class="absolute top-3 left-3 right-3 flex justify-between z-20 pointer-events-none">
+          <div class="flex gap-2">
+            <div class="px-2.5 py-1 rounded-md bg-black/80 border border-cyan-500/30 backdrop-blur-md">
+              <div class="font-mono text-[10px] leading-none text-cyan-300">F1 <span class="text-white">0ms</span></div>
+            </div>
+            <div class="px-2.5 py-1 rounded-md bg-black/80 border border-fuchsia-500/30 backdrop-blur-md">
+              <div class="font-mono text-[10px] leading-none text-fuchsia-300">F2 <span class="text-white">+111ms</span></div>
+            </div>
+            <div class="px-2.5 py-1 rounded-md bg-black/80 border border-amber-500/30 backdrop-blur-md">
+              <div class="font-mono text-[10px] leading-none text-amber-300">F3 <span class="text-white">+222ms</span></div>
+            </div>
+          </div>
+          <div class="px-2.5 py-1 rounded-md bg-black/80 border border-white/10 backdrop-blur-md">
+            <div class="font-mono text-[10px] leading-none text-slate-300">19 FRACTALS</div>
+          </div>
+        </div>
+
+        <canvas id="main" class="w-full h-full min-h-[380px] lg:min-h-0"></canvas>
+
+        <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+          <div class="text-center">
+            <div class="relative">
+              <div id="pulsar-glow" class="absolute -inset-10 rounded-full bg-fuchsia-500/20 blur-3xl animate-pulse"></div>
+              <div class="relative font-orbitron font-black text-3xl md:text-4xl tracking-[0.25em] text-white drop-shadow-[0_0_30px_rgba(217,70,239,0.9)]">PRIME</div>
+            </div>
+            <div class="font-mono text-[10px] tracking-[0.4em] text-cyan-300/80 mt-1">PULSAR CORE</div>
+            <div id="sync-ring-text" class="mt-3 font-mono text-[11px] px-3 py-1 rounded-full bg-black/70 border border-fuchsia-500/30 text-fuchsia-200 opacity-0 transition-opacity">SYNC SIGNAL ARMED</div>
+          </div>
+        </div>
+
+        <div class="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 pointer-events-none">
+          <div id="coherence-badge" class="px-4 py-1.5 rounded-full bg-black/80 border border-white/10 backdrop-blur-md font-mono text-[11px] tracking-wider text-slate-300 transition-all">
+            COHERENCE <span id="badge-pct" class="text-cyan-300">0%</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-black/70 backdrop-blur-2xl rounded-2xl border border-cyan-900/40 p-3.5">
+        <div class="flex flex-wrap items-center gap-x-5 gap-y-2">
+          <div class="flex items-center gap-2.5">
+            <div id="status-dot" class="w-2 h-2 rounded-full bg-amber-400 animate-pulse shadow-[0_0_8px_#fbbf24]"></div>
+            <span id="sync-status" class="font-orbitron text-xs tracking-widest text-amber-200">PHASE SYNC: INITIATING</span>
+          </div>
+          <div class="h-4 w-px bg-white/10 hidden sm:block"></div>
+          <div class="font-mono text-[12px] flex items-center gap-4">
+            <span class="text-slate-500">SPREAD <span id="metric-spread" class="text-white ml-1">240°</span></span>
+            <span class="text-slate-500">ERROR <span id="metric-error" class="text-red-400 ml-1">240°</span></span>
+            <span class="text-slate-500">LOCK <span id="metric-lock" class="text-cyan-300 ml-1">0/19</span></span>
+          </div>
+          <div class="ml-auto font-mono text-[11px] text-slate-500 hidden md:block">CONSTRUCTIVE INTERFERENCE</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Right -->
+    <aside class="col-span-12 lg:col-span-3 order-3">
+      <div class="h-full bg-black/70 backdrop-blur-2xl rounded-2xl border border-cyan-900/40 p-4 flex flex-col">
+        <h2 class="font-orbitron text-[11px] tracking-[0.18em] text-cyan-300 mb-3 flex items-center justify-between">
+          SYNC TELEMETRY
+          <span id="live-ind" class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+        </h2>
+        
+        <div class="space-y-2.5">
+          <div class="group relative overflow-hidden rounded-xl border border-cyan-900/40 bg-gradient-to-b from-cyan-950/40 to-transparent p-3">
+            <div class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity bg-[radial-gradient(circle_at_30%_0%,rgba(34,211,238,0.15),transparent_50%)]"></div>
+            <div class="relative flex justify-between items-center">
+              <div>
+                <div class="font-mono text-[11px] text-cyan-300">F1 RING</div>
+                <div class="text-[10px] text-slate-500">7 fractals • inner</div>
+              </div>
+              <div class="text-right">
+                <div id="f1-state" class="font-mono text-[11px] text-cyan-200">0° • STANDBY</div>
+                <div class="w-16 h-1 mt-1 rounded-full bg-slate-800 overflow-hidden"><div id="f1-prog" class="h-full w-0 bg-cyan-400 transition-all"></div></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="group relative overflow-hidden rounded-xl border border-fuchsia-900/40 bg-gradient-to-b from-fuchsia-950/30 to-transparent p-3">
+            <div class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity bg-[radial-gradient(circle_at_30%_0%,rgba(217,70,239,0.15),transparent_50%)]"></div>
+            <div class="relative flex justify-between items-center">
+              <div>
+                <div class="font-mono text-[11px] text-fuchsia-300">F2 RING</div>
+                <div class="text-[10px] text-slate-500">6 fractals • mid</div>
+              </div>
+              <div class="text-right">
+                <div id="f2-state" class="font-mono text-[11px] text-fuchsia-200">120° • STANDBY</div>
+                <div class="w-16 h-1 mt-1 rounded-full bg-slate-800 overflow-hidden"><div id="f2-prog" class="h-full w-0 bg-fuchsia-400 transition-all"></div></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="group relative overflow-hidden rounded-xl border border-amber-900/40 bg-gradient-to-b from-amber-950/30 to-transparent p-3">
+            <div class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity bg-[radial-gradient(circle_at_30%_0%,rgba(245,158,11,0.15),transparent_50%)]"></div>
+            <div class="relative flex justify-between items-center">
+              <div>
+                <div class="font-mono text-[11px] text-amber-300">F3 RING</div>
+                <div class="text-[10px] text-slate-500">6 fractals • outer</div>
+              </div>
+              <div class="text-right">
+                <div id="f3-state" class="font-mono text-[11px] text-amber-200">240° • STANDBY</div>
+                <div class="w-16 h-1 mt-1 rounded-full bg-slate-800 overflow-hidden"><div id="f3-prog" class="h-full w-0 bg-amber-400 transition-all"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-4 grid grid-cols-2 gap-2">
+          <div class="p-2.5 rounded-lg bg-slate-950/70 border border-white/5">
+            <div class="text-[10px] text-slate-500">SYNC SIGNAL</div>
+            <div id="signal-state" class="font-mono text-[12px] text-slate-300">ARMED</div>
+          </div>
+          <div class="p-2.5 rounded-lg bg-slate-950/70 border border-white/5">
+            <div class="text-[10px] text-slate-500">OUTPUT</div>
+            <div id="output-state" class="font-mono text-[12px] text-slate-300">1×</div>
+          </div>
+        </div>
+
+        <div class="mt-auto pt-3">
+          <div class="p-3 rounded-xl bg-[linear-gradient(180deg,rgba(15,23,42,0.8),rgba(2,6,23,0.8))] border border-violet-900/30">
+            <div class="flex items-center gap-2 mb-1.5">
+              <div class="w-1 h-1 rounded-full bg-violet-400 animate-pulse"></div>
+              <div class="font-mono text-[10px] tracking-wider text-violet-300">EVENT LOG</div>
+            </div>
+            <div id="log" class="font-mono text-[11px] leading-snug text-slate-300 h-[56px] overflow-hidden">System boot. 19 fractals detected. Awaiting PRIME PULSAR command...</div>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <footer class="relative z-20 max-w-[1800px] w-full mx-auto px-3 md:px-5 pb-4">
+    <div class="bg-black/80 backdrop-blur-2xl rounded-2xl border border-cyan-900/40 p-3 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.02)]">
+      <div class="flex items-center justify-between mb-2.5">
+        <h3 class="font-orbitron text-[11px] tracking-[0.18em] text-cyan-300 flex items-center gap-2">
+          <span class="w-3 h-3 rounded-sm bg-cyan-500/20 border border-cyan-500/40 flex items-center justify-center"><span class="w-1 h-1 bg-cyan-400 rounded-full animate-pulse"></span></span>
+          WAVEFORM ALIGNMENT • PWM 333222111111222333
+        </h3>
+        <div id="wave-status" class="font-mono text-[10px] px-2 py-0.5 rounded bg-red-500/10 border-red-500/20 text-red-300">OUT OF PHASE</div>
+      </div>
+      <div class="relative h-[100px] md:h-[120px] rounded-xl overflow-hidden bg-black border border-white/[0.06]">
+        <div class="absolute inset-0 opacity-[0.15]" style="background-image:linear-gradient(rgba(255,255,255,0.1) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.1) 1px,transparent 1px);background-size:40px 20px;"></div>
+        <canvas id="wave" class="absolute inset-0 w-full h-full"></canvas>
+        <div id="wave-overlay" class="absolute inset-0 flex items-center justify-center pointer-events-none transition-opacity">
+          <div class="text-center">
+            <div class="font-orbitron font-black text-lg md:text-xl tracking-[0.25em] text-white/10">MISALIGNED</div>
+            <div class="font-mono text-[10px] text-white/20 mt-1">F1 • F2 • F3</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </footer>
+</div>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const mainCanvas = $('main'), waveCanvas = $('wave'), starsCanvas = $('stars');
+  const mCtx = mainCanvas.getContext('2d'), wCtx = waveCanvas.getContext('2d'), sCtx = starsCanvas.getContext('2d');
+  const flash = $('flash');
+
+  // UI refs
+  const syncStatus = $('sync-status'), statusDot = $('status-dot');
+  const metricSpread = $('metric-spread'), metricError = $('metric-error'), metricLock = $('metric-lock');
+  const f1State = $('f1-state'), f2State = $('f2-state'), f3State = $('f3-state');
+  const f1Prog = $('f1-prog'), f2Prog = $('f2-prog'), f3Prog = $('f3-prog');
+  const f1BarVal = $('f1-bar-val'), f2BarVal = $('f2-bar-val'), f3BarVal = $('f3-bar-val');
+  const signalState = $('signal-state'), outputState = $('output-state'), logEl = $('log');
+  const waveStatus = $('wave-status'), waveOverlay = $('wave-overlay');
+  const errorBar = $('error-bar'), errorDot = $('error-dot'), badgePct = $('badge-pct');
+  const pulsarGlow = $('pulsar-glow'), syncRingText = $('sync-ring-text');
+
+  // Pattern 333222111111222333
+  const pattern = [3,3,3,2,2,2,1,1,2,2,2,3,3,3];
+  const stepDur = 100, cycle = pattern.length * stepDur; // 1800ms
+
+  const getPulse = (t, offset) => {
+    const local = (t + offset) % cycle;
+    const idx = Math.floor(local / stepDur);
+    return pattern[idx] / 3;
+  };
+
+  // Create 19 fractals in 3 rings
+  const fractals = [];
+  const rings = [
+    { radius: 0.22, count: 7, offset: 0,       color: '#22d3ee', name: 'F1' }, // cyan
+    { radius: 0.38, count: 6, offset: 600,      color: '#d946ef', name: 'F2' }, // fuchsia
+    { radius: 0.54, count: 6, offset: 1200,    color: '#f59e0b', name: 'F3' }, // amber
+  ];
+  rings.forEach((ring, ri) => {
+    for (let i=0;i<ring.count;i++) {
+      const angle = (i / ring.count) * Math.PI*2 - Math.PI/2 + (ri*0.2);
+      fractals.push({
+        id: fractals.length,
+        ring: ri,
+        angle,
+        radius: ring.radius,
+        baseOffset: ring.offset,
+        curOffset: ring.offset,
+        color: ring.color,
+        isMain: i===0,
+      });
+    }
+  });
+
+  // Phase bars
+  const barsEl = $('phase-bars');
+  fractals.forEach(f => {
+    const wrap = document.createElement('div');
+    wrap.className = 'relative h-12 rounded-md bg-slate-950 border-white/5 overflow-hidden';
+    wrap.innerHTML = `<div class="bar-fill absolute bottom-0 inset-x-0 transition-all duration-300" style="height:20%;background:${f.color};box-shadow:0 0 10px ${f.color}60"></div><div class="absolute inset-0 flex items-end justify-center pb-0.5"><span class="text-[8px] font-mono text-black/70">${f.id+1}</span></div>`;
+    barsEl.appendChild(wrap);
+    f.bar = wrap.firstChild;
+  });
+
+  // Stars
+  let stars = [];
+  function initStars() {
+    stars = Array.from({length: 220}, () => ({
+      x: Math.random(), y: Math.random(), r: Math.random()*1.2+0.2, tw: Math.random()*Math.PI*2, sp: 0.5+Math.random()*1.5
+    }));
+  }
+
+  function resize() {
+    [mainCanvas, waveCanvas, starsCanvas].forEach(c => {
+      const rect = c.getBoundingClientRect();
+      c.width = rect.width * devicePixelRatio;
+      c.height = rect.height * devicePixelRatio;
+    });
+    initStars();
+  }
+  addEventListener('resize', resize, {passive:true});
+  resize();
+
+  let startTime = performance.now();
+  let flashed = false;
+  let syncPulses = [];
+
+  function setLog(text, color='') {
+    logEl.innerHTML = `<span class="${color}">${text}</span>`;
+  }
+
+  function easeInOutCubic(x){ return x<0.5 ? 4*x*x*x : 1-Math.pow(-2*x+2,3)/2; }
+
+  function restart() {
+    startTime = performance.now();
+    flashed = false;
+    syncPulses = [];
+    fractals.forEach(f => f.curOffset = f.baseOffset);
+    errorDot.classList.remove('bg-emerald-500'); errorDot.classList.add('bg-red-500','animate-pulse');
+    setLog('System boot. 19 fractals detected. Awaiting PRIME PULSAR command...');
+  }
+  $('restart').onclick = restart;
+
+  function drawStars(t) {
+    const w = starsCanvas.width, h = starsCanvas.height;
+    sCtx.clearRect(0,0,w,h);
+    sCtx.save();
+    stars.forEach(s => {
+      const x = s.x * w, y = s.y * h;
+      const tw = 0.4 + 0.6*Math.sin(t*0.001*s.sp + s.tw);
+      sCtx.globalAlpha = tw*0.8;
+      sCtx.fillStyle = '#7dd3fc';
+      sCtx.shadowBlur = 6; sCtx.shadowColor = '#38bdf8';
+      sCtx.beginPath(); sCtx.arc(x,y,s.r*devicePixelRatio,0,Math.PI*2); sCtx.fill();
+    });
+    sCtx.restore();
+  }
+
+  function drawWave(t, offsets) {
+    const w = waveCanvas.width, h = waveCanvas.height;
+    wCtx.clearRect(0,0,w,h);
+    
+    // grid
+    wCtx.strokeStyle='rgba(255,255,255,0.06)'; wCtx.lineWidth=1;
+    for(let i=1;i<4;i++){ wCtx.beginPath(); wCtx.moveTo(0,h*i/4); wCtx.lineTo(w,h*i/4); wCtx.stroke(); }
+
+    const samples = 240;
+    const windowMs = 2000;
+    const getAvg = (ringIdx, sampleT) => {
+      const group = fractals.filter(f=>f.ring===ringIdx);
+      return group.reduce((a,f)=>a+getPulse(sampleT, -f.curOffset),0)/group.length;
+    };
+
+    const drawLine = (ringIdx, color, alpha=1) => {
+      wCtx.beginPath();
+      for(let i=0;i<samples;i++){
+        const st = t - windowMs + (i/(samples-1))*windowMs;
+        const v = getAvg(ringIdx, st);
+        const x = (i/(samples-1))*w;
+        const y = h*0.75 - v * h*0.55;
+        if(i===0) wCtx.moveTo(x,y); else wCtx.lineTo(x,y);
+      }
+      wCtx.strokeStyle = color; wCtx.globalAlpha = alpha; wCtx.lineWidth = 2*devicePixelRatio;
+      wCtx.shadowBlur=12; wCtx.shadowColor=color; wCtx.stroke(); wCtx.shadowBlur=0; wCtx.globalAlpha=1;
+    };
+
+    // combined after lock
+    const maxOffset = Math.max(...fractals.map(f=>f.curOffset));
+    const coherence = 1 - maxOffset/1200;
+
+    if(coherence < 0.92) {
+      drawLine(0, 'rgba(34,211,238,0.9)', 0.9);
+      drawLine(1, 'rgba(217,70,239,0.85)', 0.85);
+      drawLine(2, 'rgba(245,158,11,0.85)', 0.8);
+    } else {
+      // 19x constructive
+      wCtx.beginPath();
+      for(let i=0;i<samples;i++){
+        const st = t - windowMs + (i/(samples-1))*windowMs;
+        const sum = fractals.reduce((a,f)=>a+getPulse(st, -f.curOffset),0);
+        const v = (sum / 19); // normalize 0-1 but we'll amplify visually
+        const x = (i/(samples-1))*w;
+        const y = h*0.5 - (v-0.5)*h*0.9*1.8;
+        if(i===0) wCtx.moveTo(x,y); else wCtx.lineTo(x,y);
+      }
+      const grad = wCtx.createLinearGradient(0,0,w,0);
+      grad.addColorStop(0,'#22d3ee'); grad.addColorStop(0.5,'#ffffff'); grad.addColorStop(1,'#d946ef');
+      wCtx.strokeStyle = grad; wCtx.lineWidth = 3*devicePixelRatio; wCtx.shadowBlur=20; wCtx.shadowColor='#ffffff';
+      wCtx.stroke(); wCtx.shadowBlur=0;
+
+      // glow fill
+      wCtx.globalAlpha=0.15; wCtx.lineTo(w,h); wCtx.lineTo(0,h); wCtx.closePath();
+      wCtx.fillStyle = grad; wCtx.fill(); wCtx.globalAlpha=1;
+    }
+  }
+
+  function animate(now) {
+    const t = now - startTime;
+    drawStars(now);
+
+    // MAIN CANVAS
+    const cw = mainCanvas.width, ch = mainCanvas.height;
+    const cx = cw/2, cy = ch/2;
+    const scale = Math.min(cw,ch) * 0.9;
+    mCtx.clearRect(0,0,cw,ch);
+    mCtx.save();
+    mCtx.translate(cx,cy);
+
+    // determine state
+    let state = 'init';
+    if (t < 2000) state='boot';
+    else if (t < 5000) state='initiating';
+    else if (t < 8000) state='signal';
+    else if (t < 17000) state='locking';
+    else state='full';
+
+    // update offsets
+    const lockingProg = Math.min(1, Math.max(0, (t-8000)/9000));
+    const lockSpeeds = [1.25,1.0,0.82];
+    fractals.forEach(f=>{
+      if(state==='boot' || state==='initiating' || state==='signal'){
+        f.curOffset = f.baseOffset;
+      } else if(state==='locking'){
+        const p = easeInOutCubic(Math.min(1, lockingProg*lockSpeeds[f.ring]));
+        f.curOffset = f.baseOffset * (1 - p);
+      } else {
+        f.curOffset = 0;
+      }
+    });
+
+    const maxOffset = Math.max(...fractals.map(f=>f.curOffset));
+    const phaseErrorDeg = (maxOffset / cycle) * 360;
+    const coherence = Math.max(0, Math.min(100, 100 - (phaseErrorDeg/240)*100));
+    const spread = 240 * (maxOffset/1200);
+
+    // sync pulses from center
+    if(state==='signal' || state==='locking' || state==='full'){
+      if(t>5200 && (syncPulses.length===0 || now - syncPulses[syncPulses.length-1].born > cycle)){
+        syncPulses.push({born: now});
+        if(syncPulses.length===1) {
+          signalState.textContent = 'EMITTING'; signalState.className='font-mono text-[12px] text-fuchsia-300';
+          syncRingText.style.opacity='1'; syncRingText.textContent='SYNC WAVE • PRIME PULSAR';
+        }
+      }
+    }
+    syncPulses = syncPulses.filter(p=> now - p.born < 2200);
+
+    // draw sync rings
+    syncPulses.forEach(p=>{
+      const age = now - p.born;
+      const r = (age/2000) * scale*0.7;
+      mCtx.beginPath(); mCtx.arc(0,0,r,0,Math.PI*2);
+      mCtx.strokeStyle = `rgba(217,70,239,${0.45*(1-age/2000)})`; mCtx.lineWidth=2*devicePixelRatio;
+      mCtx.shadowBlur=20; mCtx.shadowColor='#d946ef'; mCtx.stroke(); mCtx.shadowBlur=0;
+    });
+
+    // connections
+    fractals.forEach(f=>{
+      const r = f.radius*scale; const x = Math.cos(f.angle)*r; const y = Math.sin(f.angle)*r;
+      const pulse = getPulse(t, -f.curOffset);
+      mCtx.beginPath(); mCtx.moveTo(0,0); mCtx.lineTo(x,y);
+      mCtx.strokeStyle = f.ring===0? 'rgba(34,211,238,0.12)' : f.ring===1? 'rgba(217,70,239,0.10)' : 'rgba(245,158,11,0.10)';
+      mCtx.lineWidth = 1 + pulse*1.5; mCtx.stroke();
+    });
+
+    // ring guides
+    rings.forEach((ring,ri)=>{
+      const r = ring.radius*scale;
+      mCtx.beginPath(); mCtx.arc(0,0,r,0,Math.PI*2);
+      mCtx.strokeStyle = ri===0?'rgba(34,211,238,0.15)':ri===1?'rgba(217,70,239,0.12)':'rgba(245,158,11,0.10)';
+      mCtx.setLineDash([4,8]); mCtx.lineWidth=1; mCtx.stroke(); mCtx.setLineDash([]);
+    });
+
+    // fractals
+    let sumPulse=0, lockedCount=0;
+    fractals.forEach(f=>{
+      const r = f.radius*scale; const x = Math.cos(f.angle)*r; const y = Math.sin(f.angle)*r;
+      const pulse = getPulse(t, -f.curOffset); sumPulse+=pulse;
+      const isLocked = f.curOffset<5;
+      if(isLocked) lockedCount++;
+
+      // halo
+      const baseColor = state==='full' ? '#a5f3fc' : f.color;
+      mCtx.shadowBlur = 18 + pulse*20; mCtx.shadowColor = baseColor;
+      mCtx.fillStyle = baseColor;
+      mCtx.globalAlpha = 0.15 + pulse*0.5;
+      mCtx.beginPath(); mCtx.arc(x,y, (f.isMain?9:6) + pulse*8,0,Math.PI*2); mCtx.fill();
+
+      // core
+      mCtx.shadowBlur=0; mCtx.globalAlpha=1;
+      mCtx.fillStyle = '#020617';
+      mCtx.beginPath(); mCtx.arc(x,y, f.isMain?5.5:4,0,Math.PI*2); mCtx.fill();
+      mCtx.strokeStyle = baseColor; mCtx.lineWidth=1.5;
+      mCtx.globalAlpha = 0.9; mCtx.stroke(); mCtx.globalAlpha=1;
+
+      // orbiting dot for main
+      if(f.isMain){
+        const oA = t*0.002 + f.id;
+        const ox = x + Math.cos(oA)*(8+pulse*3), oy = y + Math.sin(oA)*(8+pulse*3);
+        mCtx.fillStyle = baseColor; mCtx.globalAlpha=0.9;
+        mCtx.beginPath(); mCtx.arc(ox,oy,1.5,0,Math.PI*2); mCtx.fill(); mCtx.globalAlpha=1;
+      }
+
+      // update bar
+      const coh = 1 - (f.curOffset/1200); const h = Math.max(4, coh*100);
+      f.bar.style.height = h+'%';
+      f.bar.style.background = `hsl(${coh*120},100%,${50+coh*10}%)`;
+      f.bar.style.boxShadow = `0 0 10px hsl(${coh*120},100%,50%)`;
+    });
+
+    // center pulsar
+    const combined = sumPulse / fractals.length;
+    const coreR = 14*devicePixelRatio + combined*8 + (state==='full'? Math.sin(t*0.008)*3 :0);
+    const grad = mCtx.createRadialGradient(0,0,0,0,0,coreR*3);
+    grad.addColorStop(0,'rgba(255,255,255,0.95)'); grad.addColorStop(0.2,'rgba(217,70,239,0.9)'); grad.addColorStop(0.5,'rgba(34,211,238,0.6)'); grad.addColorStop(1,'rgba(0,0,0,0)');
+    mCtx.fillStyle = grad; mCtx.globalAlpha= state==='full'?0.9:0.7;
+    mCtx.beginPath(); mCtx.arc(0,0,coreR*3,0,Math.PI*2); mCtx.fill(); mCtx.globalAlpha=1;
+    mCtx.shadowBlur=30; mCtx.shadowColor='#e879f9'; mCtx.fillStyle='#fdf4ff';
+    mCtx.beginPath(); mCtx.arc(0,0,coreR,0,Math.PI*2); mCtx.fill(); mCtx.shadowBlur=0;
+
+    mCtx.restore();
+
+    // UI updates
+    metricSpread.textContent = Math.round(spread)+'°';
+    metricError.textContent = Math.round(phaseErrorDeg)+'°';
+    metricLock.textContent = lockedCount+'/19';
+    badgePct.textContent = Math.round(coherence)+'%';
+    errorBar.style.clipPath = `inset(0 ${100-coherence}% 0 0)`;
+
+    const f1off = fractals[0].curOffset, f2off = fractals[7].curOffset, f3off = fractals[13].curOffset;
+    f1BarVal.textContent = Math.round((f1off/cycle)*360)+'°';
+    f2BarVal.textContent = Math.round((f2off/cycle)*360)+'°';
+    f3BarVal.textContent = Math.round((f3off/cycle)*360)+'°';
+
+    const upd = (el, progEl, off, baseDeg) => {
+      const deg = Math.round((off/cycle)*360);
+      const locked = off<10;
+      const locking = off < rings[baseDeg].offset*0.9 && !locked;
+      el.textContent = `${deg}° • ${locked?'LOCKED':locking?'LOCKING':'STANDBY'}`;
+      progEl.style.width = `${100 - (off/rings[baseDeg].offset)*100}%`;
+    };
+    upd(f1State,f1Prog,f1off,0); upd(f2State,f2Prog,f2off,1); upd(f3State,f3Prog,f3off,2);
+
+    // state texts
+    if(state==='boot'){
+      syncStatus.textContent='PHASE SYNC: INITIATING'; statusDot.className='w-2 h-2 rounded-full bg-amber-400 animate-pulse shadow-[0_0_8px_#fbbf24]';
+    } else if(state==='initiating'){
+      if(t>2500 && t<2600) setLog('PHASE SYNC: INITIATING — Initial phase spread 240° detected','text-amber-300');
+    } else if(state==='signal'){
+      syncStatus.textContent='PHASE SYNC: IN PROGRESS'; statusDot.className='w-2 h-2 rounded-full bg-fuchsia-400 animate-pulse shadow-[0_0_8px_#e879f9]';
+      if(t>5200 && t<5300) setLog('Sync signal emitted from PRIME PULSAR — 333222111111222333','text-fuchsia-300');
+    } else if(state==='locking'){
+      if(t>8100 && t<8200) setLog('F1 ring: locking... phase error decreasing','text-cyan-300');
+      if(t>10100 && t<10200) setLog('F2 ring responding to sync wave...','text-fuchsia-300');
+      if(t>12100 && t<12200) setLog('F3 ring final alignment in progress...','text-amber-300');
+      outputState.textContent = Math.max(1, Math.round(1 + coherence/100*18))+'×';
+    } else if(state==='full'){
+      if(!flashed){
+        flashed=true;
+        flash.style.opacity='1'; setTimeout(()=>flash.style.opacity='0', 250);
+        syncStatus.textContent='PHASE SYNC: FULL'; statusDot.className='w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_10px_#10b981]';
+        errorDot.classList.remove('bg-red-500','animate-pulse'); errorDot.classList.add('bg-emerald-500');
+        waveStatus.textContent='IN PHASE • 19×'; waveStatus.className='font-mono text-[10px] px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-300';
+        waveOverlay.style.opacity='0';
+        pulsarGlow.className='absolute -inset-10 rounded-full bg-cyan-400/30 blur-3xl animate-pulse';
+        syncRingText.style.opacity='1'; syncRingText.textContent='FULL COHERENCE • CONSTRUCTIVE';
+        syncRingText.className='mt-3 font-mono text-[11px] px-3 py-1 rounded-full bg-black/70 border border-emerald-500/40 text-emerald-200 transition-opacity';
+        setLog('PHASE LOCK ACHIEVED — Coherence 100% — All fractals LOCKED','text-emerald-300');
+        signalState.textContent='LOCKED'; signalState.className='font-mono text-[12px] text-emerald-300';
+        outputState.textContent='19×'; outputState.className='font-mono text-[12px] text-white';
+        document.getElementById('coherence-badge').className='px-4 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/40 backdrop-blur-md font-mono text-[11px] tracking-wider text-emerald-200 transition-all shadow-[0_0_20px_rgba(16,185,129,0.3)]';
+      }
+    }
+
+    drawWave(t, fractals.map(f=>f.curOffset));
+
+    requestAnimationFrame(animate);
+  }
+  requestAnimationFrame(animate);
+
+  // initial log sequence
+  setTimeout(()=>setLog('Initial phase spread: 240° — F1:0°, F2:120°, F3:240°','text-slate-300'), 1800);
+  setTimeout(()=>{ syncRingText.style.opacity='1'; }, 4000);
+})();
+</script>
+</body>
+</html>

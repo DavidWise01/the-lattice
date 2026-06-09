@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>ROOT0 · Icosidodecahedron (20×3 Isodecohedron)</title>
+<style>
+:root {
+  --paper: #e8dcc4;
+  --ink: #2d4a3e;
+  --border: #8a7558;
+  --a1: #2c5564;
+  --a3: #b8862a;
+}
+body {
+  margin: 0; background: var(--paper);
+  background-image: radial-gradient(circle at 20% 30%, #f0e5cd 0%, transparent 60%);
+  color: var(--ink); font-family: "JetBrains Mono", monospace;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  height: 100vh; overflow: hidden;
+}
+h1 {
+  font-family: "Cormorant SC", serif; font-size: 28px; margin: 0;
+  letter-spacing: 0.08em; color: var(--ink);
+}
+.sub {
+  font-size: 10px; letter-spacing: 0.2em; color: var(--ink);
+  opacity: 0.7; margin-bottom: 10px;
+}
+canvas {
+  border: 1px solid var(--border);
+  background: #f5eedb;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  margin: 10px 0;
+}
+.btn {
+  background: var(--ink); color: var(--paper);
+  border: 1px solid var(--ink); padding: 8px 24px;
+  font-family: inherit; font-size: 13px; font-weight: 700;
+  letter-spacing: 0.18em; cursor: pointer; transition: background 0.15s;
+}
+.btn:hover { background: var(--a1); border-color: var(--a1); }
+.note {
+  font-size: 9px; opacity: 0.6; text-align: center; margin-top: 8px;
+  max-width: 400px;
+}
+</style>
+</head>
+<body>
+<h1>20×3 ISODECOHEDRON</h1>
+<div class="sub">Archimedean witness · 32 faces (20△ + 12⬠)</div>
+<canvas id="polyCanvas" width="480" height="400"></canvas>
+<button class="btn" id="resonateBtn">⊛ RESONATE</button>
+<div class="note">
+  Icosidodecahedron — the intermediary between icosahedron and dodecahedron.
+  Its 60 vertices map to the 60 possible permutations of ROOT0 axiomatic states.
+</div>
+
+<script>
+const canvas = document.getElementById('polyCanvas');
+const ctx = canvas.getContext('2d');
+let rotationAngle = 0;
+let pulse = 0;
+let resonating = false;
+
+const phi=(1+Math.sqrt(5))/2;
+const icosiVertices = (()=>{
+  const ico=[[0,1,phi],[0,-1,phi],[0,1,-phi],[0,-1,-phi],[1,phi,0],[-1,phi,0],[1,-phi,0],[-1,-phi,0],[phi,0,1],[-phi,0,1],[phi,0,-1],[-phi,0,-1]].map(v=>v.map(c=>c/Math.sqrt(phi*phi+1)));
+  const mids=[];
+  for(let i=0;i<ico.length;i++){
+    for(let j=i+1;j<ico.length;j++){
+      let d=0; for(let k=0;k<3;k++) d+=(ico[i][k]-ico[j][k])**2;
+      if(Math.abs(d-4/(phi*phi+1))<0.01){
+        mids.push(ico[i].map((c,k)=>(c+ico[j][k])/2));
+      }
+    }
+  }
+  return mids.map(v=>{
+    const l=Math.sqrt(v.reduce((s,x)=>s+x*x,0));
+    return v.map(x=>x/l);
+  });
+})();
+
+let vertices = icosiVertices.map(v => ({x:v[0], y:v[1], z:v[2]}));
+
+function project(v, angle) {
+  const cosA = Math.cos(angle), sinA = Math.sin(angle);
+  const x = v.x * cosA - v.z * sinA;
+  const z = v.x * sinA + v.z * cosA;
+  const y = v.y;
+  const cosB = Math.cos(0.4), sinB = Math.sin(0.4);
+  const y2 = y * cosB - z * sinB;
+  const z2 = y * sinB + z * cosB;
+  const scale = 280 / (z2 + 3.5);
+  return {
+    x: canvas.width/2 + x * scale,
+    y: canvas.height/2 - y2 * scale,
+    depth: z2,
+  };
+}
+
+function draw() {
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  const points = vertices.map(v => project(v, rotationAngle));
+  points.forEach((p,i) => { p.idx = i; });
+  points.sort((a,b) => b.depth - a.depth);
+  for (const p of points) {
+    const size = 3 + pulse * 0.5 * Math.sin(rotationAngle*3 + p.depth*2);
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, size, 0, 2*Math.PI);
+    const t = (p.depth + 2) / 4;
+    const r = 44 + 20*Math.sin(t*2), g = 85 + 30*Math.cos(t*1.5), b = 100 + 30*Math.sin(t);
+    ctx.fillStyle = `rgb(${r},${g},${b})`;
+    ctx.fill();
+  }
+  const threshold = 0.86;
+  for (let i=0;i<vertices.length;i++) {
+    for (let j=i+1;j<vertices.length;j++) {
+      const dot = vertices[i].x*vertices[j].x + vertices[i].y*vertices[j].y + vertices[i].z*vertices[j].z;
+      if (dot > threshold) {
+        const p1 = project(vertices[i], rotationAngle), p2 = project(vertices[j], rotationAngle);
+        ctx.beginPath();
+        ctx.moveTo(p1.x, p1.y);
+        ctx.lineTo(p2.x, p2.y);
+        ctx.strokeStyle = 'rgba(138,117,88,0.15)';
+        ctx.lineWidth = 0.8;
+        ctx.stroke();
+      }
+    }
+  }
+  rotationAngle += 0.005;
+  if (resonating) {
+    pulse = Math.sin(Date.now() * 0.02) * 2;
+  } else {
+    pulse = 0;
+  }
+  requestAnimationFrame(draw);
+}
+
+document.getElementById('resonateBtn').addEventListener('click', () => {
+  resonating = !resonating;
+});
+draw();
+</script>
+</body>
+</html>

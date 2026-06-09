@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Automata & Formal Languages — Primer</title>
+<style>
+  :root{--bg:#08080f;--bg2:#0c0c18;--panel:#10101e;--panel2:#13131f;--line:#1f1f33;--line2:#2a2a42;--ink:#e7e7f0;--dim:#9a9ab5;--faint:#5e5e7a;--teal:#2dd4bf;--teal-d:#14b8a6;--teal-dd:#0d9488;--cyan:#5eead4;--amber:#fbbf24;--violet:#a78bfa;--blue:#60a5fa;--rose:#fb7185;--green:#86efac;}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:radial-gradient(1100px 760px at 78% -12%,rgba(45,212,191,.08),transparent 56%),radial-gradient(880px 600px at -8% 104%,rgba(96,165,250,.04),transparent 55%),var(--bg);color:var(--ink);font-family:'IBM Plex Sans',sans-serif;font-weight:300;-webkit-font-smoothing:antialiased;line-height:1.6}
+  .wrap{max-width:760px;margin:0 auto;padding:54px 24px 80px}
+  .kicker{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.4em;text-transform:uppercase;color:var(--teal);margin-bottom:14px}
+  h1{font-family:'Spectral',serif;font-weight:300;font-size:clamp(30px,6vw,52px);letter-spacing:-.02em;line-height:1.03}
+  h1 em{font-style:italic;color:var(--teal)}
+  .lede{color:var(--dim);font-size:18px;margin-top:18px;font-weight:300}
+  .meta{font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--faint);margin-top:26px;padding-top:18px;border-top:1px solid var(--line);line-height:1.9}
+  section{margin-top:66px;scroll-margin-top:40px}
+  .num{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--teal-d);letter-spacing:.2em}
+  h2{font-family:'Spectral',serif;font-weight:400;font-size:clamp(23px,4vw,32px);margin-top:8px;letter-spacing:-.01em}
+  section p{margin-top:14px;color:#c3c3d4;font-size:16.5px}
+  section p b{color:var(--ink);font-weight:400}
+  code{font-family:'IBM Plex Mono',monospace;font-size:.92em;color:var(--teal);background:rgba(45,212,191,.08);padding:1px 5px;border-radius:4px}
+  .term{color:var(--teal);font-style:italic}
+  .simbox{margin-top:24px;background:#06060c;border:1px solid var(--line);border-radius:16px;padding:8px;position:relative;overflow:hidden}
+  .simbox canvas{display:block;width:100%;height:auto;border-radius:10px}
+  .cap{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--faint);padding:8px 10px 4px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+  .cap .verdict{font-weight:500;white-space:nowrap}
+  .ladder{font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--dim);margin-top:14px;border:1px dashed var(--line);border-radius:10px;padding:12px 14px;line-height:1.95}
+  .ladder b{color:var(--teal)}
+  footer{margin-top:80px;padding-top:26px;border-top:1px solid var(--line);color:var(--faint);font-family:'IBM Plex Mono',monospace;font-size:11.5px;line-height:1.95}
+  footer .seq{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+  footer .seq span{padding:5px 12px;border:1px solid var(--line);border-radius:30px}
+  footer .seq .here{border-color:var(--teal);color:var(--teal)}
+  .end{font-family:'Spectral',serif;font-style:italic;color:var(--dim);font-size:15px;margin-top:8px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="kicker">Automata & Formal Languages · Primer</div>
+  <h1>Machines that <em>read</em></h1>
+  <p class="lede">A language is just a set of strings. The deep question of computation is: what kind of machine do you need to decide whether a string belongs? The answer comes in a ladder — finite memory, then a stack, then an unbounded tape — and each rung recognizes languages the one below cannot.</p>
+  <div class="meta">A scroll-through tour of the Chomsky hierarchy. Six ideas, each with a small machine running live. Then four instruments to take the controls.</div>
+
+  <section id="s1">
+    <div class="num">01</div>
+    <h2>Languages and the machines that accept them</h2>
+    <p>Fix an alphabet — say {0,1}. A <b>string</b> is a finite sequence of symbols; a <span class="term">language</span> is any set of strings you care about. A machine reads a string left to right, one symbol at a time, and at the end gives a verdict: <span style="color:var(--teal)">accept</span> if the string is in the language, <span style="color:var(--rose)">reject</span> if not. Everything that follows is about how much memory that reading takes.</p>
+    <div class="simbox"><div class="cap"><span>reading a string · accepts if it has an even number of 1s</span><span class="verdict" id="v1">·</span></div><canvas id="c1" height="150"></canvas></div>
+  </section>
+
+  <section id="s2">
+    <div class="num">02</div>
+    <h2>Finite automata: a handful of states</h2>
+    <p>The simplest machine has a fixed, finite set of <span class="term">states</span> and a transition for each symbol. No counting, no scratch paper — all it remembers is which state it's in. Here, one bit of memory (is the count of 1s even or odd?) suffices. Languages recognizable this way are called <b>regular</b>.</p>
+    <div class="simbox"><div class="cap"><span>DFA · double ring = accepting state · token follows each symbol</span><span class="verdict" id="v2">·</span></div><canvas id="c2" height="200"></canvas></div>
+  </section>
+
+  <section id="s3">
+    <div class="num">03</div>
+    <h2>Nondeterminism: being in many states at once</h2>
+    <p>Allow the machine to <b>guess</b> — to follow several transitions in parallel — and you get a <span class="term">nondeterministic</span> finite automaton. It accepts if <em>any</em> path ends in an accepting state. It's no more powerful than a DFA (you can always convert one to the other), but it's often far smaller and easier to design.</p>
+    <div class="simbox"><div class="cap"><span>NFA · accepts strings ending in "01" · lit = currently-active states</span><span class="verdict" id="v3">·</span></div><canvas id="c3" height="200"></canvas></div>
+  </section>
+
+  <section id="s4">
+    <div class="num">04</div>
+    <h2>Regular expressions: patterns are machines</h2>
+    <p>The patterns you write to search text — <span class="term">regular expressions</span> — describe exactly the regular languages, no more and no less. Concatenation, choice (<code>|</code>), and repetition (<code>*</code>) can each be wired into an automaton, and every automaton can be written as a pattern. Same expressive power, two notations.</p>
+    <div class="simbox"><div class="cap"><span>pattern <code>(a|b)*abb</code> · testing strings against it</span><span class="verdict" id="v4">·</span></div><canvas id="c4" height="172"></canvas></div>
+  </section>
+
+  <section id="s5">
+    <div class="num">05</div>
+    <h2>The stack: pushdown automata</h2>
+    <p>Give the machine one piece of unbounded memory with a catch — you may only touch the top — and you get a <span class="term">pushdown automaton</span>. The stack can count. Now it can match nested structure: balanced parentheses, <code>aⁿbⁿ</code>, arithmetic expressions. These are the <b>context-free</b> languages, the backbone of programming-language grammars.</p>
+    <div class="simbox"><div class="cap"><span>PDA · push on "(", pop on ")" · accept if balanced</span><span class="verdict" id="v5">·</span></div><canvas id="c5" height="200"></canvas></div>
+  </section>
+
+  <section id="s6">
+    <div class="num">06</div>
+    <h2>The tape: Turing machines</h2>
+    <p>Replace the stack with an unbounded tape the head can read, write, and move across in both directions, and you reach the ceiling: the <span class="term">Turing machine</span>. It can compute anything any computer can. Here one increments a binary number — sweeping right to left, flipping bits and carrying. With this much memory, "accept" and "compute" become the same idea.</p>
+    <div class="simbox"><div class="cap"><span>Turing machine · incrementing a binary number (+1)</span><span class="verdict" id="v6">·</span></div><canvas id="c6" height="186"></canvas></div>
+    <div class="ladder">the hierarchy, bottom to top:<br>&nbsp;&nbsp;<b>regular</b> — finite automata, regular expressions<br>&nbsp;&nbsp;<b>context-free</b> — pushdown automata, grammars<br>&nbsp;&nbsp;<b>decidable / r.e.</b> — Turing machines<br>each rung strictly contains the one below.</div>
+  </section>
+
+  <footer>
+    <div class="seq">
+      <span class="here">00 · primer — you are here</span><span>01 finite automata</span><span>02 regular expressions</span><span>03 pushdown automata</span><span>04 Turing machines</span><span>05 hierarchy & limits</span>
+    </div>
+    AUTOMATA & FORMAL LANGUAGES · the Chomsky hierarchy, from finite memory to universal computation.
+    <div class="end">Scroll back any time — the machines keep running.</div>
+  </footer>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const vis={};
+const io=new IntersectionObserver(es=>{es.forEach(e=>{vis[e.target.id]=e.isIntersecting;});},{threshold:0.18});
+['s1','s2','s3','s4','s5','s6'].forEach(id=>io.observe($(id)));
+function fit(c){const w=c.parentElement.clientWidth-16;if(c.width!==w)c.width=w;}
+function rrect(x,a,b,w,h,r){x.beginPath();x.roundRect(a,b,w,h,r);}
+const TAU=Math.PI*2;
+
+/* ---- sim 1: reader ---- */
+const c1=$('c1'),x1=c1.getContext('2d');let S1={s:'',i:0,t:0,phase:'read'};
+function newS1(){const L=6+((Math.random()*4)|0);let s='';for(let i=0;i<L;i++)s+=Math.random()<0.5?'0':'1';S1={s,i:0,t:0,phase:'read'};}
+newS1();
+function drawS1(){fit(c1);const x=x1,W=c1.width,H=c1.height;x.clearRect(0,0,W,H);const s=S1.s,n=s.length;const cw=Math.min(46,(W-40)/n),cy=H/2-6;const ox=(W-cw*n)/2;
+  const ones=(s.slice(0,S1.phase==='read'?S1.i:n).match(/1/g)||[]).length;
+  for(let i=0;i<n;i++){const px=ox+i*cw;const done=i<S1.i||S1.phase!=='read';const cur=i===S1.i&&S1.phase==='read';
+    x.fillStyle=cur?'rgba(45,212,191,.25)':(done?'rgba(20,20,34,.8)':'rgba(14,14,24,.6)');rrect(x,px+2,cy-22,cw-4,44,7);x.fill();if(cur){x.strokeStyle='#2dd4bf';x.lineWidth=1.6;x.stroke();}
+    x.fillStyle=s[i]==='1'?'#2dd4bf':'#9a9ab5';x.font="18px 'IBM Plex Mono'";x.textAlign='center';x.fillText(s[i],px+cw/2,cy+6);}
+  if(S1.phase==='read'){const hx=ox+S1.i*cw+cw/2;x.fillStyle='#fbbf24';x.beginPath();x.moveTo(hx,cy-30);x.lineTo(hx-6,cy-40);x.lineTo(hx+6,cy-40);x.fill();}
+  x.textAlign='center';x.font="11px 'IBM Plex Mono'";x.fillStyle='#5e5e7a';x.fillText('ones seen: '+ones,W/2,H-12);
+  const acc=((s.match(/1/g)||[]).length)%2===0;
+  if(S1.phase==='done'){$('v1').textContent=acc?'ACCEPT':'REJECT';$('v1').style.color=acc?'#2dd4bf':'#fb7185';}else{$('v1').textContent='reading…';$('v1').style.color='#9a9ab5';}
+  x.textAlign='left';}
+function stepS1(){S1.t++;if(S1.phase==='read'){if(S1.t%26===0){S1.i++;if(S1.i>=S1.s.length){S1.phase='done';S1.t=0;}}}else{if(S1.t>70){newS1();}}}
+
+/* ---- sim 2: DFA even 1s ---- */
+const c2=$('c2'),x2=c2.getContext('2d');let S2={s:'',i:0,t:0,phase:'read',state:'even'};
+function newS2(){const L=5+((Math.random()*4)|0);let s='';for(let i=0;i<L;i++)s+=Math.random()<0.5?'0':'1';S2={s,i:0,t:0,phase:'read',state:'even'};}
+newS2();
+function dfaStep(st,c){return c==='1'?(st==='even'?'odd':'even'):st;}
+function drawS2(){fit(c2);const x=x2,W=c2.width,H=c2.height;x.clearRect(0,0,W,H);
+  const cyS=72,R=30,exX=W*0.32,odX=W*0.68;
+  const s=S2.s,n=s.length,cw=Math.min(34,(W-40)/n),ox=(W-cw*n)/2,sy=H-30;
+  for(let i=0;i<n;i++){const px=ox+i*cw;const cur=i===S2.i&&S2.phase==='read';x.fillStyle=cur?'rgba(45,212,191,.25)':(i<S2.i||S2.phase!=='read'?'rgba(20,20,34,.7)':'rgba(14,14,24,.5)');rrect(x,px+1.5,sy-16,cw-3,30,5);x.fill();x.fillStyle=s[i]==='1'?'#2dd4bf':'#9a9ab5';x.font="13px 'IBM Plex Mono'";x.textAlign='center';x.fillText(s[i],px+cw/2,sy+4);}
+  function arc(x0,y0,x1b,y1,bend){x.strokeStyle='rgba(120,120,150,.5)';x.lineWidth=1.3;x.beginPath();const mx=(x0+x1b)/2,my=(y0+y1)/2-bend;x.moveTo(x0,y0);x.quadraticCurveTo(mx,my,x1b,y1);x.stroke();const a=Math.atan2(y1-my,x1b-mx);x.fillStyle='rgba(120,120,150,.6)';x.beginPath();x.moveTo(x1b,y1);x.lineTo(x1b-7*Math.cos(a-0.4),y1-7*Math.sin(a-0.4));x.lineTo(x1b-7*Math.cos(a+0.4),y1-7*Math.sin(a+0.4));x.fill();}
+  arc(exX+R,cyS-6,odX-R,cyS-6,26);arc(odX-R,cyS+6,exX+R,cyS+6,-26);
+  x.fillStyle='#7a7a92';x.font="12px 'IBM Plex Mono'";x.textAlign='center';x.fillText('1',(exX+odX)/2,cyS-30);x.fillText('1',(exX+odX)/2,cyS+38);
+  [[exX],[odX]].forEach(([sx])=>{x.strokeStyle='rgba(120,120,150,.45)';x.lineWidth=1.3;x.beginPath();x.arc(sx,cyS-R-8,12,0.6,TAU-0.2);x.stroke();x.fillStyle='#7a7a92';x.fillText('0',sx,cyS-R-26);});
+  [['even',exX,true],['odd',odX,false]].forEach(([name,sx,acc])=>{const on=S2.state===name;x.fillStyle=on?'rgba(45,212,191,.2)':'rgba(16,16,30,.9)';x.strokeStyle=on?'#2dd4bf':'#4a4a62';x.lineWidth=on?2:1.4;x.beginPath();x.arc(sx,cyS,R,0,TAU);x.fill();x.stroke();if(acc){x.beginPath();x.arc(sx,cyS,R-4,0,TAU);x.stroke();}x.fillStyle=on?'#2dd4bf':'#9a9ab5';x.font="13px 'IBM Plex Mono'";x.fillText(name,sx,cyS+4);});
+  x.strokeStyle='rgba(120,120,150,.5)';x.beginPath();x.moveTo(exX-R-22,cyS);x.lineTo(exX-R,cyS);x.stroke();
+  const acc=S2.state==='even';
+  if(S2.phase==='done'){$('v2').textContent=acc?'ACCEPT':'REJECT';$('v2').style.color=acc?'#2dd4bf':'#fb7185';}else{$('v2').textContent='state: '+S2.state;$('v2').style.color='#9a9ab5';}
+  x.textAlign='left';}
+function stepS2(){S2.t++;if(S2.phase==='read'){if(S2.t%32===0){S2.state=dfaStep(S2.state,S2.s[S2.i]);S2.i++;if(S2.i>=S2.s.length){S2.phase='done';S2.t=0;}}}else{if(S2.t>72)newS2();}}
+
+/* ---- sim 3: NFA ends 01 ---- */
+const c3=$('c3'),x3=c3.getContext('2d');let S3={s:'',i:0,t:0,phase:'read',active:new Set([0])};
+function newS3(){const L=4+((Math.random()*4)|0);let s='';for(let i=0;i<L;i++)s+=Math.random()<0.5?'0':'1';S3={s,i:0,t:0,phase:'read',active:new Set([0])};}
+newS3();
+function nfaStep(act,c){const nx=new Set();for(const q of act){if(q===0){nx.add(0);if(c==='0')nx.add(1);}if(q===1&&c==='1')nx.add(2);}return nx;}
+function drawS3(){fit(c3);const x=x3,W=c3.width,H=c3.height;x.clearRect(0,0,W,H);
+  const cyS=70,R=27,xs=[W*0.22,W*0.5,W*0.78];
+  const s=S3.s,n=s.length,cw=Math.min(34,(W-40)/n),ox=(W-cw*n)/2,sy=H-30;
+  for(let i=0;i<n;i++){const px=ox+i*cw;const cur=i===S3.i&&S3.phase==='read';x.fillStyle=cur?'rgba(45,212,191,.25)':(i<S3.i||S3.phase!=='read'?'rgba(20,20,34,.7)':'rgba(14,14,24,.5)');rrect(x,px+1.5,sy-16,cw-3,30,5);x.fill();x.fillStyle=s[i]==='1'?'#2dd4bf':'#9a9ab5';x.font="13px 'IBM Plex Mono'";x.textAlign='center';x.fillText(s[i],px+cw/2,sy+4);}
+  function edge(a,b,lab,bend){const x0=xs[a]+R,y0=cyS,x1b=xs[b]-R,y1=cyS;x.strokeStyle='rgba(120,120,150,.5)';x.lineWidth=1.3;x.beginPath();const mx=(x0+x1b)/2,my=cyS-bend;x.moveTo(x0,y0);x.quadraticCurveTo(mx,my,x1b,y1);x.stroke();const ang=Math.atan2(y1-my,x1b-mx);x.fillStyle='rgba(120,120,150,.6)';x.beginPath();x.moveTo(x1b,y1);x.lineTo(x1b-7*Math.cos(ang-0.4),y1-7*Math.sin(ang-0.4));x.lineTo(x1b-7*Math.cos(ang+0.4),y1-7*Math.sin(ang+0.4));x.fill();x.fillStyle='#7a7a92';x.font="12px 'IBM Plex Mono'";x.textAlign='center';x.fillText(lab,mx,my-4);}
+  edge(0,1,'0',24);edge(1,2,'1',24);
+  x.strokeStyle='rgba(120,120,150,.45)';x.lineWidth=1.3;x.beginPath();x.arc(xs[0],cyS-R-8,12,0.6,TAU-0.2);x.stroke();x.fillStyle='#7a7a92';x.font="11px 'IBM Plex Mono'";x.textAlign='center';x.fillText('0,1',xs[0],cyS-R-26);
+  ['q0','q1','q2'].forEach((nm,i)=>{const on=S3.active.has(i);const acc=i===2;x.fillStyle=on?'rgba(45,212,191,.22)':'rgba(16,16,30,.9)';x.strokeStyle=on?'#2dd4bf':'#4a4a62';x.lineWidth=on?2.2:1.4;x.beginPath();x.arc(xs[i],cyS,R,0,TAU);x.fill();x.stroke();if(acc){x.beginPath();x.arc(xs[i],cyS,R-4,0,TAU);x.stroke();}x.fillStyle=on?'#2dd4bf':'#9a9ab5';x.font="13px 'IBM Plex Mono'";x.fillText(nm,xs[i],cyS+4);});
+  x.strokeStyle='rgba(120,120,150,.5)';x.beginPath();x.moveTo(xs[0]-R-20,cyS);x.lineTo(xs[0]-R,cyS);x.stroke();
+  const acc=S3.active.has(2);
+  if(S3.phase==='done'){$('v3').textContent=acc?'ACCEPT':'REJECT';$('v3').style.color=acc?'#2dd4bf':'#fb7185';}else{$('v3').textContent=S3.active.size+' active';$('v3').style.color='#9a9ab5';}
+  x.textAlign='left';}
+function stepS3(){S3.t++;if(S3.phase==='read'){if(S3.t%34===0){S3.active=nfaStep(S3.active,S3.s[S3.i]);S3.i++;if(S3.i>=S3.s.length){S3.phase='done';S3.t=0;}}}else{if(S3.t>74)newS3();}}
+
+/* ---- sim 4: regex ---- */
+const c4=$('c4'),x4=c4.getContext('2d');
+const TESTS=['abb','aabb','babb','ab','abab','bb','ababb','b','aaabb','abbb'];
+function endsAbb(s){return s.endsWith('abb');}
+let S4={k:0,i:0,t:0,phase:'scan'};
+function drawS4(){fit(c4);const x=x4,W=c4.width,H=c4.height;x.clearRect(0,0,W,H);
+  x.fillStyle='#5e5e7a';x.font="11px 'IBM Plex Mono'";x.textAlign='center';x.fillText('pattern',W/2,24);
+  x.fillStyle='#2dd4bf';x.font="22px 'IBM Plex Mono'";x.fillText('( a | b )*  a b b',W/2,52);
+  const s=TESTS[S4.k],n=s.length,cw=Math.min(40,(W-60)/Math.max(n,1)),ox=(W-cw*n)/2,cy=100;
+  for(let i=0;i<n;i++){const px=ox+i*cw;const cur=i===S4.i&&S4.phase==='scan';x.fillStyle=cur?'rgba(251,191,36,.25)':'rgba(20,20,34,.7)';rrect(x,px+2,cy-20,cw-4,40,7);x.fill();x.fillStyle='#e7e7f0';x.font="17px 'IBM Plex Mono'";x.textAlign='center';x.fillText(s[i],px+cw/2,cy+6);}
+  const acc=endsAbb(s);
+  if(S4.phase==='done'){x.fillStyle=acc?'#2dd4bf':'#fb7185';x.font="15px 'IBM Plex Mono'";x.fillText(acc?'✓  matches':'✗  no match',W/2,H-14);$('v4').textContent=acc?'ACCEPT':'REJECT';$('v4').style.color=acc?'#2dd4bf':'#fb7185';}else{$('v4').textContent='testing "'+s+'"';$('v4').style.color='#9a9ab5';}
+  x.textAlign='left';}
+function stepS4(){S4.t++;if(S4.phase==='scan'){if(S4.t%24===0){S4.i++;if(S4.i>=TESTS[S4.k].length){S4.phase='done';S4.t=0;}}}else{if(S4.t>54){S4.k=(S4.k+1)%TESTS.length;S4.i=0;S4.phase='scan';S4.t=0;}}}
+
+/* ---- sim 5: PDA parens ---- */
+const c5=$('c5'),x5=c5.getContext('2d');
+const PARENS=['(())','(()())','())(','(((','()()','(())()','())',')('];
+let S5={k:0,i:0,t:0,phase:'read',stack:0,dead:false};
+function newS5(){S5={k:(S5.k+1)%PARENS.length,i:0,t:0,phase:'read',stack:0,dead:false};}
+function drawS5(){fit(c5);const x=x5,W=c5.width,H=c5.height;x.clearRect(0,0,W,H);
+  const s=PARENS[S5.k],n=s.length;const cw=Math.min(40,(W-160)/Math.max(n,1)),ox=20,cy=46;
+  for(let i=0;i<n;i++){const px=ox+i*cw;const cur=i===S5.i&&S5.phase==='read';const done=i<S5.i;x.fillStyle=cur?'rgba(45,212,191,.25)':(done?'rgba(20,20,34,.8)':'rgba(14,14,24,.55)');rrect(x,px+2,cy-18,cw-4,36,6);x.fill();if(cur){x.strokeStyle=s[i]==='('?'#2dd4bf':'#fbbf24';x.lineWidth=1.6;x.stroke();}x.fillStyle=s[i]==='('?'#2dd4bf':'#fbbf24';x.font="17px 'IBM Plex Mono'";x.textAlign='center';x.fillText(s[i],px+cw/2,cy+5);}
+  const stX=W-90,stW=54,baseY=H-24,cellH=22;
+  x.strokeStyle='rgba(60,60,92,.7)';x.lineWidth=1.4;x.beginPath();x.moveTo(stX-2,baseY-cellH*7);x.lineTo(stX-2,baseY);x.lineTo(stX+stW+2,baseY);x.lineTo(stX+stW+2,baseY-cellH*7);x.stroke();
+  x.fillStyle='#5e5e7a';x.font="10px 'IBM Plex Mono'";x.textAlign='center';x.fillText('stack',stX+stW/2,baseY-cellH*7-8);
+  for(let i=0;i<S5.stack;i++){const py=baseY-(i+1)*cellH+2;x.fillStyle='rgba(45,212,191,.28)';x.strokeStyle='#2dd4bf';x.lineWidth=1.2;rrect(x,stX,py,stW,cellH-3,4);x.fill();x.stroke();x.fillStyle='#2dd4bf';x.font="12px 'IBM Plex Mono'";x.fillText('(',stX+stW/2,py+15);}
+  const balanced=S5.stack===0&&!S5.dead;
+  if(S5.dead){$('v5').textContent='REJECT';$('v5').style.color='#fb7185';x.fillStyle='#fb7185';x.font="13px 'IBM Plex Mono'";x.textAlign='left';x.fillText('pop on empty stack → reject',20,H-16);}
+  else if(S5.phase==='done'){$('v5').textContent=balanced?'ACCEPT':'REJECT';$('v5').style.color=balanced?'#2dd4bf':'#fb7185';x.fillStyle=balanced?'#2dd4bf':'#fb7185';x.font="13px 'IBM Plex Mono'";x.textAlign='left';x.fillText(balanced?'stack empty → balanced':'stack not empty → reject',20,H-16);}
+  else{$('v5').textContent='depth '+S5.stack;$('v5').style.color='#9a9ab5';}
+  x.textAlign='left';}
+function stepS5(){S5.t++;if(S5.dead){if(S5.t>64)newS5();return;}if(S5.phase==='read'){if(S5.t%30===0){const c=PARENS[S5.k][S5.i];if(c==='(')S5.stack++;else{if(S5.stack===0){S5.dead=true;S5.t=0;return;}S5.stack--;}S5.i++;if(S5.i>=PARENS[S5.k].length){S5.phase='done';S5.t=0;}}}else{if(S5.t>64)newS5();}}
+
+/* ---- sim 6: TM increment ---- */
+const c6=$('c6'),x6=c6.getContext('2d');
+let S6={};
+function newS6(){const n=1+((Math.random()*30)|0);const b=n.toString(2).split('');S6={tape:b,head:b.length-1,t:0,phase:'run',orig:n,carry:1};}
+newS6();
+function drawS6(){fit(c6);const x=x6,W=c6.width,H=c6.height;x.clearRect(0,0,W,H);
+  const tape=S6.tape,n=tape.length,cw=Math.min(40,(W-60)/Math.max(n,1)),ox=(W-cw*n)/2,cy=H/2-2;
+  for(let i=0;i<n;i++){const px=ox+i*cw;const isHead=i===S6.head&&S6.phase==='run';x.fillStyle=isHead?'rgba(45,212,191,.25)':'rgba(18,18,30,.8)';x.strokeStyle=isHead?'#2dd4bf':'rgba(60,60,92,.6)';x.lineWidth=isHead?1.8:1;rrect(x,px+2,cy-22,cw-4,44,6);x.fill();x.stroke();x.fillStyle=tape[i]==='1'?'#2dd4bf':'#9a9ab5';x.font="18px 'IBM Plex Mono'";x.textAlign='center';x.fillText(tape[i],px+cw/2,cy+6);}
+  if(S6.phase==='run'&&S6.head>=0&&S6.head<n){const hx=ox+S6.head*cw+cw/2;x.fillStyle='#fbbf24';x.beginPath();x.moveTo(hx,cy-30);x.lineTo(hx-6,cy-40);x.lineTo(hx+6,cy-40);x.fill();}
+  x.textAlign='center';x.font="11px 'IBM Plex Mono'";
+  if(S6.phase==='done'){x.fillStyle='#2dd4bf';x.fillText(S6.orig+' + 1 = '+parseInt(tape.join(''),2)+'   ('+tape.join('')+')',W/2,H-12);$('v6').textContent='HALT · '+parseInt(tape.join(''),2);$('v6').style.color='#2dd4bf';}
+  else{x.fillStyle='#5e5e7a';x.fillText('start '+S6.orig+' ('+S6.orig.toString(2)+') · sweeping right→left, carrying',W/2,H-12);$('v6').textContent='carry '+(S6.carry||0);$('v6').style.color='#9a9ab5';}
+  x.textAlign='left';}
+function stepS6(){S6.t++;if(S6.phase==='run'){if(S6.t%30===0){if(S6.head<0||!S6.carry){if(S6.carry){S6.tape.unshift('1');S6.carry=0;}S6.phase='done';S6.t=0;return;}const b=+S6.tape[S6.head];const sum=b+S6.carry;S6.tape[S6.head]=String(sum%2);S6.carry=sum>>1;S6.head--;if(!S6.carry){S6.phase='done';S6.t=0;}}}else{if(S6.t>78)newS6();}}
+
+/* ---- loop ---- */
+function loop(){
+  if(vis['s1']){stepS1();drawS1();}
+  if(vis['s2']){stepS2();drawS2();}
+  if(vis['s3']){stepS3();drawS3();}
+  if(vis['s4']){stepS4();drawS4();}
+  if(vis['s5']){stepS5();drawS5();}
+  if(vis['s6']){stepS6();drawS6();}
+  requestAnimationFrame(loop);
+}
+[drawS1,drawS2,drawS3,drawS4,drawS5,drawS6].forEach(f=>f());
+window.addEventListener('resize',()=>{[drawS1,drawS2,drawS3,drawS4,drawS5,drawS6].forEach(f=>f());});
+loop();
+</script>
+</body>
+</html>

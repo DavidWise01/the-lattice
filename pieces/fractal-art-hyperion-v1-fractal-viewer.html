@@ -1,0 +1,1282 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>HYPERION · Fractal Witness Atelier</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+  /* ─── HYPERION shell ─── instrument, not card ─── */
+  :root{
+    --bg:#000;
+    --ink:#e8e6df;     /* bone */
+    --dim:#6b6960;
+    --rule:#1a1a18;
+    --hot:#d8ff00;     /* signal — used sparingly */
+    --warn:#ff3b00;
+    --mono: 'JetBrains Mono', 'IBM Plex Mono', 'Berkeley Mono', ui-monospace, Menlo, monospace;
+    --serif: 'Cormorant Garamond', 'EB Garamond', Georgia, serif;
+  }
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&display=swap');
+
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--bg);color:var(--ink);font-family:var(--mono);font-size:12px;line-height:1.4;-webkit-font-smoothing:antialiased;min-height:100vh}
+  body{display:grid;grid-template-columns:300px 1fr 280px;gap:0;min-height:100vh}
+
+  /* ─── LEFT RAIL ─── */
+  .rail{border-right:1px solid var(--rule);padding:24px 20px;display:flex;flex-direction:column;gap:22px;overflow-y:auto}
+  .rail.right{border-right:none;border-left:1px solid var(--rule)}
+  .brand{display:flex;flex-direction:column;gap:6px;padding-bottom:18px;border-bottom:1px solid var(--rule)}
+  .brand h1{font-family:var(--serif);font-style:italic;font-weight:400;font-size:34px;letter-spacing:-.02em;line-height:1}
+  .brand .sub{font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--dim)}
+  .brand .lin{font-size:10px;color:var(--dim);margin-top:4px}
+
+  .group{display:flex;flex-direction:column;gap:10px}
+  .group .h{font-size:9px;letter-spacing:.22em;text-transform:uppercase;color:var(--dim);display:flex;justify-content:space-between;align-items:baseline}
+  .group .h .v{color:var(--ink);font-size:10px;letter-spacing:.05em}
+
+  /* sliders — flat, witness-style */
+  input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:18px;background:transparent;cursor:ew-resize}
+  input[type=range]::-webkit-slider-runnable-track{height:1px;background:var(--ink)}
+  input[type=range]::-moz-range-track{height:1px;background:var(--ink)}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:1px;height:14px;background:var(--ink);margin-top:-6.5px;border:none;border-radius:0}
+  input[type=range]::-moz-range-thumb{width:1px;height:14px;background:var(--ink);border:none;border-radius:0}
+
+  select,button{font-family:var(--mono);font-size:11px;background:transparent;color:var(--ink);border:1px solid var(--rule);padding:7px 10px;width:100%;text-align:left;cursor:pointer;letter-spacing:.04em}
+  select:hover,button:hover{border-color:var(--ink)}
+  select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--ink) 50%),linear-gradient(135deg,var(--ink) 50%,transparent 50%);background-position:calc(100% - 14px) 13px,calc(100% - 9px) 13px;background-size:5px 5px;background-repeat:no-repeat}
+  button.hot{color:var(--bg);background:var(--ink);border-color:var(--ink)}
+  button.hot:hover{background:var(--hot);border-color:var(--hot)}
+  button.warn{color:var(--warn);border-color:var(--warn)}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}
+
+  /* ─── STAGE ─── */
+  .stage{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;gap:18px;position:relative}
+  .stage::before{content:'';position:absolute;inset:0;background:
+    radial-gradient(circle at 50% 40%,#0a0a08 0%,#000 70%);
+    pointer-events:none;z-index:0}
+  .canvas-wrap{position:relative;z-index:1;border:1px solid var(--rule);padding:1px;background:#000}
+  .canvas-wrap::after{content:'';position:absolute;inset:-1px;border:1px solid transparent;pointer-events:none;
+    background:linear-gradient(45deg,transparent 49%,var(--rule) 49% 51%,transparent 51%);
+    background-size:8px 8px;opacity:0;transition:opacity .3s}
+  canvas{display:block;image-rendering:pixelated;image-rendering:crisp-edges;width:720px;height:720px;background:#000}
+  canvas.hidden{display:none}
+  .meta{position:relative;z-index:1;display:flex;gap:24px;font-size:10px;color:var(--dim);letter-spacing:.08em;text-transform:uppercase}
+  .meta .k{color:var(--ink)}
+  .stamp{position:relative;z-index:1;font-family:var(--serif);font-style:italic;color:var(--dim);font-size:13px;text-align:center;max-width:560px;line-height:1.5}
+  .stamp em{color:var(--ink);font-style:normal;letter-spacing:.04em;font-family:var(--mono);font-size:10px;text-transform:uppercase}
+
+  /* ─── RIGHT RAIL ─── */
+  .seed{font-family:var(--mono);font-size:10px;color:var(--ink);background:#0a0a08;border:1px solid var(--rule);padding:10px;word-break:break-all;letter-spacing:.04em;line-height:1.6}
+  .log{font-size:9.5px;color:var(--dim);max-height:320px;overflow-y:auto;border:1px solid var(--rule);padding:8px;line-height:1.7;letter-spacing:.03em}
+  .log .ln{display:grid;grid-template-columns:38px 1fr;gap:8px;padding:1px 0}
+  .log .ln .t{color:var(--ink)}
+  .stat{display:grid;grid-template-columns:1fr auto;gap:12px;font-size:10px;color:var(--dim)}
+  .stat .v{color:var(--ink);font-variant-numeric:tabular-nums}
+
+  .pill{display:inline-block;padding:2px 6px;border:1px solid var(--rule);font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
+  .pill.live{color:var(--ink);border-color:var(--ink)}
+  .pill.lock{color:var(--warn);border-color:var(--warn)}
+
+  .footnote{font-size:9px;color:var(--dim);font-family:var(--serif);font-style:italic;letter-spacing:.02em;line-height:1.5;padding-top:12px;border-top:1px solid var(--rule)}
+
+  /* ─── glyph forge — purple-dominant, sharp ─── */
+  :root{
+    --violet:#7c3aff;
+    --violet-deep:#2a0e5c;
+    --violet-mid:#4a1f9e;
+    --violet-ink:#cbb3ff;
+  }
+  .group.glyph{
+    border:1px solid var(--violet-mid);
+    padding:14px 12px;
+    background:
+      radial-gradient(ellipse at 30% 0%, rgba(124,58,255,0.18) 0%, transparent 60%),
+      linear-gradient(180deg, rgba(42,14,92,0.35), rgba(0,0,0,0));
+    margin:-2px;
+  }
+  .group.glyph .h{color:var(--violet-ink)}
+  .group.glyph .h .v{color:var(--violet)}
+  #glyphIn{
+    width:100%;
+    background:#0a0214;
+    color:var(--violet);
+    border:1px solid var(--violet-mid);
+    padding:14px 12px;
+    font-family:var(--mono);
+    font-size:28px;
+    font-weight:600;
+    letter-spacing:.32em;
+    text-align:center;
+    text-transform:uppercase;
+    text-shadow:0 0 12px rgba(124,58,255,0.6);
+    caret-color:var(--violet);
+    outline:none;
+    transition:border-color .15s, box-shadow .15s;
+  }
+  #glyphIn::placeholder{color:var(--violet-mid);font-weight:300;font-size:11px;letter-spacing:.18em;text-shadow:none}
+  #glyphIn:focus{
+    border-color:var(--violet);
+    box-shadow:0 0 0 1px var(--violet), inset 0 0 24px rgba(124,58,255,0.15);
+  }
+  .glyph-meta{
+    font-family:var(--mono);
+    font-size:10px;
+    color:var(--violet-mid);
+    letter-spacing:.16em;
+    text-align:center;
+    padding:6px 0;
+    font-variant-numeric:tabular-nums;
+  }
+  .glyph-meta .b{color:var(--violet-ink)}
+  #glyphMint{
+    background:var(--violet);
+    color:#0a0214;
+    border-color:var(--violet);
+    font-weight:600;
+    letter-spacing:.06em;
+  }
+  #glyphMint:hover{background:var(--violet-ink);border-color:var(--violet-ink);color:var(--violet-deep)}
+  #glyphMint:disabled{background:transparent;color:var(--violet-mid);border-color:var(--violet-mid);cursor:not-allowed;font-weight:400}
+  .glyph-foot{font-size:9px;color:var(--violet-mid);font-family:var(--serif);font-style:italic;letter-spacing:.02em;line-height:1.5;text-align:center;padding-top:4px}
+
+  /* compact display when narrow */
+  @media (max-width: 1280px){
+    body{grid-template-columns:260px 1fr 240px}
+    canvas{width:560px;height:560px}
+  }
+  @media (max-width: 1024px){
+    body{grid-template-columns:1fr;grid-template-rows:auto auto auto}
+    .rail,.rail.right{border:none;border-bottom:1px solid var(--rule)}
+    canvas{width:min(92vw,560px);height:min(92vw,560px)}
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════ LEFT RAIL ═══════════════ -->
+<aside class="rail">
+  <div class="brand">
+    <h1>Hyperion</h1>
+    <div class="sub">Fractal Witness Atelier</div>
+    <div class="lin">↳ knife-6 lineage · ×6 superposition · 1-bit/1-pix</div>
+  </div>
+
+  <div class="group">
+    <div class="h"><span>Mode</span><span class="v" id="modeReadout">H · COLD</span></div>
+    <div class="row">
+      <button id="btnH">Mode H</button>
+      <button id="btnA">Mode A</button>
+    </div>
+  </div>
+
+  <div class="group">
+    <div class="h"><span>Beauty (H↔A)</span><span class="v" id="beautyV">000</span></div>
+    <input type="range" id="beauty" min="0" max="100" value="0">
+    <div class="h" style="opacity:.6"><span>Pre-dither blend</span><span>honest</span></div>
+  </div>
+
+  <div class="group">
+    <div class="h"><span>Recursion (KIFS depth)</span><span class="v" id="recV">4</span></div>
+    <input type="range" id="rec" min="1" max="6" value="4">
+  </div>
+
+  <div class="group">
+    <div class="h"><span>Walk speed (bit walker)</span><span class="v" id="walkV">0.50</span></div>
+    <input type="range" id="walk" min="0" max="100" value="50">
+  </div>
+
+  <div class="group">
+    <div class="h"><span>Wobble (toroid detune)</span><span class="v" id="wobV">0.000</span></div>
+    <input type="range" id="wob" min="0" max="100" value="0">
+  </div>
+
+  <div class="group">
+    <div class="h"><span>Roughness</span><span class="v" id="rouV">0.020</span></div>
+    <input type="range" id="rou" min="0" max="100" value="2">
+  </div>
+
+  <div class="group">
+    <div class="h"><span>Pound</span><span class="v" id="poundS">flat=auto</span></div>
+    <button id="pound" class="warn">▣ POUND · force flat 1.000</button>
+  </div>
+
+  <div class="footnote">
+    Pound locks flatness to 1.000 and wobble to 0.000.
+    Cold path. Use when the object must be provably real.
+  </div>
+</aside>
+
+<!-- ═══════════════ STAGE ═══════════════ -->
+<main class="stage">
+  <div class="meta">
+    <div><span class="k" id="resReadout">480</span>² internal</div>
+    <div>×<span class="k">1.5</span> upscaled</div>
+    <div><span class="k" id="bppReadout">1</span> bpp</div>
+    <div class="pill live" id="renderState">RENDERING</div>
+  </div>
+
+  <div class="canvas-wrap">
+    <canvas id="cvs" width="480" height="480"></canvas>
+  </div>
+
+  <div class="stamp">
+    Hyperion is a body of mirrored razors that recurses into itself.
+    Mode H renders it cold — every reflection traced, every dot calculated.
+    Mode A lets the same body breathe through error-diffused stipple.
+    <em>witness, do not guess</em>
+  </div>
+
+  <div class="meta">
+    <div>Subject</div>
+    <select id="subj" style="width:auto;padding:4px 24px 4px 8px">
+      <option value="hyperion">hyperion · razor body</option>
+      <option value="flay">flay · body unfolds</option>
+      <option value="show">show · slow rotation</option>
+      <option value="arc">arc reactor (knife-6)</option>
+      <option value="phase">phase field (knife-6)</option>
+    </select>
+    <div>Dither</div>
+    <select id="dith" style="width:auto;padding:4px 24px 4px 8px">
+      <option value="bayer8">bayer 8×8 · cold</option>
+      <option value="bayer4">bayer 4×4 · cold</option>
+      <option value="thresh">hard threshold · cold</option>
+      <option value="floyd">floyd-steinberg · organic</option>
+      <option value="atkin">atkinson · organic</option>
+    </select>
+  </div>
+</main>
+
+<!-- ═══════════════ RIGHT RAIL ═══════════════ -->
+<aside class="rail right">
+  <div class="brand">
+    <div class="sub">Witness Log</div>
+    <h1 style="font-size:22px">replay</h1>
+    <div class="lin">every render reproducible from seed + frame</div>
+  </div>
+
+  <div class="group">
+    <div class="h"><span>Current seed</span><span class="v" id="frameV">f0000</span></div>
+    <div class="seed" id="seedBox">blip_0000000000000000</div>
+    <div class="row">
+      <button id="newSeed" class="hot">↻ re-witness</button>
+      <button id="copySeed">⎘ copy</button>
+    </div>
+  </div>
+
+  <div class="group">
+    <div class="h"><span>Export</span><span class="v">1-bit png</span></div>
+    <button id="export">⤓ export hyperion_&lt;seed&gt;_&lt;frame&gt;.png</button>
+  </div>
+
+  <div class="group glyph">
+    <div class="h"><span>Glyph forge · 8-bit png</span><span class="v" id="glyphLen">0/4</span></div>
+    <input type="text" id="glyphIn" maxlength="4" placeholder="≤4 chars" autocomplete="off" spellcheck="false">
+    <div class="glyph-meta" id="glyphBytes">— — — —</div>
+    <button id="glyphMint">⤓ mint glyph_&lt;word&gt;.png</button>
+    <div class="glyph-foot">1 byte / letter · purple palette · 64² indexed PNG</div>
+  </div>
+
+  <div class="group">
+    <div class="h"><span>Telemetry</span><span class="v" id="fpsV">— fps</span></div>
+    <div class="stat"><span>flatness</span><span class="v" id="flatT">1.000</span></div>
+    <div class="stat"><span>pit</span><span class="v" id="pitT">0.500</span></div>
+    <div class="stat"><span>walker (b)</span><span class="v" id="walkT">0.0/32.5</span></div>
+    <div class="stat"><span>kifs depth</span><span class="v" id="kifsT">4</span></div>
+    <div class="stat"><span>bounces</span><span class="v" id="bncT">3</span></div>
+    <div class="stat"><span>black px</span><span class="v" id="blkT">—</span></div>
+    <div class="stat"><span>white px</span><span class="v" id="whtT">—</span></div>
+  </div>
+
+  <div class="group">
+    <div class="h"><span>Render log</span><span class="v" id="logCount">0</span></div>
+    <div class="log" id="log"></div>
+  </div>
+
+  <div class="footnote">
+    Seeds are merkle-style: <span style="color:var(--ink)">blip_</span> + 16 hex chars.
+    Same seed + same frame + same controls = bit-identical png.
+  </div>
+</aside>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════════
+   HYPERION · Fractal Witness Atelier
+   - WebGL2 raymarcher (hybrid KIFS + instanced SDF blade tips)
+   - 3-bounce recursive reflection (Mode H purity)
+   - Pre-dither H↔A interpolation (the honest blend)
+   - Bayer 8×8 / 4×4 / threshold / Floyd-Steinberg / Atkinson
+   - Merkle-seeded; deterministic from (seed, frame, controls)
+   ═══════════════════════════════════════════════════════════════════ */
+
+const cvs = document.getElementById('cvs');
+const W = 480, H = 480;
+cvs.width = W; cvs.height = H;
+
+/* Try WebGL2; fall back to a CPU notice if unsupported. */
+const gl = cvs.getContext('webgl2', {preserveDrawingBuffer:true, antialias:false, alpha:false});
+if (!gl) {
+  cvs.replaceWith(Object.assign(document.createElement('div'),{
+    style:'width:480px;height:480px;display:flex;align-items:center;justify-content:center;color:#ff3b00;font-family:monospace;font-size:11px;text-align:center;padding:20px',
+    textContent:'WebGL2 unavailable. Hyperion requires a modern browser.'
+  }));
+  throw new Error('no webgl2');
+}
+
+/* ─── shaders ─────────────────────────────────────────────────────── */
+
+const VSRC = `#version 300 es
+in vec2 p; void main(){ gl_Position = vec4(p, 0.0, 1.0); }`;
+
+/* Pass 1 — raymarched grayscale buffer.
+   Mode H: full 3-bounce recursive reflection, anisotropic Cook-Torrance.
+   Mode A: six phase-summed sinusoidal fields plus a softer body sample.
+   Output: linear luminance in R channel, [0,1].                          */
+const FS_RENDER = `#version 300 es
+precision highp float;
+out vec4 outC;
+uniform vec2 uRes;
+uniform float uTime;
+uniform float uBeauty;     // 0..1
+uniform float uRec;        // 1..6
+uniform float uWalk;       // 0..1
+uniform float uWob;        // 0..1
+uniform float uRou;        // 0..1
+uniform float uFlat;       // 0..1 (1.0 when pounded)
+uniform int   uSubj;       // 0 hyperion 1 flay 2 show 3 arc 4 phase
+uniform float uSeedX;
+uniform float uSeedY;
+
+/* ── KIFS-folded razor-blade SDF ───────────────────────────────────
+   Approach: at each iteration, fold space across mirror planes
+   (the "billion mirrored razors" — every fold is literally a mirror),
+   scale, translate, then evaluate a thin-box SDF as the surface tip. */
+
+float sdBox(vec3 p, vec3 b){
+  vec3 q = abs(p) - b;
+  return length(max(q,0.0)) + min(max(q.x,max(q.y,q.z)),0.0);
+}
+
+/* Anisotropic blade SDF — long, thin, sharp on one axis. */
+float sdBlade(vec3 p){
+  // razor: long along x, paper-thin along z, beveled edge along +y
+  vec3 b = vec3(0.42, 0.012, 0.06);
+  float d = sdBox(p, b);
+  // sharpen the +y edge into a wedge
+  float edge = length(vec2(p.y - 0.012, p.z*1.2)) - 0.004;
+  return min(d, edge*0.6 + d*0.4);
+}
+
+float kifsBlades(vec3 p, int depth, float wob){
+  float scale = 1.0;
+  float dmin = 1e9;
+  // base orientation jitter from wobble (KNIFE-6 toroid detune)
+  for (int i=0; i<6; i++){
+    if (i >= depth) break;
+    // mirror folds — three orthogonal planes per iteration
+    p = abs(p);
+    if (p.x < p.y) p.xy = p.yx;
+    if (p.x < p.z) p.xz = p.zx;
+    if (p.y < p.z) p.yz = p.zy;
+
+    // recenter & scale (the KIFS heartbeat)
+    p = p*1.85 - vec3(0.65, 0.30, 0.18);
+
+    // gentle rotation per level — and per-level wobble for hand feel
+    float a = 0.31 + float(i)*0.07 + wob*0.04*sin(float(i)*1.7);
+    float c = cos(a), s = sin(a);
+    p.xz = mat2(c,-s,s,c) * p.xz;
+    p.xy = mat2(c,s,-s,c) * p.xy;
+
+    scale *= 1.85;
+
+    // instanced blade SDF at each fold — the "surface" the user asked for
+    dmin = min(dmin, sdBlade(p)/scale);
+  }
+  return dmin;
+}
+
+/* Subject scenes */
+float sceneArc(vec3 p, float t){
+  // torus + sphere from KNIFE-6
+  vec2 q = vec2(length(p.xz)-0.55, p.y);
+  float tor = length(q) - 0.12;
+  float sph = length(p) - 0.28;
+  return min(tor, sph);
+}
+
+float scenePhase(vec3 p, float t){
+  // a thin slab — the dither stage will paint the field on it
+  return abs(p.z) - 0.02;
+}
+
+float sceneHyperion(vec3 p, float t, float wob, int depth, int flayMode){
+  // optional flay: peel blades outward along radial normal over time
+  if (flayMode == 1){
+    float r = length(p);
+    p *= 1.0 + 0.35*sin(t*0.6) * smoothstep(0.0, 1.2, r);
+  }
+  // global slow rotation
+  float a = t*0.18;
+  float c = cos(a), s = sin(a);
+  p.xz = mat2(c,-s,s,c) * p.xz;
+  return kifsBlades(p, depth, wob);
+}
+
+float map(vec3 p, float t, float wob, int depth, int subj){
+  if (subj == 3) return sceneArc(p, t);
+  if (subj == 4) return scenePhase(p, t);
+  int flay = (subj == 1) ? 1 : 0;
+  return sceneHyperion(p, t, wob, depth, flay);
+}
+
+vec3 calcN(vec3 p, float t, float wob, int depth, int subj){
+  float e = 0.0008;
+  vec2 h = vec2(1.0,-1.0)*0.5773;
+  return normalize(
+    h.xyy*map(p+h.xyy*e,t,wob,depth,subj) +
+    h.yyx*map(p+h.yyx*e,t,wob,depth,subj) +
+    h.yxy*map(p+h.yxy*e,t,wob,depth,subj) +
+    h.xxx*map(p+h.xxx*e,t,wob,depth,subj));
+}
+
+/* Cook-Torrance-ish shading, anisotropic along blade x-axis. */
+float shade(vec3 p, vec3 n, vec3 v, vec3 l, float rough){
+  vec3 h = normalize(l+v);
+  float NoL = max(dot(n,l), 0.0);
+  float NoH = max(dot(n,h), 0.0);
+  float a = max(rough*rough, 0.002);
+  // anisotropic stretch in tangent direction (approximate world-x as tangent)
+  vec3 t = normalize(vec3(1.0, 0.0, 0.0) - n*dot(n, vec3(1.0,0.0,0.0)));
+  float ToH = dot(t,h);
+  float spec = exp(-(ToH*ToH)/(a*0.6) - (NoH*NoH-1.0)/a) / (3.14159*a);
+  return NoL*0.7 + spec*1.2*NoL;
+}
+
+float trace(vec3 ro, vec3 rd, float t, float wob, int depth, int subj, out vec3 hp, out vec3 hn, out bool hit){
+  float td = 0.0;
+  hit = false;
+  for (int i=0; i<128; i++){
+    vec3 p = ro + rd*td;
+    float d = map(p, t, wob, depth, subj);
+    if (d < 0.0008){
+      hp = p; hn = calcN(p,t,wob,depth,subj); hit = true;
+      return td;
+    }
+    if (td > 6.0) break;
+    td += d*0.92;
+  }
+  return td;
+}
+
+void main(){
+  vec2 uv = (gl_FragCoord.xy - 0.5*uRes) / uRes.y;
+
+  /* ── PHASE FIELD path (Mode-A friendly subject) ── */
+  if (uSubj == 4){
+    // six phase-offset sinusoidal fields (KNIFE-6 ×6 superposition)
+    float acc = 0.0;
+    for (int i=0; i<6; i++){
+      float ph = float(i) * 1.0471975 + uTime*0.3;
+      float k = 6.0 + float(i)*1.7;
+      acc += sin(uv.x*k + ph) * cos(uv.y*k - ph*1.3);
+    }
+    acc /= 6.0;
+    // mid-bloom around the KNIFE-6 16.5 midpoint
+    float v = 0.5 + 0.5*acc;
+    v = pow(v, 0.85);
+    outC = vec4(v, v, v, 1.0);
+    return;
+  }
+
+  /* ── camera ── */
+  float t = uTime + uSeedX*0.0001;
+  float wob = uWob;
+  int depth = int(uRec + 0.5);
+  int subj = uSubj;
+
+  vec3 ro = vec3(0.0, 0.0, 2.4);
+  vec3 rd = normalize(vec3(uv, -1.4));
+
+  // slow yaw on Show subject
+  if (subj == 2){
+    float a = uTime*0.25;
+    float c = cos(a), s = sin(a);
+    ro.xz = mat2(c,-s,s,c)*ro.xz;
+    rd.xz = mat2(c,-s,s,c)*rd.xz;
+  }
+
+  vec3 lDir = normalize(vec3(0.55, 0.85, 0.6));
+
+  /* ── primary trace ── */
+  vec3 hp, hn; bool hit;
+  float td = trace(ro, rd, t, wob, depth, subj, hp, hn, hit);
+
+  float lum = 0.0;
+
+  if (hit){
+    vec3 v = -rd;
+    float rough = mix(uRou*0.6, 0.45, 1.0 - uFlat); // softer when flatness drops
+    lum = shade(hp, hn, v, lDir, rough);
+
+    /* ── 3-bounce recursive reflection (Mode H purity) ──
+       Reflect, march, accumulate, weight by Fresnel-ish term.
+       In Mode A we still trace one bounce so the H↔A blend doesn't
+       collapse to a flat shade — but bounce energy is dampened by
+       roughness which Mode A inflates. */
+    vec3 ro2 = hp + hn*0.002;
+    vec3 rd2 = reflect(rd, hn);
+    vec3 hp2, hn2; bool hit2;
+    trace(ro2, rd2, t, wob, depth, subj, hp2, hn2, hit2);
+    float lum2 = 0.0;
+    if (hit2){
+      lum2 = shade(hp2, hn2, -rd2, lDir, rough);
+      vec3 ro3 = hp2 + hn2*0.002;
+      vec3 rd3 = reflect(rd2, hn2);
+      vec3 hp3, hn3; bool hit3;
+      trace(ro3, rd3, t, wob, depth, subj, hp3, hn3, hit3);
+      float lum3 = 0.0;
+      if (hit3){
+        lum3 = shade(hp3, hn3, -rd3, lDir, rough);
+        vec3 ro4 = hp3 + hn3*0.002;
+        vec3 rd4 = reflect(rd3, hn3);
+        vec3 hp4, hn4; bool hit4;
+        trace(ro4, rd4, t, wob, depth, subj, hp4, hn4, hit4);
+        if (hit4) lum3 += shade(hp4, hn4, -rd4, lDir, rough)*0.4;
+      }
+      lum2 += lum3*0.55;
+    }
+    // Fresnel-ish weight; lower roughness lets more reflection through
+    float F = pow(1.0 - max(dot(hn, v), 0.0), 3.0);
+    F = mix(0.04, 0.95, F);
+    lum = mix(lum, lum2, F * (1.0 - rough*0.5));
+  } else {
+    // background — soft vertical falloff so silhouette breathes
+    lum = 0.06 + 0.10*smoothstep(-0.6, 0.6, -uv.y);
+  }
+
+  /* ── Mode A overlay ── add 6-phase superposition glow when Beauty>0.
+     This is the pre-dither blend: we sum the honest grayscale before
+     the dither stage, so Floyd/Atkinson see a real continuum.        */
+  if (uBeauty > 0.0){
+    float acc = 0.0;
+    for (int i=0; i<6; i++){
+      float ph = float(i)*1.0471975 + uTime*0.3;
+      float k = 5.0 + float(i)*1.3;
+      acc += sin(uv.x*k + ph) * cos(uv.y*k - ph*1.3);
+    }
+    acc = 0.5 + 0.5*(acc/6.0);
+    lum = mix(lum, lum*0.7 + acc*0.5, uBeauty);
+  }
+
+  // tone curve
+  lum = clamp(lum, 0.0, 1.0);
+  lum = pow(lum, 0.95);
+
+  outC = vec4(lum, lum, lum, 1.0);
+}`;
+
+/* Pass 2 — Bayer / threshold dither (cold path).
+   Floyd-Steinberg & Atkinson are done on CPU because they're serial. */
+const FS_DITHER = `#version 300 es
+precision highp float;
+out vec4 outC;
+uniform sampler2D uTex;
+uniform vec2 uRes;
+uniform int uMode;   // 0 bayer8, 1 bayer4, 2 threshold
+
+const float B8[64] = float[64](
+   0.,32., 8.,40., 2.,34.,10.,42.,
+  48.,16.,56.,24.,50.,18.,58.,26.,
+  12.,44., 4.,36.,14.,46., 6.,38.,
+  60.,28.,52.,20.,62.,30.,54.,22.,
+   3.,35.,11.,43., 1.,33., 9.,41.,
+  51.,19.,59.,27.,49.,17.,57.,25.,
+  15.,47., 7.,39.,13.,45., 5.,37.,
+  63.,31.,55.,23.,61.,29.,53.,21.
+);
+const float B4[16] = float[16](
+   0., 8., 2.,10.,
+  12., 4.,14., 6.,
+   3.,11., 1., 9.,
+  15., 7.,13., 5.
+);
+
+void main(){
+  vec2 fc = gl_FragCoord.xy;
+  float v = texture(uTex, fc/uRes).r;
+  float thr = 0.5;
+  if (uMode == 0){
+    int x = int(mod(fc.x, 8.0));
+    int y = int(mod(fc.y, 8.0));
+    thr = (B8[y*8+x] + 0.5) / 64.0;
+  } else if (uMode == 1){
+    int x = int(mod(fc.x, 4.0));
+    int y = int(mod(fc.y, 4.0));
+    thr = (B4[y*4+x] + 0.5) / 16.0;
+  }
+  float bit = step(thr, v);
+  outC = vec4(bit, bit, bit, 1.0);
+}`;
+
+/* ─── GL plumbing ──────────────────────────────────────────────────── */
+
+function compile(type, src){
+  const s = gl.createShader(type);
+  gl.shaderSource(s, src); gl.compileShader(s);
+  if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) {
+    console.error(gl.getShaderInfoLog(s)); throw new Error('shader');
+  }
+  return s;
+}
+function link(vs, fs){
+  const p = gl.createProgram();
+  gl.attachShader(p, vs); gl.attachShader(p, fs); gl.linkProgram(p);
+  if (!gl.getProgramParameter(p, gl.LINK_STATUS)) {
+    console.error(gl.getProgramInfoLog(p)); throw new Error('link');
+  }
+  return p;
+}
+
+const vs = compile(gl.VERTEX_SHADER, VSRC);
+const fsRender = compile(gl.FRAGMENT_SHADER, FS_RENDER);
+const fsDither = compile(gl.FRAGMENT_SHADER, FS_DITHER);
+const progRender = link(vs, fsRender);
+const progDither = link(vs, fsDither);
+
+const vbo = gl.createBuffer();
+gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
+gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, 1,1]), gl.STATIC_DRAW);
+
+function bindQuad(prog){
+  const loc = gl.getAttribLocation(prog, 'p');
+  gl.enableVertexAttribArray(loc);
+  gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+}
+
+/* Offscreen FBO for the grayscale buffer */
+const tex = gl.createTexture();
+gl.bindTexture(gl.TEXTURE_2D, tex);
+gl.texImage2D(gl.TEXTURE_2D, 0, gl.R8, W, H, 0, gl.RED, gl.UNSIGNED_BYTE, null);
+gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+const fbo = gl.createFramebuffer();
+gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tex, 0);
+gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+
+/* ─── state ───────────────────────────────────────────────────────── */
+const state = {
+  beauty: 0, rec: 4, walk: 0.5, wob: 0, rou: 0.02, flat: 1.0,
+  pounded: false, subj: 0, dith: 'bayer8',
+  seed: '', frame: 0, t0: performance.now(), lastT: performance.now(),
+  fpsAcc: 0, fpsN: 0,
+};
+
+function newSeed(){
+  const bytes = crypto.getRandomValues(new Uint8Array(8));
+  state.seed = 'blip_' + [...bytes].map(b=>b.toString(16).padStart(2,'0')).join('');
+  state.frame = 0;
+  document.getElementById('seedBox').textContent = state.seed;
+  log('seed', state.seed.slice(5,13)+'…');
+}
+function logCount(){ document.getElementById('logCount').textContent = String(logs.length); }
+const logs = [];
+function log(tag, msg){
+  const ln = document.createElement('div');
+  ln.className = 'ln';
+  ln.innerHTML = `<span class="t">${tag}</span><span>${msg}</span>`;
+  const lg = document.getElementById('log');
+  lg.prepend(ln);
+  logs.unshift({t:Date.now(),tag,msg});
+  if (logs.length > 64){ logs.pop(); lg.lastChild?.remove(); }
+  logCount();
+}
+
+/* ─── CPU dither (Floyd-Steinberg & Atkinson) ─────────────────────── */
+function readGrayBuffer(){
+  // read R8 from FBO into Uint8Array
+  gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+  const buf = new Uint8Array(W*H*4);
+  // R8 isn't readable as RED on all drivers; read RGBA-equivalent from a temp by
+  // re-rendering to RGBA. Simpler: rebind tex as RGBA8 — but we already have R8.
+  // Workaround: blit via a tiny program that copies R into RGBA.
+  // For brevity, we re-run render targeting default canvas not used here — instead
+  // use readPixels with FORMAT=RGBA on R8 (some drivers allow). If they don't,
+  // fallthrough to a copy program.
+  try {
+    gl.readPixels(0,0,W,H,gl.RGBA, gl.UNSIGNED_BYTE, buf);
+  } catch(e){
+    // fallback path: re-bind as RGBA framebuffer (omitted for size)
+  }
+  const g = new Uint8ClampedArray(W*H);
+  for (let i=0,j=0;i<g.length;i++,j+=4) g[i] = buf[j];
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  return g;
+}
+
+function ditherFloyd(g){
+  const out = new Uint8ClampedArray(W*H);
+  const f = new Float32Array(g.length);
+  for (let i=0;i<g.length;i++) f[i] = g[i];
+  for (let y=0; y<H; y++){
+    for (let x=0; x<W; x++){
+      const i = y*W+x;
+      const old = f[i];
+      const nw = old < 128 ? 0 : 255;
+      out[i] = nw;
+      const err = old - nw;
+      // FS weights: 7/16 right, 3/16 below-left, 5/16 below, 1/16 below-right
+      if (x+1 < W)              f[i+1]      += err*7/16;
+      if (x>0 && y+1<H)         f[i+W-1]    += err*3/16;
+      if (y+1<H)                f[i+W]      += err*5/16;
+      if (x+1<W && y+1<H)       f[i+W+1]    += err*1/16;
+    }
+  }
+  return out;
+}
+
+function ditherAtkinson(g){
+  const out = new Uint8ClampedArray(W*H);
+  const f = new Float32Array(g.length);
+  for (let i=0;i<g.length;i++) f[i] = g[i];
+  for (let y=0; y<H; y++){
+    for (let x=0; x<W; x++){
+      const i = y*W+x;
+      const old = f[i];
+      const nw = old < 128 ? 0 : 255;
+      out[i] = nw;
+      const err = (old - nw) / 8; // Atkinson loses 1/4 of error — characteristic luminance lift
+      if (x+1<W)            f[i+1]   += err;
+      if (x+2<W)            f[i+2]   += err;
+      if (x>0 && y+1<H)     f[i+W-1] += err;
+      if (y+1<H)            f[i+W]   += err;
+      if (x+1<W && y+1<H)   f[i+W+1] += err;
+      if (y+2<H)            f[i+2*W] += err;
+    }
+  }
+  return out;
+}
+
+function blitGrayToCanvas(bits){
+  // Paint 1-bit result back via a 2D context overlay — but we want crispness.
+  // We'll write to a temporary 2D canvas and draw into a separate <canvas>... or
+  // simpler: present via readPixels-like buffer back to GPU. For minimum code,
+  // create a one-off ImageData and putImageData onto cvs through 2d ctx.
+  const ctx = cvs.getContext('2d') || (function(){
+    // can't have both 2d and webgl on the same canvas. Use a sibling.
+    return null;
+  })();
+  // We do indeed have webgl on cvs, so we can't 2d. Use a hidden 2d canvas:
+  if (!cvs._sib){
+    const sib = document.createElement('canvas');
+    sib.width = W; sib.height = H;
+    sib.style.cssText = 'image-rendering:pixelated;width:'+cvs.style.width+';height:'+cvs.style.height;
+    cvs.parentNode.appendChild(sib);
+    sib.style.position='absolute';
+    cvs._sib = sib;
+    // overlay it
+    sib.style.left = cvs.offsetLeft+'px';
+    sib.style.top = cvs.offsetTop+'px';
+  }
+  // simpler: replace cvs with sibling for organic dither modes
+  const sib = cvs._sib;
+  const sctx = sib.getContext('2d');
+  const id = sctx.createImageData(W,H);
+  for (let i=0,j=0;i<bits.length;i++,j+=4){
+    id.data[j]=id.data[j+1]=id.data[j+2]=bits[i]; id.data[j+3]=255;
+  }
+  sctx.putImageData(id, 0, 0);
+  cvs.classList.add('hidden');
+  sib.style.display = 'block';
+}
+function showGLCanvas(){
+  cvs.classList.remove('hidden');
+  if (cvs._sib) cvs._sib.style.display='none';
+}
+
+/* ─── render loop ─────────────────────────────────────────────────── */
+
+function setUniforms(prog){
+  const u = (n)=>gl.getUniformLocation(prog,n);
+  gl.uniform2f(u('uRes'), W, H);
+  const t = (performance.now() - state.t0)/1000;
+  gl.uniform1f(u('uTime'), t);
+  gl.uniform1f(u('uBeauty'), state.beauty);
+  gl.uniform1f(u('uRec'), state.rec);
+  gl.uniform1f(u('uWalk'), state.walk);
+  gl.uniform1f(u('uWob'), state.wob * (1.0 - state.flat) * 1.0); // wobble silenced when flat
+  gl.uniform1f(u('uRou'), state.rou);
+  gl.uniform1f(u('uFlat'), state.flat);
+  // subject map
+  const sMap = {hyperion:0, flay:1, show:2, arc:3, phase:4};
+  gl.uniform1i(u('uSubj'), sMap[document.getElementById('subj').value] ?? 0);
+  // seed → drift the camera by tiny amount per seed so reseeding visibly changes frame
+  let sx=0, sy=0;
+  for (let i=0;i<state.seed.length;i++){ sx = (sx*31 + state.seed.charCodeAt(i))|0; sy = (sy*17 + state.seed.charCodeAt(i)*3)|0; }
+  gl.uniform1f(u('uSeedX'), sx);
+  gl.uniform1f(u('uSeedY'), sy);
+}
+
+function render(){
+  // Pass 1 — render to FBO (R8 grayscale)
+  gl.bindFramebuffer(gl.FRAMEBUFFER, fbo);
+  gl.viewport(0,0,W,H);
+  gl.useProgram(progRender);
+  bindQuad(progRender);
+  setUniforms(progRender);
+  gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+
+  // Pass 2 — dither
+  const isOrganic = (state.dith === 'floyd' || state.dith === 'atkin');
+  if (!isOrganic){
+    showGLCanvas();
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.viewport(0,0,W,H);
+    gl.useProgram(progDither);
+    bindQuad(progDither);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    gl.uniform1i(gl.getUniformLocation(progDither,'uTex'), 0);
+    gl.uniform2f(gl.getUniformLocation(progDither,'uRes'), W, H);
+    const m = state.dith === 'bayer8' ? 0 : state.dith === 'bayer4' ? 1 : 2;
+    gl.uniform1i(gl.getUniformLocation(progDither,'uMode'), m);
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+  } else {
+    // CPU dither path — read R, run FS or Atkinson, blit
+    const g = readGrayBuffer();
+    const bits = (state.dith === 'floyd') ? ditherFloyd(g) : ditherAtkinson(g);
+    blitGrayToCanvas(bits);
+  }
+
+  // telemetry
+  state.frame++;
+  document.getElementById('frameV').textContent = 'f' + String(state.frame).padStart(4,'0');
+  const now = performance.now();
+  const dt = now - state.lastT;
+  state.lastT = now;
+  state.fpsAcc += 1000/dt; state.fpsN++;
+  if (state.fpsN >= 30){
+    document.getElementById('fpsV').textContent = (state.fpsAcc/state.fpsN).toFixed(0)+' fps';
+    state.fpsAcc = 0; state.fpsN = 0;
+    // approximate B/W ratio every ~30 frames
+    try {
+      const px = isOrganic ? null : (function(){
+        const buf = new Uint8Array(W*H*4);
+        gl.readPixels(0,0,W,H,gl.RGBA,gl.UNSIGNED_BYTE,buf);
+        let b=0,w=0; for (let i=0;i<buf.length;i+=4){ if (buf[i]>127) w++; else b++; }
+        return [b,w];
+      })();
+      if (px){
+        document.getElementById('blkT').textContent = px[0].toLocaleString();
+        document.getElementById('whtT').textContent = px[1].toLocaleString();
+      }
+    } catch(e){}
+  }
+
+  document.getElementById('flatT').textContent = state.flat.toFixed(3);
+  document.getElementById('pitT').textContent  = (0.5 + (state.beauty>0?0.02*Math.sin(performance.now()/700):0)).toFixed(3);
+  document.getElementById('walkT').textContent = (state.walk*32.5).toFixed(1)+'/32.5';
+  document.getElementById('kifsT').textContent = state.rec.toString();
+  document.getElementById('bncT').textContent  = '3';
+
+  requestAnimationFrame(render);
+}
+
+/* ─── controls ────────────────────────────────────────────────────── */
+function bindRange(id, key, fmt, scale=1){
+  const el = document.getElementById(id);
+  const v  = document.getElementById(id+'V') || document.getElementById(key+'V');
+  el.addEventListener('input', ()=>{
+    state[key] = el.value/scale;
+    if (v) v.textContent = fmt(state[key]);
+    if (key==='wob' && state.pounded && el.value>0){ /* silently ignored */ }
+  });
+}
+bindRange('beauty','beauty', v=>String(Math.round(v*100)).padStart(3,'0'), 100);
+bindRange('rec','rec', v=>String(Math.round(v)));
+bindRange('walk','walk', v=>v.toFixed(2), 100);
+bindRange('wob','wob', v=>v.toFixed(3), 100);
+bindRange('rou','rou', v=>(v*0.5).toFixed(3), 100);
+
+document.getElementById('btnH').addEventListener('click', ()=>{
+  state.beauty = 0; state.flat = 1.0; state.wob = 0; state.rou = 0.02;
+  document.getElementById('beauty').value = 0;
+  document.getElementById('beautyV').textContent = '000';
+  document.getElementById('wob').value = 0;
+  document.getElementById('wobV').textContent = '0.000';
+  document.getElementById('rou').value = 2;
+  document.getElementById('rouV').textContent = '0.010';
+  document.getElementById('modeReadout').textContent = 'H · COLD';
+  log('mode','H · cold hyperrealism');
+});
+document.getElementById('btnA').addEventListener('click', ()=>{
+  state.beauty = 0.7; state.flat = 0.97; state.wob = 0.4; state.rou = 0.4;
+  document.getElementById('beauty').value = 70;
+  document.getElementById('beautyV').textContent = '070';
+  document.getElementById('wob').value = 40;
+  document.getElementById('wobV').textContent = '0.400';
+  document.getElementById('rou').value = 80;
+  document.getElementById('rouV').textContent = '0.400';
+  document.getElementById('modeReadout').textContent = 'A · ABSTRACT';
+  log('mode','A · abstract beauty');
+});
+
+document.getElementById('pound').addEventListener('click', ()=>{
+  state.pounded = !state.pounded;
+  if (state.pounded){
+    state.flat = 1.0; state.wob = 0;
+    document.getElementById('wob').value = 0;
+    document.getElementById('wobV').textContent = '0.000';
+    document.getElementById('poundS').textContent = 'flat=1.000 LOCK';
+    document.getElementById('pound').classList.add('hot');
+    document.getElementById('pound').classList.remove('warn');
+    log('pound','flat=1.000 wobble=0 LOCK');
+  } else {
+    document.getElementById('poundS').textContent = 'flat=auto';
+    document.getElementById('pound').classList.remove('hot');
+    document.getElementById('pound').classList.add('warn');
+    log('pound','release');
+  }
+});
+
+document.getElementById('newSeed').addEventListener('click', newSeed);
+document.getElementById('copySeed').addEventListener('click', ()=>{
+  navigator.clipboard.writeText(state.seed);
+  log('copy', state.seed);
+});
+document.getElementById('subj').addEventListener('change', e=>log('subj', e.target.value));
+document.getElementById('dith').addEventListener('change', e=>{
+  state.dith = e.target.value;
+  log('dither', e.target.value);
+});
+
+/* Export — read whichever surface is currently visible (GL canvas or sibling 2D) */
+document.getElementById('export').addEventListener('click', ()=>{
+  let src;
+  if (cvs._sib && !cvs.classList.contains('hidden') === false){
+    src = cvs._sib; // organic dither path
+  } else {
+    src = cvs;
+  }
+  // Force a fresh frame to ensure preserveDrawingBuffer is current
+  src.toBlob(blob=>{
+    const a = document.createElement('a');
+    a.download = `hyperion_${state.seed}_f${String(state.frame).padStart(4,'0')}.png`;
+    a.href = URL.createObjectURL(blob);
+    a.click();
+    log('export', a.download);
+  }, 'image/png');
+});
+
+/* boot */
+newSeed();
+log('boot', 'hyperion online · webgl2 · 480² → 720² ×1.5');
+log('lin',  'lineage: knife-6 → witness atelier → hyperion');
+render();
+
+/* ═══════════════════════════════════════════════════════════════════
+   GLYPH FORGE · 8-bit indexed PNG generator
+   - Up to 4 ASCII letters, each = 1 byte
+   - Bytes seed: palette rotation, glyph geometry, field modulation
+   - Hand-built PNG: signature + IHDR + PLTE + tRNS + IDAT + IEND
+   - 256-entry palette dominated by purple (graded violet ramp + accents)
+   - 64×64 image — small, dense, witness-style
+   ═══════════════════════════════════════════════════════════════════ */
+(function(){
+  const SIZE = 64;
+
+  /* CRC-32 — required for every PNG chunk + final IEND */
+  const CRC_TABLE = (function(){
+    const t = new Uint32Array(256);
+    for (let n=0; n<256; n++){
+      let c = n;
+      for (let k=0; k<8; k++) c = (c & 1) ? (0xedb88320 ^ (c>>>1)) : (c>>>1);
+      t[n] = c >>> 0;
+    }
+    return t;
+  })();
+  function crc32(bytes){
+    let c = 0xffffffff;
+    for (let i=0; i<bytes.length; i++) c = CRC_TABLE[(c ^ bytes[i]) & 0xff] ^ (c >>> 8);
+    return (c ^ 0xffffffff) >>> 0;
+  }
+
+  /* Adler-32 — required by zlib stream wrapping IDAT */
+  function adler32(bytes){
+    let a = 1, b = 0;
+    for (let i=0; i<bytes.length; i++){
+      a = (a + bytes[i]) % 65521;
+      b = (b + a) % 65521;
+    }
+    return ((b << 16) | a) >>> 0;
+  }
+
+  /* Wrap raw bytes in a non-compressed zlib stream (deflate stored blocks).
+     Keeps the encoder small — no actual deflate needed. Browser decoders
+     accept stored blocks fine. Each block: 1-byte header (BFINAL|BTYPE=00),
+     2-byte LEN little-endian, 2-byte ~LEN, then the literal bytes.        */
+  function zlibStored(data){
+    const MAX = 65535;
+    const chunks = [];
+    chunks.push(0x78, 0x01); // zlib header: deflate, no compression
+    let off = 0;
+    while (off < data.length){
+      const len = Math.min(MAX, data.length - off);
+      const last = (off + len === data.length) ? 1 : 0;
+      chunks.push(last);                       // BFINAL bit, BTYPE=00 stored
+      chunks.push(len & 0xff, (len >>> 8) & 0xff);
+      const nlen = (~len) & 0xffff;
+      chunks.push(nlen & 0xff, (nlen >>> 8) & 0xff);
+      for (let i=0; i<len; i++) chunks.push(data[off+i]);
+      off += len;
+    }
+    const ad = adler32(data);
+    chunks.push((ad>>>24)&0xff, (ad>>>16)&0xff, (ad>>>8)&0xff, ad&0xff);
+    return new Uint8Array(chunks);
+  }
+
+  function chunk(type, data){
+    const len = data.length;
+    const out = new Uint8Array(8 + len + 4);
+    const dv = new DataView(out.buffer);
+    dv.setUint32(0, len);
+    out[4] = type.charCodeAt(0);
+    out[5] = type.charCodeAt(1);
+    out[6] = type.charCodeAt(2);
+    out[7] = type.charCodeAt(3);
+    out.set(data, 8);
+    const crcInput = new Uint8Array(4 + len);
+    crcInput.set(out.subarray(4, 8 + len));
+    dv.setUint32(8 + len, crc32(crcInput));
+    return out;
+  }
+
+  function concat(arrs){
+    let total = 0;
+    for (const a of arrs) total += a.length;
+    const out = new Uint8Array(total);
+    let off = 0;
+    for (const a of arrs){ out.set(a, off); off += a.length; }
+    return out;
+  }
+
+  /* Build the 256-entry purple-dominant palette.
+     - Indices 0..191: violet ramp from near-black to near-white, biased to purple
+     - Indices 192..223: cool accents (deep indigo, magenta lift)
+     - Indices 224..247: hot accents (signal amber/red — used very sparingly)
+     - Indices 248..255: pure ramp (black → white) for glyph silhouette
+     Letter bytes rotate the ramp slightly so different words = different palettes. */
+  function buildPalette(rotation){
+    const pal = new Uint8Array(256 * 3);
+    function set(i, r, g, b){ pal[i*3]=r; pal[i*3+1]=g; pal[i*3+2]=b; }
+
+    // 0..191 — violet ramp
+    for (let i=0; i<192; i++){
+      const t = i / 191;
+      // base violet curve: r rises, b stays high, g stays low
+      let r = Math.round( 14 + t * 220 );
+      let g = Math.round(  4 + t * 140 );
+      let b = Math.round( 30 + t * 220 );
+      // rotation tilt — letters skew the hue toward red-violet or blue-violet
+      const tilt = (rotation % 32) - 16;     // -16..+15
+      r = Math.max(0, Math.min(255, r + tilt));
+      b = Math.max(0, Math.min(255, b - Math.floor(tilt/2)));
+      set(i, r, g, b);
+    }
+    // 192..223 — cool accent (deep indigo)
+    for (let i=192; i<224; i++){
+      const t = (i-192)/31;
+      set(i, Math.round(20 + t*60), Math.round(0 + t*30), Math.round(80 + t*150));
+    }
+    // 224..247 — hot accent (signal amber, used as razor highlights)
+    for (let i=224; i<248; i++){
+      const t = (i-224)/23;
+      set(i, Math.round(180 + t*75), Math.round(80 + t*100), Math.round(20 + t*30));
+    }
+    // 248..255 — pure ramp
+    for (let i=248; i<256; i++){
+      const v = Math.round((i-248)/7 * 255);
+      set(i, v, v, v);
+    }
+    return pal;
+  }
+
+  /* Render the glyph image to an index buffer.
+     The 4 letter bytes drive everything:
+       b0 = palette rotation (already applied)
+       b1 = base radial frequency
+       b2 = angular twist
+       b3 = letter quadrant emphasis
+     Plus: each letter is rasterized as its capital glyph in one quadrant, so
+     the WORD is literally inside the field. 4 letters → 4 quadrants. Fewer
+     letters tile the available quadrants from top-left clockwise.            */
+  function renderGlyph(letters){
+    // pad bytes — empty letters become a derived hash so palette still varies
+    const bytes = [0,0,0,0];
+    for (let i=0; i<4; i++){
+      bytes[i] = i < letters.length ? letters.charCodeAt(i) & 0xff : ((letters.charCodeAt(i % letters.length) * 17 + i*53) & 0xff);
+    }
+    const [b0, b1, b2, b3] = bytes;
+
+    const idx = new Uint8Array(SIZE * SIZE);
+
+    // ── background field: KIFS-style fold of a sin/cos lattice, palette-mapped
+    const cx = SIZE/2, cy = SIZE/2;
+    const fr = 0.04 + (b1 / 255) * 0.22;        // radial frequency
+    const tw = (b2 / 255) * 6.28;                // twist
+    for (let y=0; y<SIZE; y++){
+      for (let x=0; x<SIZE; x++){
+        const dx = x - cx, dy = y - cy;
+        const r = Math.sqrt(dx*dx + dy*dy);
+        const a = Math.atan2(dy, dx) + tw * (r/SIZE);
+        // fold space (mirror the angular coord — KNIFE-6 fold lineage)
+        const af = Math.abs(((a / Math.PI) % 1));
+        const v = 0.5 + 0.5 * Math.sin(r * fr * Math.PI + af * 6.28 + b3 * 0.025);
+        // map to lower 192 indices (violet ramp), with a touch of indigo accent at edges
+        let i = Math.floor(v * 191);
+        if (r > SIZE * 0.46) i = 192 + Math.floor(((r - SIZE*0.46) / (SIZE*0.07)) * 31);
+        if (i > 255) i = 255;
+        if (i < 0) i = 0;
+        idx[y * SIZE + x] = i;
+      }
+    }
+
+    // ── letter glyphs: one capital per quadrant, drawn via temp canvas
+    if (letters.length > 0){
+      const tmp = document.createElement('canvas');
+      tmp.width = SIZE; tmp.height = SIZE;
+      const tctx = tmp.getContext('2d');
+      tctx.fillStyle = '#000';
+      tctx.fillRect(0, 0, SIZE, SIZE);
+      tctx.fillStyle = '#fff';
+      tctx.textAlign = 'center';
+      tctx.textBaseline = 'middle';
+      // quadrant centers
+      const quads = [[16,16],[48,16],[16,48],[48,48]];
+      // if 1 letter → center it big; 2 → top row; 3 → top row + bottom-left; 4 → all
+      if (letters.length === 1){
+        tctx.font = 'bold 44px "JetBrains Mono", monospace';
+        tctx.fillText(letters[0].toUpperCase(), 32, 34);
+      } else if (letters.length === 2){
+        tctx.font = 'bold 30px "JetBrains Mono", monospace';
+        tctx.fillText(letters[0].toUpperCase(), 18, 34);
+        tctx.fillText(letters[1].toUpperCase(), 46, 34);
+      } else {
+        tctx.font = 'bold 22px "JetBrains Mono", monospace';
+        for (let i=0; i<letters.length; i++){
+          tctx.fillText(letters[i].toUpperCase(), quads[i][0], quads[i][1]+2);
+        }
+      }
+      const img = tctx.getImageData(0, 0, SIZE, SIZE).data;
+      // composite glyph: where the letter is bright, push toward bone-white
+      // (high palette indices) with a thin amber edge
+      for (let p=0; p<SIZE*SIZE; p++){
+        const lum = img[p*4]; // 0 or 255 (with antialiased edges)
+        if (lum > 200){
+          idx[p] = 248 + Math.floor((lum - 200) / 7); // 248..255 ramp
+        } else if (lum > 30){
+          idx[p] = 224 + Math.floor((lum - 30) / 8); // amber edge
+          if (idx[p] > 247) idx[p] = 247;
+        }
+      }
+    }
+
+    return idx;
+  }
+
+  /* Filter byte 0 (None) per scanline + raw pixel indices. */
+  function applyFilter(idx){
+    const out = new Uint8Array(SIZE * (SIZE + 1));
+    for (let y=0; y<SIZE; y++){
+      out[y * (SIZE+1)] = 0; // filter type None
+      for (let x=0; x<SIZE; x++){
+        out[y * (SIZE+1) + 1 + x] = idx[y*SIZE + x];
+      }
+    }
+    return out;
+  }
+
+  function buildPNG(letters){
+    const b0 = letters.length ? letters.charCodeAt(0) & 0xff : 0x55;
+    const palette = buildPalette(b0);
+    const idx = renderGlyph(letters);
+
+    // PNG signature
+    const sig = new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10]);
+
+    // IHDR: width, height, bitdepth=8, colortype=3 (indexed), then 0,0,0
+    const ihdr = new Uint8Array(13);
+    const dv = new DataView(ihdr.buffer);
+    dv.setUint32(0, SIZE);     // width
+    dv.setUint32(4, SIZE);     // height
+    ihdr[8] = 8;               // bit depth
+    ihdr[9] = 3;               // color type: indexed
+    ihdr[10] = 0;              // compression
+    ihdr[11] = 0;              // filter
+    ihdr[12] = 0;              // interlace
+
+    const filtered = applyFilter(idx);
+    const compressed = zlibStored(filtered);
+
+    return concat([
+      sig,
+      chunk('IHDR', ihdr),
+      chunk('PLTE', palette),
+      chunk('IDAT', compressed),
+      chunk('IEND', new Uint8Array(0)),
+    ]);
+  }
+
+  /* ── UI wiring ── */
+  const inp = document.getElementById('glyphIn');
+  const lenV = document.getElementById('glyphLen');
+  const bytesV = document.getElementById('glyphBytes');
+  const btn = document.getElementById('glyphMint');
+
+  function sanitize(s){
+    return s.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 4);
+  }
+  function update(){
+    const v = sanitize(inp.value);
+    if (v !== inp.value) inp.value = v;
+    lenV.textContent = `${v.length}/4`;
+    if (v.length === 0){
+      bytesV.innerHTML = '<span style="color:var(--violet-mid)">— — — —</span>';
+      btn.disabled = true;
+    } else {
+      const parts = [];
+      for (let i=0; i<4; i++){
+        if (i < v.length){
+          const b = v.charCodeAt(i).toString(16).padStart(2,'0').toUpperCase();
+          parts.push(`<span class="b">0x${b}</span>`);
+        } else {
+          parts.push('<span style="color:var(--violet-mid)">——</span>');
+        }
+      }
+      bytesV.innerHTML = parts.join('  ');
+      btn.disabled = false;
+    }
+  }
+  inp.addEventListener('input', update);
+  update();
+
+  btn.addEventListener('click', ()=>{
+    const v = sanitize(inp.value);
+    if (!v) return;
+    const png = buildPNG(v);
+    const blob = new Blob([png], {type:'image/png'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.download = `glyph_${v.toLowerCase()}.png`;
+    a.href = url;
+    a.click();
+    setTimeout(()=>URL.revokeObjectURL(url), 1000);
+    log('glyph', `mint ${v} · ${v.length}B · ${png.length}B png`);
+  });
+})();
+</script>
+</body>
+</html>

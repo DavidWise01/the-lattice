@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Regular Expressions</title>
+<style>
+  :root{--bg:#08080f;--bg2:#0c0c18;--panel:#10101e;--panel2:#13131f;--line:#1f1f33;--line2:#2a2a42;--ink:#e7e7f0;--dim:#9a9ab5;--faint:#5e5e7a;--teal:#2dd4bf;--teal-d:#14b8a6;--teal-dd:#0d9488;--cyan:#5eead4;--amber:#fbbf24;--violet:#a78bfa;--blue:#60a5fa;--rose:#fb7185;--green:#86efac;}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:radial-gradient(1150px 800px at 80% -15%,rgba(45,212,191,.08),transparent 58%),radial-gradient(900px 640px at -8% 106%,rgba(96,165,250,.04),transparent 55%),var(--bg);color:var(--ink);font-family:'IBM Plex Sans',sans-serif;font-weight:300;min-height:100vh;padding:28px 22px 56px;-webkit-font-smoothing:antialiased}
+  .shell{max-width:1160px;margin:0 auto}
+  .kicker{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.4em;text-transform:uppercase;color:var(--teal);margin-bottom:12px}
+  h1{font-family:'Spectral',serif;font-weight:300;font-size:clamp(26px,5vw,44px);letter-spacing:-.02em;line-height:1.04}
+  h1 em{font-style:italic;color:var(--teal)}
+  .sub{color:var(--dim);font-size:15px;margin-top:8px;max-width:790px}
+  .tabs{display:flex;gap:8px;margin-top:22px;flex-wrap:wrap}
+  .tab{font-family:'IBM Plex Mono',monospace;font-size:12px;border:1px solid var(--line);border-radius:10px;background:var(--panel);color:var(--dim);padding:10px 15px;cursor:pointer;transition:.15s}
+  .tab:hover{border-color:var(--teal-d)} .tab.on{border-color:var(--teal);color:var(--teal);background:rgba(45,212,191,.08)}
+  .pane{display:none;margin-top:18px}.pane.on{display:block}
+  .layout{display:grid;grid-template-columns:290px minmax(0,1fr);gap:18px;align-items:start}
+  @media(max-width:900px){.layout{grid-template-columns:1fr}}
+  .controls{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px}
+  .sec{font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--faint);margin-bottom:10px}
+  .sec:not(:first-child){margin-top:15px}
+  .btns{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+  .btns button{flex:1;min-width:42px;font-family:'IBM Plex Mono',monospace;font-size:11px;border:1px solid var(--line);border-radius:8px;background:var(--panel2);color:var(--dim);padding:9px 4px;cursor:pointer}
+  .btns button:hover{border-color:var(--teal);color:var(--teal)}
+  .btns button.act{border-color:var(--teal);color:var(--teal);background:rgba(45,212,191,.1)}
+  .relist{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+  .relist button{font-family:'IBM Plex Mono',monospace;font-size:13px;border:1px solid var(--line);border-radius:8px;background:var(--panel2);color:var(--dim);padding:9px 10px;cursor:pointer;text-align:left}
+  .relist button:hover{border-color:var(--teal-d)} .relist button.on{border-color:var(--teal);color:var(--teal);background:rgba(45,212,191,.1)}
+  .stat{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--dim);margin-top:13px;border:1px solid var(--line);border-radius:11px;padding:10px}
+  .stat .r{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px dashed var(--line);gap:8px}
+  .stat .r:last-child{border:0} .stat .k{color:var(--faint)} .stat .v{color:var(--teal);text-align:right}
+  .stat .v.g{color:var(--green)} .stat .v.c{color:var(--cyan)} .stat .v.a{color:var(--amber)} .stat .v.r{color:var(--rose)}
+  .note{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--faint);line-height:1.55;margin-top:10px}
+  code{font-family:'IBM Plex Mono',monospace;color:var(--teal)}
+  .panel{background:#06060c;border:1px solid var(--line);border-radius:16px;position:relative;overflow:hidden;line-height:0}
+  .plabel{position:absolute;top:10px;left:14px;font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--faint);background:rgba(6,6,12,.4);padding:2px 6px;border-radius:4px;z-index:2}
+  canvas{display:block;width:100%;height:auto}
+  .tablewrap{padding:14px}
+  table{width:100%;border-collapse:collapse;font-family:'IBM Plex Mono',monospace;font-size:12px}
+  th{color:var(--faint);font-weight:400;text-align:center;padding:7px 4px;border-bottom:1px solid var(--line);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase}
+  td{text-align:center;padding:7px 4px;border-bottom:1px solid rgba(31,31,51,.5);color:#cfcfe0}
+  td.s{text-align:left;color:var(--teal);padding-left:14px}
+  .yes{color:var(--green)} .no{color:var(--faint)}
+  footer{margin-top:24px;padding-top:22px;border-top:1px solid var(--line);color:var(--faint);font-family:'IBM Plex Mono',monospace;font-size:11.5px;line-height:1.9}
+  footer .seq{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+  footer .seq span{padding:5px 12px;border:1px solid var(--line);border-radius:30px}
+  footer .seq .here{border-color:var(--teal);color:var(--teal)}
+</style>
+</head>
+<body>
+<div class="shell">
+  <div>
+    <div class="kicker">Automata & Formal Languages · Instrument 02 · Regular Expressions</div>
+    <h1>Patterns <em>are</em> machines</h1>
+    <p class="sub">A regular expression and a finite automaton are the same thing wearing different clothes. Thompson's construction wires any pattern into an ε-NFA, gadget by gadget; the subset construction turns that into a DFA. Three notations, one class of languages — the regular ones.</p>
+  </div>
+
+  <div class="tabs">
+    <div class="tab on" data-t="A">Operators</div>
+    <div class="tab" data-t="B">Construction</div>
+    <div class="tab" data-t="C">Matching</div>
+    <div class="tab" data-t="D">Equivalence</div>
+  </div>
+
+  <!-- A -->
+  <div class="pane on" id="paneA">
+    <div class="layout">
+      <div class="controls">
+        <div class="sec">Thompson's gadgets</div>
+        <div class="note">Every regular expression is built from four rules, and each rule is a small NFA gadget with one start and one accepting state, glued together with <code>ε</code>-transitions (taken for free):<br><br>• <b>literal</b> <code>a</code> — one edge labeled a<br>• <b>concatenation</b> <code>RS</code> — link R's accept to S's start<br>• <b>union</b> <code>R|S</code> — branch into both, merge after<br>• <b>star</b> <code>R*</code> — loop back, or skip entirely<br><br>Because each gadget preserves the single-start, single-accept shape, they nest without limit.</div>
+      </div>
+      <div class="panel"><canvas id="cvA" height="430"></canvas><div class="plabel">the four rules</div></div>
+    </div>
+  </div>
+
+  <!-- B -->
+  <div class="pane" id="paneB">
+    <div class="layout">
+      <div class="controls">
+        <div class="sec">Choose a pattern</div>
+        <div class="relist" id="reListB"></div>
+        <div class="stat" id="statB"></div>
+        <div class="note">The pattern is parsed and each operator emits its gadget, placed left to right. <span style="color:var(--teal)">Solid</span> edges consume a symbol; <span style="color:var(--violet)">dashed</span> edges are ε-moves. The whole thing has exactly one start and one accept, however deeply nested.</div>
+      </div>
+      <div class="panel"><canvas id="cvB" height="430"></canvas><div class="plabel" id="bLab">Thompson NFA</div></div>
+    </div>
+  </div>
+
+  <!-- C -->
+  <div class="pane" id="paneC">
+    <div class="layout">
+      <div class="controls">
+        <div class="sec">Pattern</div>
+        <div class="relist" id="reListC"></div>
+        <div class="sec">Build a string</div>
+        <div class="btns" id="cAlpha"></div>
+        <div class="btns"><button id="cStep">step ▸</button><button id="cPlay">play ▶</button><button id="cClear">clear</button><button id="cRand">random</button></div>
+        <div class="stat" id="statC"></div>
+        <div class="note">Run the string through the constructed NFA. After each symbol the active set is closed under ε. Accept if the single accepting state is reachable.</div>
+      </div>
+      <div class="panel"><canvas id="cvC" height="430"></canvas><div class="plabel" id="cLab">matching</div></div>
+    </div>
+  </div>
+
+  <!-- D -->
+  <div class="pane" id="paneD">
+    <div class="layout">
+      <div class="controls">
+        <div class="sec">Pattern</div>
+        <div class="relist" id="reListD"></div>
+        <div class="stat" id="statD"></div>
+        <div class="note">Subset-construct the NFA into a DFA, then test strings against all three forms. The columns always agree — <span style="color:var(--teal)">regex = NFA = DFA</span>, the three faces of a regular language. The DFA is what a real matcher runs: one state, one transition per symbol.</div>
+      </div>
+      <div class="panel"><div class="plabel" id="dLab">three forms, one language</div><div class="tablewrap" id="dTable" style="margin-top:6px"></div></div>
+    </div>
+  </div>
+
+  <footer>
+    <div class="seq">
+      <span>00 primer</span><span>01 finite automata</span><span class="here">02 · regular expressions — you are here</span><span>03 pushdown automata</span><span>04 Turing machines</span><span>05 hierarchy & limits</span>
+    </div>
+    REGULAR EXPRESSIONS · Thompson's construction · NFA matching · regex = NFA = DFA. Verified.
+  </footer>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);const TAU=Math.PI*2;
+/* ---- regex -> AST ---- */
+function parseAST(re){let i=0;const peek=()=>re[i];
+  function atom(){if(peek()==='('){i++;const e=union();i++;return e;}return {t:'lit',c:re[i++]};}
+  function starf(){let f=atom();while(peek()==='*'){i++;f={t:'star',c:f};}return f;}
+  function concat(){let f=starf();while(i<re.length&&peek()!=='|'&&peek()!==')')f={t:'cat',l:f,r:starf()};return f;}
+  function union(){let f=concat();while(peek()==='|'){i++;f={t:'uni',l:f,r:concat()};}return f;}
+  return union();}
+/* ---- layout-aware Thompson ---- */
+let SID=0;function mk(x,y,states){const s={id:SID++,x,y};states.push(s);return s.id;}
+function layout(ast,x,y,states,edges){
+  if(ast.t==='lit'){const s=mk(x,y,states),a=mk(x+1.4,y,states);edges.push({f:s,to:a,c:ast.c});return {s,a,x1:x+1.4};}
+  if(ast.t==='cat'){const f=layout(ast.l,x,y,states,edges);const g=layout(ast.r,f.x1+1.1,y,states,edges);edges.push({f:f.a,to:g.s,c:null});return {s:f.s,a:g.a,x1:g.x1};}
+  if(ast.t==='uni'){const s=mk(x,y,states);const f=layout(ast.l,x+1.1,y-1.5,states,edges);const g=layout(ast.r,x+1.1,y+1.5,states,edges);const ax=Math.max(f.x1,g.x1)+1.1;const a=mk(ax,y,states);edges.push({f:s,to:f.s,c:null},{f:s,to:g.s,c:null},{f:f.a,to:a,c:null},{f:g.a,to:a,c:null});return {s,a,x1:ax};}
+  if(ast.t==='star'){const s=mk(x,y,states);const f=layout(ast.c,x+1.1,y,states,edges);const a=mk(f.x1+1.1,y,states);edges.push({f:s,to:f.s,c:null},{f:s,to:a,c:null},{f:f.a,to:f.s,c:null},{f:f.a,to:a,c:null});return {s,a,x1:f.x1+1.1};}
+}
+function build(re){SID=0;const ast=parseAST(re);const states=[],edges=[];const fr=layout(ast,0,0,states,edges);
+  const pos={};states.forEach(s=>pos[s.id]=s);return {start:fr.s,accept:fr.a,states,edges,pos};}
+function eclose(set,edges){const st=[...set],S=new Set(set);while(st.length){const q=st.pop();for(const e of edges)if(e.f===q&&e.c===null&&!S.has(e.to)){S.add(e.to);st.push(e.to);}}return S;}
+function step(active,ch,edges){const nx=new Set();for(const q of active)for(const e of edges)if(e.f===q&&e.c===ch)nx.add(e.to);return eclose(nx,edges);}
+function match(N,s){let cur=eclose(new Set([N.start]),N.edges);for(const ch of s)cur=step(cur,ch,N.edges);return cur.has(N.accept);}
+function alphaOf(re){const set=new Set();for(const c of re)if(/[a-z0-9]/.test(c))set.add(c);return [...set].sort();}
+/* ---- subset construction ---- */
+function subset(N,alpha){const key=s=>[...s].sort((a,b)=>a-b).join(',');const start=eclose(new Set([N.start]),N.edges);const states=[start],seen={[key(start)]:0},trans={},acc=new Set();let i=0;while(i<states.length){const cur=states[i];if(cur.has(N.accept))acc.add(i);trans[i]={};for(const ch of alpha){const cl=step(cur,ch,N.edges);const k=key(cl);if(!(k in seen)){seen[k]=states.length;states.push(cl);}trans[i][ch]=seen[k];}i++;}return {n:states.length,trans,acc};}
+function dfaRun(D,s){let st=0;for(const c of s){st=D.trans[st][c];}return D.acc.has(st);}
+
+const PRESETS=['(a|b)*','a(b|c)*','ab|ba','(ab)*','(a|b)*abb','a*b*'];
+let RE='(a|b)*';let N=build(RE);
+
+/* ---- node/edge drawing ---- */
+function drawNode(x,p,r,o){o=o||{};const on=o.on,acc=o.acc,st=o.start;x.fillStyle=on?'rgba(45,212,191,.2)':'rgba(16,16,30,.95)';x.strokeStyle=on?'#2dd4bf':(o.dim?'#3a3a52':'#4a4a62');x.lineWidth=on?2.2:1.4;x.beginPath();x.arc(p.x,p.y,r,0,TAU);x.fill();x.stroke();if(acc){x.beginPath();x.arc(p.x,p.y,r-3.5,0,TAU);x.stroke();}}
+function drawEdge(x,a,b,r,c,on){const dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy)||1;const ux=dx/d,uy=dy/d;const sx=a.x+ux*r,sy=a.y+uy*r,ex=b.x-ux*r,ey=b.y-uy*r;
+  const eps=(c===null);const col=on?'#2dd4bf':(eps?'rgba(167,139,250,.55)':'rgba(94,234,212,.7)');
+  const backward=b.x<a.x-0.1, longf=(b.x-a.x)>2.4*38;
+  x.strokeStyle=col;x.lineWidth=on?2:1.4;if(eps)x.setLineDash([4,4]);else x.setLineDash([]);
+  let mx=(sx+ex)/2,my=(sy+ey)/2;
+  if(backward){my-=Math.min(46,18+Math.abs(b.x-a.x)*0.25);}else if(longf){my+=Math.min(50,20+(b.x-a.x)*0.12);}
+  x.beginPath();x.moveTo(sx,sy);if(backward||longf)x.quadraticCurveTo(mx,my,ex,ey);else x.lineTo(ex,ey);x.stroke();x.setLineDash([]);
+  const ang=(backward||longf)?Math.atan2(ey-my,ex-mx):Math.atan2(dy,dx);x.fillStyle=col;x.beginPath();x.moveTo(ex,ey);x.lineTo(ex-8*Math.cos(ang-0.4),ey-8*Math.sin(ang-0.4));x.lineTo(ex-8*Math.cos(ang+0.4),ey-8*Math.sin(ang+0.4));x.fill();
+  const lx=(backward||longf)?mx:(sx+ex)/2,ly=(backward||longf)?my-4:(sy+ey)/2-5;x.fillStyle=eps?'#a78bfa':'#5eead4';x.font="12px 'IBM Plex Mono'";x.textAlign='center';x.fillText(eps?'ε':c,lx,ly);x.textAlign='left';}
+function renderNFA(cv,x,N,active){const W=cv.width,H=cv.height;x.clearRect(0,0,W,H);
+  let minX=1e9,maxX=-1e9,minY=1e9,maxY=-1e9;N.states.forEach(s=>{minX=Math.min(minX,s.x);maxX=Math.max(maxX,s.x);minY=Math.min(minY,s.y);maxY=Math.max(maxY,s.y);});
+  const padX=50,padTop=40,padBot=40;const sx=(W-2*padX)/Math.max(maxX-minX,1);const sy=(H-padTop-padBot)/Math.max(maxY-minY,2.2);const sc=Math.min(sx,sy,64);const r=Math.max(8,Math.min(15,sc*0.26));
+  const P={};N.states.forEach(s=>{P[s.id]={x:padX+(s.x-minX)*sc,y:H/2+(s.y-(minY+maxY)/2)*sc};});
+  // start arrow
+  const st=P[N.start];x.strokeStyle='rgba(130,130,160,.6)';x.lineWidth=1.4;x.beginPath();x.moveTo(st.x-r-20,st.y);x.lineTo(st.x-r,st.y);x.stroke();x.fillStyle='rgba(130,130,160,.7)';x.beginPath();x.moveTo(st.x-r,st.y);x.lineTo(st.x-r-7,st.y-4);x.lineTo(st.x-r-7,st.y+4);x.fill();
+  N.edges.forEach(e=>{const on=active&&active.has(e.f)&&((e.c===null&&active.has(e.to)));drawEdge(x,P[e.f],P[e.to],r,e.c,false);});
+  N.states.forEach(s=>{drawNode(x,P[s.id],r,{on:active&&active.has(s.id),acc:s.id===N.accept,start:s.id===N.start});});
+  return {P,r};}
+
+/* ============ A: gadgets ============ */
+const cvA=$('cvA'),xA=cvA.getContext('2d');
+function drawA(){const x=xA,W=cvA.width,H=cvA.height;x.clearRect(0,0,W,H);const r=16;
+  function nd(cx,cy,acc,on){x.fillStyle=on?'rgba(45,212,191,.18)':'rgba(16,16,30,.95)';x.strokeStyle='#2dd4bf';x.lineWidth=1.5;x.beginPath();x.arc(cx,cy,r,0,TAU);x.fill();x.stroke();if(acc){x.beginPath();x.arc(cx,cy,r-3.5,0,TAU);x.stroke();}}
+  function ar(x1,y1,x2,y2,lab,eps,bend){const col=eps?'#a78bfa':'#5eead4';x.strokeStyle=col;x.lineWidth=1.5;if(eps)x.setLineDash([4,4]);x.beginPath();if(bend){const mx=(x1+x2)/2,my=(y1+y2)/2+bend;x.moveTo(x1,y1);x.quadraticCurveTo(mx,my,x2,y2);}else{x.moveTo(x1,y1);x.lineTo(x2,y2);}x.stroke();x.setLineDash([]);const ang=bend?Math.atan2(y2-((y1+y2)/2+bend),x2-(x1+x2)/2):Math.atan2(y2-y1,x2-x1);x.fillStyle=col;x.beginPath();x.moveTo(x2,y2);x.lineTo(x2-8*Math.cos(ang-0.4),y2-8*Math.sin(ang-0.4));x.lineTo(x2-8*Math.cos(ang+0.4),y2-8*Math.sin(ang+0.4));x.fill();if(lab){x.fillStyle=col;x.font="12px 'IBM Plex Mono'";x.textAlign='center';x.fillText(lab,(x1+x2)/2,bend?(y1+y2)/2+bend-5:(y1+y2)/2-7);x.textAlign='left';}}
+  function title(t,cx,cy){x.fillStyle='#9a9ab5';x.font="13px 'IBM Plex Mono'";x.textAlign='center';x.fillText(t,cx,cy);x.textAlign='left';}
+  const colX=W/2;
+  // literal
+  title('literal  a',W*0.25,32);nd(W*0.16,70);nd(W*0.34,70,true);ar(W*0.16+r,70,W*0.34-r,70,'a',false);
+  // concat
+  title('concatenation  R S',W*0.72,32);x.fillStyle='#5e5e7a';x.font="11px 'IBM Plex Mono'";x.textAlign='center';
+  // draw R box, S box
+  function frag(cx,cy,lab){x.strokeStyle='rgba(94,234,212,.4)';x.lineWidth=1.2;x.setLineDash([3,3]);x.strokeRect(cx-26,cy-18,52,36);x.setLineDash([]);x.fillStyle='#5eead4';x.fillText(lab,cx,cy+4);}
+  frag(W*0.6,70,'R');frag(W*0.84,70,'S');ar(W*0.6+26,70,W*0.84-26,70,'ε',true);x.textAlign='left';
+  // union
+  title('union  R | S',W*0.25,170);nd(W*0.08,210);frag(W*0.25,180,'R');frag(W*0.25,240,'S');nd(W*0.42,210,true);
+  ar(W*0.08+r,210,W*0.25-26,180,'ε',true);ar(W*0.08+r,210,W*0.25-26,240,'ε',true);ar(W*0.25+26,180,W*0.42-r,210,'ε',true);ar(W*0.25+26,240,W*0.42-r,210,'ε',true);
+  // star
+  title('star  R*',W*0.72,170);nd(W*0.58,210);frag(W*0.72,210,'R');nd(W*0.86,210,true);
+  ar(W*0.58+r,210,W*0.72-26,210,'ε',true);ar(W*0.72+26,210,W*0.86-r,210,'ε',true);
+  // back loop and skip
+  ar(W*0.72+26,222,W*0.72-26,222,'ε',true,40);ar(W*0.58,210+r,W*0.86,210+r,'ε',true,56);
+  // captions
+  x.fillStyle='#5e5e7a';x.font="10.5px 'IBM Plex Mono'";x.textAlign='center';
+  x.fillText('back-edge (repeat) below; skip-edge (zero times) under it',W*0.72,330);
+  x.fillText('one start, one accept — so gadgets nest freely',W/2,H-18);x.textAlign='left';}
+
+/* ============ B: construction ============ */
+const cvB=$('cvB'),xB=cvB.getContext('2d');
+function drawB(){const x=xB,W=cvB.width,H=cvB.height;renderNFA(cvB,x,N,null);
+  x.fillStyle='#5e5e7a';x.font="13px 'IBM Plex Mono'";x.textAlign='left';x.fillText('pattern:  '+RE,16,H-14);
+  $('statB').innerHTML=`<div class="r"><span class="k">pattern</span><span class="v c">${RE}</span></div>
+  <div class="r"><span class="k">NFA states</span><span class="v">${N.states.length}</span></div>
+  <div class="r"><span class="k">ε-edges</span><span class="v" style="color:var(--violet)">${N.edges.filter(e=>e.c===null).length}</span></div>
+  <div class="r"><span class="k">symbol edges</span><span class="v">${N.edges.filter(e=>e.c!==null).length}</span></div>`;
+  $('bLab').textContent='Thompson NFA · '+RE;}
+
+/* ============ C: matching ============ */
+const cvC=$('cvC'),xC=cvC.getContext('2d');let Cst={s:'',i:0,active:new Set(),phase:'idle',playing:false};
+function cReset(clear){if(clear)Cst.s='';Cst.i=0;Cst.phase='idle';Cst.active=eclose(new Set([N.start]),N.edges);}
+function cAlphaBtns(){const al=alphaOf(RE);$('cAlpha').innerHTML=al.map(c=>`<button class="csym" data-c="${c}">${c}</button>`).join('');document.querySelectorAll('.csym').forEach(b=>b.onclick=()=>{Cst.s+=b.dataset.c;cReset(false);drawC();});}
+function drawC(){const x=xC,W=cvC.width,H=cvC.height;const {P,r}=renderNFA(cvC,x,N,Cst.active);
+  // string strip
+  const s=Cst.s,n=s.length;if(n){const cw=Math.min(30,(W-40)/n),ox=(W-cw*n)/2,sy=H-30;for(let i=0;i<n;i++){const px=ox+i*cw;const cur=i===Cst.i&&Cst.phase==='run';x.fillStyle=cur?'rgba(251,191,36,.25)':(i<Cst.i||Cst.phase==='done'?'rgba(20,20,34,.8)':'rgba(14,14,24,.5)');x.beginPath();x.roundRect(px+1.5,sy-15,cw-3,28,5);x.fill();x.fillStyle=cur?'#fbbf24':'#cfcfe0';x.font="13px 'IBM Plex Mono'";x.textAlign='center';x.fillText(s[i],px+cw/2,sy+4);}}else{x.fillStyle='#5e5e7a';x.font="12px 'IBM Plex Mono'";x.textAlign='center';x.fillText('(empty string ε)',W/2,H-26);}
+  const acc=Cst.active.has(N.accept);x.textAlign='left';
+  if(Cst.phase==='done')$('cLab').textContent=acc?'ACCEPT':'REJECT';else $('cLab').textContent='matching · '+RE;
+  $('statC').innerHTML=`<div class="r"><span class="k">pattern</span><span class="v c">${RE}</span></div>
+  <div class="r"><span class="k">string</span><span class="v">${Cst.s||'ε'}</span></div>
+  <div class="r"><span class="k">active states</span><span class="v">${Cst.active.size}</span></div>
+  <div class="r"><span class="k">accept reachable?</span><span class="v ${acc?'g':'r'}">${acc?'yes':'no'}</span></div>
+  <div class="r"><span class="k">verdict</span><span class="v ${acc?'g':'r'}">${Cst.phase==='done'?(acc?'ACCEPT ✓':'REJECT'):(acc?'would accept':'would reject')}</span></div>`;}
+function cStepFn(){if(Cst.phase==='idle'){Cst.phase='run';Cst.i=0;Cst.active=eclose(new Set([N.start]),N.edges);}if(Cst.phase==='run'){if(Cst.i<Cst.s.length){Cst.active=step(Cst.active,Cst.s[Cst.i],N.edges);Cst.i++;if(Cst.i>=Cst.s.length)Cst.phase='done';}else Cst.phase='done';}}
+$('cStep').onclick=()=>{if(Cst.phase==='done')cReset(false);cStepFn();drawC();};
+$('cClear').onclick=()=>{cReset(true);drawC();};
+$('cRand').onclick=()=>{const al=alphaOf(RE);const L=3+((Math.random()*4)|0);Cst.s='';for(let i=0;i<L;i++)Cst.s+=al[(Math.random()*al.length)|0];cReset(false);drawC();};
+$('cPlay').onclick=()=>{Cst.playing=!Cst.playing;$('cPlay').classList.toggle('act',Cst.playing);$('cPlay').textContent=Cst.playing?'pause ⏸':'play ▶';if(Cst.playing&&Cst.phase==='done')cReset(false);};
+
+/* ============ D: equivalence ============ */
+function genTests(re){const al=alphaOf(re);const out=[''];function g(L,p){if(L===0){out.push(p);return;}for(const c of al)g(L-1,p+c);}for(let L=1;L<=3;L++)g(L,"");
+  // pick a spread: some accept some reject
+  const ref=new RegExp('^(?:'+re+')$');const acc=out.filter(s=>ref.test(s)).slice(0,5);const rej=out.filter(s=>!ref.test(s)).slice(0,5);return [...acc,...rej].slice(0,10);}
+function drawD(){const al=alphaOf(RE);const D=subset(N,al);const ref=new RegExp('^(?:'+RE+')$');const tests=genTests(RE);
+  let rows='';let allAgree=true;tests.forEach(s=>{const a1=ref.test(s),a2=match(N,s),a3=dfaRun(D,s);if(!(a1===a2&&a2===a3))allAgree=false;const cell=v=>v?'<span class="yes">✓</span>':'<span class="no">·</span>';rows+=`<tr><td class="s">${s===''?'ε':s}</td><td>${cell(a1)}</td><td>${cell(a2)}</td><td>${cell(a3)}</td></tr>`;});
+  $('dTable').innerHTML=`<table><thead><tr><th>string</th><th>regex</th><th>NFA</th><th>DFA</th></tr></thead><tbody>${rows}</tbody></table>`;
+  $('statD').innerHTML=`<div class="r"><span class="k">pattern</span><span class="v c">${RE}</span></div>
+  <div class="r"><span class="k">NFA states</span><span class="v">${N.states.length}</span></div>
+  <div class="r"><span class="k">DFA states</span><span class="v">${D.n}</span></div>
+  <div class="r"><span class="k">strings tested</span><span class="v">${tests.length}</span></div>
+  <div class="r"><span class="k">all three agree?</span><span class="v ${allAgree?'g':'r'}">${allAgree?'yes ✓':'no'}</span></div>`;
+  $('dLab').textContent='regex = NFA = DFA';}
+
+/* ---- regex selectors ---- */
+function makeList(container,onPick){container.innerHTML=PRESETS.map(p=>`<button data-re="${p}" class="${p===RE?'on':''}">${p}</button>`).join('');container.querySelectorAll('button').forEach(b=>b.onclick=()=>{RE=b.dataset.re;N=build(RE);[reListB,reListC,reListD].forEach(c=>c.querySelectorAll('button').forEach(z=>z.classList.toggle('on',z.dataset.re===RE)));cAlphaBtns();cReset(true);layout2();});}
+const reListB=$('reListB'),reListC=$('reListC'),reListD=$('reListD');
+makeList(reListB);makeList(reListC);makeList(reListD);
+
+/* ---- tabs ---- */
+let active='A';
+function showTab(tb){active=tb;document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x.dataset.t===tb));document.querySelectorAll('.pane').forEach(p=>p.classList.remove('on'));$('pane'+tb).classList.add('on');layout2();}
+document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>showTab(b.dataset.t));
+function sz(c,h){c.width=Math.max(340,c.parentElement.clientWidth);c.height=h;}
+function layout2(){if(active==='A'){sz(cvA,430);drawA();}if(active==='B'){sz(cvB,430);drawB();}if(active==='C'){sz(cvC,430);drawC();}if(active==='D'){drawD();}}
+window.addEventListener('resize',()=>{clearTimeout(window._rl);window._rl=setTimeout(layout2,200);});
+cAlphaBtns();cReset(true);
+let af=0;function loop(){af++;if(active==='C'&&Cst.playing){if(af%30===0){if(Cst.phase==='done'){Cst.playing=false;$('cPlay').classList.remove('act');$('cPlay').textContent='play ▶';}else{cStepFn();drawC();}}}requestAnimationFrame(loop);}
+layout2();loop();
+</script>
+</body>
+</html>

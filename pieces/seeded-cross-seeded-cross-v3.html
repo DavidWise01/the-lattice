@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Seeded Cross Mesh</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: #000;
+    height: 100%;
+    overflow: hidden;
+    cursor: crosshair;
+  }
+  canvas {
+    display: block;
+    width: 100vw;
+    height: 100vh;
+  }
+  .label {
+    position: fixed;
+    bottom: 18px;
+    left: 0;
+    right: 0;
+    text-align: center;
+    color: #fff;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    opacity: 0.55;
+    pointer-events: none;
+    user-select: none;
+  }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="label">0root.ai — seeded cross — minimal mesh</div>
+<script>
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+
+let w, h, dpr, nodes = {}, edges = [], scale = 1;
+
+function resize() {
+  dpr = Math.min(window.devicePixelRatio || 1, 2);
+  w = window.innerWidth;
+  h = window.innerHeight;
+  canvas.width = w * dpr;
+  canvas.height = h * dpr;
+  canvas.style.width = w + 'px';
+  canvas.style.height = h + 'px';
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+  scale = Math.min(1, Math.max(0.7, w / 900));
+  const cx = w * 0.5;
+  const cy = h * 0.56;
+  const cannonDist = Math.min(w, h) * 0.115;
+
+  nodes = {
+    n990: { id: '990990', x: cx, y: h * 0.18, r: 6 * scale, label: '990990', fs: 26 },
+    n880: { id: '88088', x: w * 0.74, y: h * 0.40, r: 4.5 * scale, label: '88088', fs: 18 },
+    n770: { id: '77077', x: w * 0.74, y: h * 0.70, r: 4.5 * scale, label: '77077', fs: 18 },
+    center: { id: 'toph', x: cx, y: cy, r: 3.2 * scale },
+    cN: { id: 'cN', x: cx, y: cy - cannonDist, r: 4, cannon: true },
+    cS: { id: 'cS', x: cx, y: cy + cannonDist, r: 4, cannon: true },
+    cW: { id: 'cW', x: cx - cannonDist, y: cy, r: 4, cannon: true },
+    cE: { id: 'cE', x: cx + cannonDist, y: cy, r: 4, cannon: true },
+  };
+
+  edges = [
+    { a: nodes.n990, b: nodes.n880, pulses: [] },
+    { a: nodes.n880, b: nodes.n770, pulses: [] },
+    { a: nodes.n990, b: nodes.center, pulses: [] },
+    { a: nodes.n880, b: nodes.center, pulses: [] },
+    { a: nodes.n770, b: nodes.center, pulses: [] },
+    { a: nodes.cN, b: nodes.center, pulses: [] },
+    { a: nodes.cS, b: nodes.center, pulses: [] },
+    { a: nodes.cW, b: nodes.center, pulses: [] },
+    { a: nodes.cE, b: nodes.center, pulses: [] },
+  ];
+}
+
+function spawnPulse() {
+  if (!edges.length) return;
+  const e = edges[Math.floor(Math.random() * edges.length)];
+  if (e.pulses.length < 2 && Math.random() > 0.2) {
+    e.pulses.push({
+      t: 0,
+      dir: Math.random() > 0.5 ? 1 : -1,
+      speed: 0.0035 + Math.random() * 0.003
+    });
+  }
+}
+
+function draw() {
+  ctx.clearRect(0, 0, w, h);
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+
+  // lines
+  ctx.strokeStyle = 'rgba(255,255,255,0.95)';
+  ctx.lineWidth = 1;
+  ctx.shadowBlur = 0;
+  edges.forEach(e => {
+    ctx.beginPath();
+    ctx.moveTo(e.a.x, e.a.y);
+    ctx.lineTo(e.b.x, e.b.y);
+    ctx.stroke();
+  });
+
+  // pulses
+  ctx.fillStyle = '#fff';
+  ctx.shadowColor = '#fff';
+  ctx.shadowBlur = 10;
+  edges.forEach(e => {
+    for (let i = e.pulses.length - 1; i >= 0; i--) {
+      const p = e.pulses[i];
+      p.t += p.speed;
+      if (p.t >= 1) { e.pulses.splice(i, 1); continue; }
+      const t = p.dir === 1 ? p.t : 1 - p.t;
+      const x = e.a.x + (e.b.x - e.a.x) * t;
+      const y = e.a.y + (e.b.y - e.a.y) * t;
+      ctx.beginPath();
+      ctx.arc(x, y, 2.2 * scale, 0, Math.PI * 2);
+      ctx.fill();
+      // trail
+      ctx.globalAlpha = 0.25;
+      ctx.beginPath();
+      ctx.arc(x, y, 5 * scale, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    }
+  });
+  ctx.shadowBlur = 0;
+
+  // nodes
+  Object.values(nodes).forEach(n => {
+    if (n.cannon) {
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(n.x, n.y, 1.2, 0, Math.PI * 2);
+      ctx.fillStyle = '#fff';
+      ctx.fill();
+      // crosshair
+      ctx.beginPath();
+      ctx.moveTo(n.x - 7, n.y); ctx.lineTo(n.x + 7, n.y);
+      ctx.moveTo(n.x, n.y - 7); ctx.lineTo(n.x, n.y + 7);
+      ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+      ctx.lineWidth = 0.5;
+      ctx.stroke();
+    } else {
+      ctx.beginPath();
+      ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
+      ctx.fillStyle = '#fff';
+      ctx.shadowColor = '#fff';
+      ctx.shadowBlur = 12 * scale;
+      ctx.fill();
+      ctx.shadowBlur = 0;
+    }
+  });
+
+  // labels
+  ctx.fillStyle = '#fff';
+  ctx.textBaseline = 'middle';
+  ctx.font = `500 ${Math.max(20, nodes.n990.fs * scale)}px 'IBM Plex Mono', monospace`;
+  ctx.textAlign = 'center';
+  ctx.fillText(nodes.n990.label, nodes.n990.x, nodes.n990.y - 28 * scale);
+
+  ctx.font = `400 ${Math.max(14, nodes.n880.fs * scale)}px 'IBM Plex Mono', monospace`;
+  ctx.textAlign = 'left';
+  ctx.fillText(nodes.n880.label, nodes.n880.x + 12, nodes.n880.y);
+  ctx.fillText(nodes.n770.label, nodes.n770.x + 12, nodes.n770.y);
+
+  // center toph cortex subtle
+  ctx.font = `400 ${11 * scale}px 'IBM Plex Mono', monospace`;
+  ctx.textAlign = 'center';
+  ctx.globalAlpha = 0.35;
+  ctx.fillText('toph cortex', nodes.center.x, nodes.center.y + 18);
+  ctx.globalAlpha = 1;
+
+  requestAnimationFrame(draw);
+}
+
+window.addEventListener('resize', resize);
+resize();
+setInterval(spawnPulse, 320);
+draw();
+
+// initial burst
+for (let i = 0; i < 6; i++) setTimeout(spawnPulse, i * 150);
+</script>
+</body>
+</html>

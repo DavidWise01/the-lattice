@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Finite Automata</title>
+<style>
+  :root{--bg:#08080f;--bg2:#0c0c18;--panel:#10101e;--panel2:#13131f;--line:#1f1f33;--line2:#2a2a42;--ink:#e7e7f0;--dim:#9a9ab5;--faint:#5e5e7a;--teal:#2dd4bf;--teal-d:#14b8a6;--teal-dd:#0d9488;--cyan:#5eead4;--amber:#fbbf24;--violet:#a78bfa;--blue:#60a5fa;--rose:#fb7185;--green:#86efac;}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:radial-gradient(1150px 800px at 80% -15%,rgba(45,212,191,.08),transparent 58%),radial-gradient(900px 640px at -8% 106%,rgba(96,165,250,.04),transparent 55%),var(--bg);color:var(--ink);font-family:'IBM Plex Sans',sans-serif;font-weight:300;min-height:100vh;padding:28px 22px 56px;-webkit-font-smoothing:antialiased}
+  .shell{max-width:1160px;margin:0 auto}
+  .kicker{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.4em;text-transform:uppercase;color:var(--teal);margin-bottom:12px}
+  h1{font-family:'Spectral',serif;font-weight:300;font-size:clamp(26px,5vw,44px);letter-spacing:-.02em;line-height:1.04}
+  h1 em{font-style:italic;color:var(--teal)}
+  .sub{color:var(--dim);font-size:15px;margin-top:8px;max-width:790px}
+  .tabs{display:flex;gap:8px;margin-top:22px;flex-wrap:wrap}
+  .tab{font-family:'IBM Plex Mono',monospace;font-size:12px;border:1px solid var(--line);border-radius:10px;background:var(--panel);color:var(--dim);padding:10px 15px;cursor:pointer;transition:.15s}
+  .tab:hover{border-color:var(--teal-d)} .tab.on{border-color:var(--teal);color:var(--teal);background:rgba(45,212,191,.08)}
+  .pane{display:none;margin-top:18px}.pane.on{display:block}
+  .layout{display:grid;grid-template-columns:290px minmax(0,1fr);gap:18px;align-items:start}
+  @media(max-width:900px){.layout{grid-template-columns:1fr}}
+  .controls{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px}
+  .sec{font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--faint);margin-bottom:10px}
+  .sec:not(:first-child){margin-top:15px}
+  .seg{display:flex;border:1px solid var(--line);border-radius:9px;overflow:hidden;margin-top:8px}
+  .seg button{flex:1;font-family:'IBM Plex Mono',monospace;font-size:10.5px;background:transparent;color:var(--dim);border:0;padding:8px 3px;cursor:pointer}
+  .seg button.on{background:rgba(45,212,191,.16);color:var(--teal)}
+  .btns{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+  .btns button{flex:1;min-width:42px;font-family:'IBM Plex Mono',monospace;font-size:11px;border:1px solid var(--line);border-radius:8px;background:var(--panel2);color:var(--dim);padding:9px 4px;cursor:pointer}
+  .btns button:hover{border-color:var(--teal);color:var(--teal)}
+  .btns button.act{border-color:var(--teal);color:var(--teal);background:rgba(45,212,191,.1)}
+  .sliderrow{margin-top:12px}
+  .sliderrow .lab{display:flex;justify-content:space-between;font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--dim);margin-bottom:5px}
+  .sliderrow .lab b{color:var(--teal)}
+  input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:4px;border-radius:4px;background:var(--line);outline:none}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--teal);cursor:pointer;border:2px solid #0a0a14}
+  input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:var(--teal);cursor:pointer;border:2px solid #0a0a14}
+  .stat{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--dim);margin-top:13px;border:1px solid var(--line);border-radius:11px;padding:10px}
+  .stat .r{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px dashed var(--line);gap:8px}
+  .stat .r:last-child{border:0} .stat .k{color:var(--faint)} .stat .v{color:var(--teal);text-align:right}
+  .stat .v.g{color:var(--green)} .stat .v.c{color:var(--cyan)} .stat .v.a{color:var(--amber)} .stat .v.r{color:var(--rose)}
+  .note{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--faint);line-height:1.55;margin-top:10px}
+  code{font-family:'IBM Plex Mono',monospace;color:var(--teal)}
+  .panel{background:#06060c;border:1px solid var(--line);border-radius:16px;position:relative;overflow:hidden;line-height:0}
+  .plabel{position:absolute;top:10px;left:14px;font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--faint);background:rgba(6,6,12,.4);padding:2px 6px;border-radius:4px}
+  canvas{display:block;width:100%;height:auto}
+  footer{margin-top:24px;padding-top:22px;border-top:1px solid var(--line);color:var(--faint);font-family:'IBM Plex Mono',monospace;font-size:11.5px;line-height:1.9}
+  footer .seq{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+  footer .seq span{padding:5px 12px;border:1px solid var(--line);border-radius:30px}
+  footer .seq .here{border-color:var(--teal);color:var(--teal)}
+</style>
+</head>
+<body>
+<div class="shell">
+  <div>
+    <div class="kicker">Automata & Formal Languages · Instrument 01 · Finite Automata</div>
+    <h1>Recognizing with <em>finite memory</em></h1>
+    <p class="sub">A finite automaton is a fixed set of states wired together by transitions — the leanest model of computation. Run a string through it, watch it land in an accepting state or not. Then meet nondeterminism, the powerset trick that tames it, and the algorithm that finds the smallest machine for a language.</p>
+  </div>
+
+  <div class="tabs">
+    <div class="tab on" data-t="A">DFA</div>
+    <div class="tab" data-t="B">NFA</div>
+    <div class="tab" data-t="C">Subset construction</div>
+    <div class="tab" data-t="D">Minimization</div>
+  </div>
+
+  <!-- A -->
+  <div class="pane on" id="paneA">
+    <div class="layout">
+      <div class="controls">
+        <div class="sec">Divisible by 3 (binary)</div>
+        <div class="sliderrow"><div class="lab"><span>number n</span><b id="aNV">21</b></div><input type="range" id="aN" min="0" max="63" value="21"></div>
+        <div class="btns"><button id="aStep">step ▸</button><button id="aPlay">play ▶</button><button id="aReset">reset</button></div>
+        <div class="stat" id="statA"></div>
+        <div class="note">State = remainder of the number-so-far mod 3. Reading bit <code>b</code> doubles and adds: <code>r → (2r+b) mod 3</code>. The start state (remainder 0) is also the only accepting one, so the machine accepts exactly the multiples of 3 — with just three states.</div>
+      </div>
+      <div class="panel"><canvas id="cvA" height="420"></canvas><div class="plabel" id="aLab">DFA</div></div>
+    </div>
+  </div>
+
+  <!-- B -->
+  <div class="pane" id="paneB">
+    <div class="layout">
+      <div class="controls">
+        <div class="sec">Nondeterministic automaton</div>
+        <div class="seg" id="bSel"><button data-m="01" class="on">ends in "01"</button><button data-m="ab">a*b*</button></div>
+        <div class="sec">Build a string</div>
+        <div class="btns" id="bAlpha"></div>
+        <div class="btns"><button id="bStep">step ▸</button><button id="bPlay">play ▶</button><button id="bClear">clear</button><button id="bRand">random</button></div>
+        <div class="stat" id="statB"></div>
+        <div class="note">The machine is in a <span style="color:var(--teal)">set</span> of states at once. Each symbol maps every active state to its successors; an <code>ε</code>-edge is taken for free, so the active set is closed under ε first. It accepts if any active state is accepting — one accepting path is enough.</div>
+      </div>
+      <div class="panel"><canvas id="cvB" height="420"></canvas><div class="plabel" id="bLab">NFA</div></div>
+    </div>
+  </div>
+
+  <!-- C -->
+  <div class="pane" id="paneC">
+    <div class="layout">
+      <div class="controls">
+        <div class="sec">NFA → DFA (powerset)</div>
+        <div class="btns"><button id="cStep">add state ▸</button><button id="cAll">build all</button><button id="cReset">reset</button></div>
+        <div class="stat" id="statC"></div>
+        <div class="note">Each DFA state is a <span style="color:var(--teal)">set</span> of NFA states the machine could be in. Start from the ε-closure of the start state; for each symbol, take the union of successors and close — that's a new DFA state. A DFA state accepts if its set contains any NFA accepting state.</div>
+      </div>
+      <div class="panel"><canvas id="cvC" height="420"></canvas><div class="plabel" id="cLab">subset construction</div></div>
+    </div>
+  </div>
+
+  <!-- D -->
+  <div class="pane" id="paneD">
+    <div class="layout">
+      <div class="controls">
+        <div class="sec">Partition refinement</div>
+        <div class="btns"><button id="dStep">refine ▸</button><button id="dAll">finish</button><button id="dReset">reset</button></div>
+        <div class="stat" id="statD"></div>
+        <div class="note">Start by splitting states into <span style="color:var(--teal)">accepting</span> and non-accepting. Refine: two states stay together only if, for every symbol, they move to the same group. Repeat until stable — each surviving group becomes one state of the unique smallest DFA.</div>
+      </div>
+      <div class="panel"><canvas id="cvD" height="420"></canvas><div class="plabel" id="dLab">DFA minimization</div></div>
+    </div>
+  </div>
+
+  <footer>
+    <div class="seq">
+      <span>00 primer</span><span class="here">01 · finite automata — you are here</span><span>02 regular expressions</span><span>03 pushdown automata</span><span>04 Turing machines</span><span>05 hierarchy & limits</span>
+    </div>
+    FINITE AUTOMATA · DFA simulation · nondeterminism & ε-moves · subset construction · minimization. Verified.
+  </footer>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);const TAU=Math.PI*2;
+const PAL=['#2dd4bf','#fbbf24','#a78bfa','#60a5fa','#86efac','#fb7185'];
+function node(x,cx,cy,r,label,o){o=o||{};const on=o.on,acc=o.acc,col=o.col||'#2dd4bf';x.fillStyle=on?'rgba(45,212,191,.18)':(o.bg||'rgba(16,16,30,.95)');if(o.col&&on)x.fillStyle=hexA(col,.2);x.strokeStyle=on?col:(o.col||'#4a4a62');x.lineWidth=on?2.2:1.5;x.beginPath();x.arc(cx,cy,r,0,TAU);x.fill();x.stroke();if(acc){x.beginPath();x.arc(cx,cy,r-4,0,TAU);x.stroke();}x.fillStyle=on?col:'#cfcfe0';x.font="13px 'IBM Plex Mono'";x.textAlign='center';x.textBaseline='middle';x.fillText(label,cx,cy);x.textBaseline='alphabetic';x.textAlign='left';}
+function hexA(h,a){const n=parseInt(h.slice(1),16);return `rgba(${n>>16&255},${n>>8&255},${n&255},${a})`;}
+function edge(x,x1,y1,x2,y2,bend,lab,col){col=col||'rgba(130,130,160,.55)';const mx=(x1+x2)/2+ (bend?0:0),my=(y1+y2)/2-bend;x.strokeStyle=col;x.lineWidth=1.4;x.beginPath();x.moveTo(x1,y1);x.quadraticCurveTo(mx,my,x2,y2);x.stroke();const ang=Math.atan2(y2-my,x2-mx);x.fillStyle=col;x.beginPath();x.moveTo(x2,y2);x.lineTo(x2-8*Math.cos(ang-0.4),y2-8*Math.sin(ang-0.4));x.lineTo(x2-8*Math.cos(ang+0.4),y2-8*Math.sin(ang+0.4));x.fill();if(lab){x.fillStyle='#8a8aa8';x.font="12px 'IBM Plex Mono'";x.textAlign='center';x.fillText(lab,mx,my-3);x.textAlign='left';}}
+function selfLoop(x,cx,cy,r,lab,col){col=col||'rgba(130,130,160,.5)';x.strokeStyle=col;x.lineWidth=1.4;x.beginPath();x.arc(cx,cy-r-9,13,0.55,TAU-0.15);x.stroke();const ex=cx+13*Math.cos(TAU-0.15),ey=cy-r-9+13*Math.sin(TAU-0.15);x.fillStyle=col;x.beginPath();x.moveTo(ex,ey);x.lineTo(ex-7,ey-2);x.lineTo(ex-1,ey+6);x.fill();x.fillStyle='#8a8aa8';x.font="12px 'IBM Plex Mono'";x.textAlign='center';x.fillText(lab,cx,cy-r-28);x.textAlign='left';}
+function startArrow(x,cx,cy,r){x.strokeStyle='rgba(130,130,160,.6)';x.lineWidth=1.4;x.beginPath();x.moveTo(cx-r-24,cy);x.lineTo(cx-r,cy);x.stroke();x.fillStyle='rgba(130,130,160,.7)';x.beginPath();x.moveTo(cx-r,cy);x.lineTo(cx-r-8,cy-4);x.lineTo(cx-r-8,cy+4);x.fill();}
+function strip(x,W,s,idx,sy,active,alpha){const n=s.length;if(!n){x.fillStyle='#5e5e7a';x.font="12px 'IBM Plex Mono'";x.textAlign='center';x.fillText('(empty string ε)',W/2,sy+4);x.textAlign='left';return;}const cw=Math.min(34,(W-40)/n),ox=(W-cw*n)/2;for(let i=0;i<n;i++){const px=ox+i*cw;const cur=i===idx;x.fillStyle=cur?'rgba(251,191,36,.25)':(i<idx?'rgba(20,20,34,.8)':'rgba(14,14,24,.5)');x.beginPath();x.roundRect(px+1.5,sy-16,cw-3,30,5);x.fill();if(cur){x.strokeStyle='#fbbf24';x.lineWidth=1.4;x.stroke();}x.fillStyle=cur?'#fbbf24':'#cfcfe0';x.font="14px 'IBM Plex Mono'";x.textAlign='center';x.fillText(s[i],px+cw/2,sy+5);}x.textAlign='left';}
+
+/* ============ A: DFA div-by-3 ============ */
+const cvA=$('cvA'),xA=cvA.getContext('2d');let A={n:21,bits:'10101',i:0,r:0,phase:'idle',t:0,playing:false};
+function aSet(n){A.n=n;A.bits=n.toString(2);A.i=0;A.r=0;A.phase='idle';}
+aSet(21);
+const T3=[[0,1],[2,0],[1,2]];
+function drawA(){const x=xA,W=cvA.width,H=cvA.height;x.clearRect(0,0,W,H);const cx=W/2,cy=150,R=34,sp=Math.min(150,W*0.22);
+  const pos=[[cx,cy-70],[cx-sp,cy+60],[cx+sp,cy+60]];
+  // edges: 0-0->0 self,0-1->1 ; 1-0->2,1-1->0 ; 2-0->1,2-1->2 self
+  edge(x,pos[0][0]-12,pos[0][1]+R-4,pos[1][0]+R-6,pos[1][1]-R+8,40,'1');
+  edge(x,pos[1][0]+R-6,pos[1][1]+6,pos[2][0]-R+6,pos[2][1]+6,-30,'0');
+  edge(x,pos[1][0]+8,pos[1][1]-R+6,pos[0][0]-R+4,pos[0][1]+12,-10,'1');
+  edge(x,pos[2][0]-R+6,pos[2][1]-6,pos[1][0]+R-6,pos[1][1]-6,30,'0');
+  selfLoop(x,pos[0][0],pos[0][1],R,'0');selfLoop(x,pos[2][0],pos[2][1],R,'1');
+  startArrow(x,pos[0][0],pos[0][1],R);
+  const names=['r=0','r=1','r=2'];
+  for(let s=0;s<3;s++)node(x,pos[s][0],pos[s][1],R,names[s],{on:A.r===s&&A.phase!=='idle'||A.r===s,acc:s===0});
+  // string strip
+  strip(x,W,A.bits,A.phase==='run'?A.i:-1,H-40,null);
+  const acc=A.phase==='done'?(A.r===0):(A.n%3===0);
+  if(A.phase==='done'){$('aLab').textContent=acc?'ACCEPT':'REJECT';}else $('aLab').textContent='DFA · divisible by 3';
+  $('statA').innerHTML=`<div class="r"><span class="k">n</span><span class="v">${A.n}</span></div>
+  <div class="r"><span class="k">binary</span><span class="v c">${A.bits||'ε'}</span></div>
+  <div class="r"><span class="k">current remainder</span><span class="v a">${A.r}</span></div>
+  <div class="r"><span class="k">n mod 3</span><span class="v">${A.n%3}</span></div>
+  <div class="r"><span class="k">verdict</span><span class="v ${(A.phase==='done'?acc:A.n%3===0)?'g':'r'}">${A.phase==='done'?(acc?'ACCEPT ✓':'REJECT'):(A.n%3===0?'accepts':'rejects')}</span></div>`;}
+$('aN').oninput=e=>{aSet(+e.target.value);$('aNV').textContent=A.n;A.playing=false;$('aPlay').classList.remove('act');$('aPlay').textContent='play ▶';drawA();};
+function aStepFn(){if(A.phase==='idle'){A.phase='run';A.i=0;A.r=0;}if(A.phase==='run'){if(A.i<A.bits.length){A.r=T3[A.r][+A.bits[A.i]];A.i++;if(A.i>=A.bits.length)A.phase='done';}else A.phase='done';}}
+$('aStep').onclick=()=>{if(A.phase==='done'){A.phase='idle';A.r=0;A.i=0;}aStepFn();drawA();};
+$('aReset').onclick=()=>{A.phase='idle';A.r=0;A.i=0;A.playing=false;$('aPlay').classList.remove('act');$('aPlay').textContent='play ▶';drawA();};
+$('aPlay').onclick=()=>{A.playing=!A.playing;$('aPlay').classList.toggle('act',A.playing);$('aPlay').textContent=A.playing?'pause ⏸':'play ▶';if(A.playing&&A.phase==='done'){A.phase='idle';A.r=0;A.i=0;}};
+
+/* ============ B: NFA ============ */
+const cvB=$('cvB'),xB=cvB.getContext('2d');
+const NFAS={'01':{alpha:['0','1'],start:0,accept:new Set([2]),eps:{},delta:{0:{'0':[0,1],'1':[0]},1:{'1':[2]}},names:['q0','q1','q2'],lay:[[.22,.42],[.5,.42],[.78,.42]]},
+  'ab':{alpha:['a','b'],start:0,accept:new Set([0,1]),eps:{0:[1]},delta:{0:{'a':[0]},1:{'b':[1]}},names:['q0','q1'],lay:[[.33,.42],[.67,.42]]}};
+let B={m:'01',s:'',i:0,active:new Set(),phase:'idle',playing:false,t:0};
+function epsClose(set,eps){const st=[...set],S=new Set(set);while(st.length){const q=st.pop();(eps[q]||[]).forEach(t=>{if(!S.has(t)){S.add(t);st.push(t);}});}return S;}
+function bReset(full){B.s=full?'':B.s;B.i=0;B.phase='idle';B.active=epsClose(new Set([NFAS[B.m].start]),NFAS[B.m].eps);}
+function bAlphaButtons(){const al=NFAS[B.m].alpha;$('bAlpha').innerHTML=al.map(c=>`<button class="bsym" data-c="${c}">${c}</button>`).join('');document.querySelectorAll('.bsym').forEach(btn=>btn.onclick=()=>{B.s+=btn.dataset.c;bReset(false);drawB();});}
+bReset(true);
+function drawB(){const x=xB,W=cvB.width,H=cvB.height;x.clearRect(0,0,W,H);const nf=NFAS[B.m];const R=28;const pos=nf.lay.map(([fx,fy])=>[fx*W,fy*H]);
+  if(B.m==='01'){edge(x,pos[0][0]+R-6,pos[0][1],pos[1][0]-R+6,pos[1][1],24,'0');edge(x,pos[1][0]+R-6,pos[1][1],pos[2][0]-R+6,pos[2][1],24,'1');selfLoop(x,pos[0][0],pos[0][1],R,'0,1');}
+  else{selfLoop(x,pos[0][0],pos[0][1],R,'a');selfLoop(x,pos[1][0],pos[1][1],R,'b');edge(x,pos[0][0]+R-6,pos[0][1],pos[1][0]-R+6,pos[1][1],0,'ε','rgba(167,139,250,.7)');}
+  startArrow(x,pos[0][0],pos[0][1],R);
+  nf.names.forEach((nm,i)=>node(x,pos[i][0],pos[i][1],R,nm,{on:B.active.has(i),acc:nf.accept.has(i)}));
+  strip(x,W,B.s,B.phase==='run'?B.i:-1,H-46,null);
+  const acc=[...B.active].some(q=>nf.accept.has(q));
+  x.fillStyle='#5e5e7a';x.font="11px 'IBM Plex Mono'";x.textAlign='center';x.fillText('active set: { '+[...B.active].map(q=>nf.names[q]).join(', ')+' }',W/2,H-14);x.textAlign='left';
+  if(B.phase==='done')$('bLab').textContent=acc?'ACCEPT':'REJECT';else $('bLab').textContent='NFA · '+(B.m==='01'?'ends in 01':'a*b*');
+  $('statB').innerHTML=`<div class="r"><span class="k">string</span><span class="v c">${B.s||'ε'}</span></div>
+  <div class="r"><span class="k">active states</span><span class="v">${[...B.active].map(q=>nf.names[q]).join(',')||'∅'}</span></div>
+  <div class="r"><span class="k">accepting in set?</span><span class="v ${acc?'g':'r'}">${acc?'yes':'no'}</span></div>
+  <div class="r"><span class="k">verdict</span><span class="v ${acc?'g':'r'}">${B.phase==='done'?(acc?'ACCEPT ✓':'REJECT'):(acc?'would accept':'would reject')}</span></div>`;}
+function bStepFn(){const nf=NFAS[B.m];if(B.phase==='idle'){B.phase='run';B.i=0;B.active=epsClose(new Set([nf.start]),nf.eps);}if(B.phase==='run'){if(B.i<B.s.length){const ch=B.s[B.i];const nx=new Set();for(const q of B.active)((nf.delta[q]&&nf.delta[q][ch])||[]).forEach(t=>nx.add(t));B.active=epsClose(nx,nf.eps);B.i++;if(B.i>=B.s.length)B.phase='done';}else B.phase='done';}}
+document.querySelectorAll('#bSel button').forEach(btn=>btn.onclick=()=>{document.querySelectorAll('#bSel button').forEach(z=>z.classList.remove('on'));btn.classList.add('on');B.m=btn.dataset.m;B.s='';bAlphaButtons();bReset(true);drawB();});
+$('bStep').onclick=()=>{if(B.phase==='done'){bReset(false);}bStepFn();drawB();};
+$('bClear').onclick=()=>{B.s='';bReset(true);drawB();};
+$('bRand').onclick=()=>{const al=NFAS[B.m].alpha;const L=3+((Math.random()*4)|0);B.s='';for(let i=0;i<L;i++)B.s+=al[(Math.random()*al.length)|0];bReset(false);drawB();};
+$('bPlay').onclick=()=>{B.playing=!B.playing;$('bPlay').classList.toggle('act',B.playing);$('bPlay').textContent=B.playing?'pause ⏸':'play ▶';if(B.playing&&B.phase==='done')bReset(false);};
+
+/* ============ C: subset construction ============ */
+const cvC=$('cvC'),xC=cvC.getContext('2d');
+const nfaC=NFAS['01'];
+function buildSubset(){const start=epsClose(new Set([nfaC.start]),nfaC.eps);const key=s=>[...s].sort((a,b)=>a-b).join(',');const states=[start],seen={[key(start)]:0},trans={},acc=new Set();let i=0;while(i<states.length){const cur=states[i];if([...cur].some(q=>nfaC.accept.has(q)))acc.add(i);trans[i]={};for(const ch of nfaC.alpha){const nx=new Set();for(const q of cur)((nfaC.delta[q]&&nfaC.delta[q][ch])||[]).forEach(t=>nx.add(t));const cl=epsClose(nx,nfaC.eps);const k=key(cl);if(!(k in seen)){seen[k]=states.length;states.push(cl);}trans[i][ch]=seen[k];}i++;}return {states:states.map(s=>[...s].sort((a,b)=>a-b)),trans,acc};}
+const SUB=buildSubset();
+let C={shown:1};
+function drawC(){const x=xC,W=cvC.width,H=cvC.height;x.clearRect(0,0,W,H);const R=26;
+  // NFA top-left small
+  x.fillStyle='#5e5e7a';x.font="11px 'IBM Plex Mono'";x.fillText('NFA (ends in 01)',24,24);
+  const npos=[[70,80],[150,80],[230,80]];
+  edge(x,npos[0][0]+R-8,npos[0][1],npos[1][0]-R+8,npos[1][1],20,'0');edge(x,npos[1][0]+R-8,npos[1][1],npos[2][0]-R+8,npos[2][1],20,'1');selfLoop(x,npos[0][0],npos[0][1],R-2,'0,1');startArrow(x,npos[0][0],npos[0][1],R-2);
+  nfaC.names.forEach((nm,i)=>node(x,npos[i][0],npos[i][1],R-2,nm,{acc:nfaC.accept.has(i),col:'#5e5e7a'}));
+  // DFA below
+  x.fillStyle='#5e5e7a';x.font="11px 'IBM Plex Mono'";x.fillText('DFA (subsets)',24,170);
+  const dpos=[[W*0.22,290],[W*0.5,250],[W*0.78,290]];
+  const sh=C.shown;
+  // edges among shown
+  function lbl(i){return '{'+SUB.states[i].map(q=>'q'+q).join(',')+'}';}
+  if(sh>=2){edge(x,dpos[0][0]+R-6,dpos[0][1]-6,dpos[1][0]-R+6,dpos[1][1]+R-8,30,'0','rgba(45,212,191,.5)');}
+  if(sh>=1){selfLoop(x,dpos[0][0],dpos[0][1],R,'1','rgba(45,212,191,.5)');}
+  if(sh>=3){edge(x,dpos[1][0]+R-6,dpos[1][1]+R-8,dpos[2][0]-R+6,dpos[2][1]-6,-30,'1','rgba(45,212,191,.5)');selfLoop(x,dpos[1][0],dpos[1][1],R,'0','rgba(45,212,191,.5)');edge(x,dpos[2][0]-R+6,dpos[2][1]+6,dpos[1][0]+R-2,dpos[1][1]+8,20,'0','rgba(45,212,191,.5)');edge(x,dpos[2][0]-8,dpos[2][1]+R-6,dpos[0][0]+8,dpos[0][1]+R-6,55,'1','rgba(45,212,191,.5)');}
+  startArrow(x,dpos[0][0],dpos[0][1],R);
+  for(let i=0;i<Math.min(sh,3);i++)node(x,dpos[i][0],dpos[i][1],R,'',{on:true,acc:SUB.acc.has(i),col:'#2dd4bf'});
+  // subset labels under nodes
+  x.font="10.5px 'IBM Plex Mono'";x.textAlign='center';for(let i=0;i<Math.min(sh,3);i++){x.fillStyle=SUB.acc.has(i)?'#2dd4bf':'#9a9ab5';x.fillText(lbl(i),dpos[i][0],dpos[i][1]+R+16);}x.textAlign='left';
+  $('cLab').textContent='subset construction';
+  let rows='';for(let i=0;i<Math.min(sh,SUB.states.length);i++){rows+=`<div class="r"><span class="k">${lbl(i)}${SUB.acc.has(i)?' ✓':''}</span><span class="v" style="font-size:9.5px">0→${lbl(SUB.trans[i]['0'])}, 1→${lbl(SUB.trans[i]['1'])}</span></div>`;}
+  $('statC').innerHTML=`<div class="r"><span class="k">DFA states so far</span><span class="v">${Math.min(sh,SUB.states.length)} / ${SUB.states.length}</span></div>`+rows;}
+$('cStep').onclick=()=>{C.shown=Math.min(C.shown+1,SUB.states.length);drawC();};
+$('cAll').onclick=()=>{C.shown=SUB.states.length;drawC();};
+$('cReset').onclick=()=>{C.shown=1;drawC();};
+
+/* ============ D: minimization ============ */
+const cvD=$('cvD'),xD=cvD.getContext('2d');
+const Ddup={names:['e1','e2','o1','o2'],accept:new Set([0,1]),trans:{0:{'0':1,'1':2},1:{'0':0,'1':3},2:{'0':3,'1':0},3:{'0':2,'1':1}},lay:[[.3,.26],[.7,.26],[.3,.6],[.7,.6]]};
+function refineRounds(){let part=Ddup.names.map((_,i)=>Ddup.accept.has(i)?1:0);const rounds=[part.slice()];for(let it=0;it<6;it++){const newId={};let next=0;const np=[];for(let i=0;i<part.length;i++){const sig=part[i]+'|'+['0','1'].map(c=>part[Ddup.trans[i][c]]).join(',');if(!(sig in newId))newId[sig]=next++;np.push(newId[sig]);}if(JSON.stringify(np)===JSON.stringify(part))break;part=np;rounds.push(part.slice());}return rounds;}
+const ROUNDS=refineRounds();
+let D={round:0};
+function drawD(){const x=xD,W=cvD.width,H=cvD.height;x.clearRect(0,0,W,H);const R=28;const part=ROUNDS[Math.min(D.round,ROUNDS.length-1)];const pos=Ddup.lay.map(([fx,fy])=>[fx*W,fy*H*0.62]);
+  x.fillStyle='#5e5e7a';x.font="11px 'IBM Plex Mono'";x.fillText('original DFA — colored by current partition',24,20);
+  // edges (light)
+  const E=[[0,1,'0',0],[0,2,'1',0],[1,0,'0',0],[1,3,'1',0],[2,3,'0',0],[2,0,'1',0],[3,2,'0',0],[3,1,'1',0]];
+  E.forEach(([a,b,l])=>{if(a===b)return;edge(x,pos[a][0],pos[a][1],pos[b][0],pos[b][1],18,l,'rgba(90,90,120,.4)');});
+  startArrow(x,pos[0][0],pos[0][1],R);
+  Ddup.names.forEach((nm,i)=>node(x,pos[i][0],pos[i][1],R,nm,{on:true,acc:Ddup.accept.has(i),col:PAL[part[i]%PAL.length]}));
+  // merged DFA if stable
+  const stable=D.round>=ROUNDS.length-1;
+  const classes=Math.max(...part)+1;
+  x.fillStyle='#5e5e7a';x.font="11px 'IBM Plex Mono'";x.fillText(stable?'minimal DFA ('+classes+' states)':'refining…',24,H*0.62+30);
+  if(stable){const mpos=[[W*0.34,H*0.84],[W*0.66,H*0.84]];const mn=['even','odd'];
+    edge(x,mpos[0][0]+R-6,mpos[0][1]-6,mpos[1][0]-R+6,mpos[1][1]-6,22,'1','rgba(45,212,191,.5)');edge(x,mpos[1][0]-R+6,mpos[1][1]+6,mpos[0][0]+R-6,mpos[0][1]+6,-22,'1','rgba(45,212,191,.5)');selfLoop(x,mpos[0][0],mpos[0][1],R,'0','rgba(45,212,191,.5)');selfLoop(x,mpos[1][0],mpos[1][1],R,'0','rgba(45,212,191,.5)');startArrow(x,mpos[0][0],mpos[0][1],R);
+    node(x,mpos[0][0],mpos[0][1],R,mn[0],{on:true,acc:true,col:PAL[0]});node(x,mpos[1][0],mpos[1][1],R,mn[1],{on:true,col:PAL[1]});}
+  $('dLab').textContent=stable?'minimized':'DFA minimization';
+  const groups={};part.forEach((c,i)=>{(groups[c]=groups[c]||[]).push(Ddup.names[i]);});
+  $('statD').innerHTML=`<div class="r"><span class="k">round</span><span class="v">${Math.min(D.round,ROUNDS.length-1)} / ${ROUNDS.length-1}</span></div>
+  <div class="r"><span class="k">classes</span><span class="v">${classes}</span></div>`+Object.values(groups).map((g,i)=>`<div class="r"><span class="k">group ${i+1}</span><span class="v" style="color:${PAL[i%PAL.length]}">{${g.join(', ')}}</span></div>`).join('')+(stable?`<div class="r"><span class="k">result</span><span class="v g">4 → ${classes} states ✓</span></div>`:'');}
+$('dStep').onclick=()=>{D.round=Math.min(D.round+1,ROUNDS.length-1);drawD();};
+$('dAll').onclick=()=>{D.round=ROUNDS.length-1;drawD();};
+$('dReset').onclick=()=>{D.round=0;drawD();};
+
+/* ============ tabs + loop ============ */
+let active='A';
+function showTab(tb){active=tb;document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x.dataset.t===tb));document.querySelectorAll('.pane').forEach(p=>p.classList.remove('on'));$('pane'+tb).classList.add('on');layout();}
+document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>showTab(b.dataset.t));
+function sz(c,h){c.width=Math.max(340,c.parentElement.clientWidth);c.height=h;}
+function layout(){if(active==='A'){sz(cvA,420);drawA();}if(active==='B'){sz(cvB,420);drawB();}if(active==='C'){sz(cvC,420);drawC();}if(active==='D'){sz(cvD,420);drawD();}}
+window.addEventListener('resize',()=>{clearTimeout(window._rl);window._rl=setTimeout(layout,200);});
+bAlphaButtons();
+let af=0;function loop(){af++;if(active==='A'&&A.playing){if(af%30===0){if(A.phase==='done'){A.playing=false;$('aPlay').classList.remove('act');$('aPlay').textContent='play ▶';}else{aStepFn();drawA();}}}if(active==='B'&&B.playing){if(af%32===0){if(B.phase==='done'){B.playing=false;$('bPlay').classList.remove('act');$('bPlay').textContent='play ▶';}else{bStepFn();drawB();}}}requestAnimationFrame(loop);}
+layout();loop();
+</script>
+</body>
+</html>

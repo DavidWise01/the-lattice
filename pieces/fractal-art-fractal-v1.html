@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Playables SDK -->
+<script>// Playables SDK v1.0.0
+// Game lifecycle bridge: rAF-based game-ready detection + event communication
+(function() {
+  'use strict';
+
+  // Idempotency: skip if already initialized (e.g., server-side injection
+  // followed by client-side inject-javascript via the Bloks webview component).
+  if (window.playablesSDK) return;
+
+  var HANDLER_NAME = 'playablesGameEventHandler';
+  var ANDROID_BRIDGE_NAME = '_MetaPlayablesBridge';
+  var RAF_FRAME_THRESHOLD = 3;
+
+  var gameReadySent = false;
+  var firstInteractionSent = false;
+  var errorSent = false;
+  var frameCount = 0;
+  var originalRAF = window.requestAnimationFrame;
+
+  // --- Transport Layer ---
+
+  function hasIOSBridge() {
+    return !!(window.webkit &&
+              window.webkit.messageHandlers &&
+              window.webkit.messageHandlers[HANDLER_NAME]);
+  }
+
+  function hasAndroidBridge() {
+    return !!(window[ANDROID_BRIDGE_NAME] &&
+              typeof window[ANDROID_BRIDGE_NAME].postEvent === 'function');
+  }
+
+  function isInIframe() {
+    return !!(window.parent && window.parent !== window);
+  }
+
+  function sendEvent(eventName, payload) {
+    var message = {
+      type: eventName,
+      payload: payload || {},
+      timestamp: Date.now()
+    };
+
+    if (hasIOSBridge()) {
+      try {
+        window.webkit.messageHandlers[HANDLER_NAME].postMessage(message);
+      } catch (e) { /* ignore */ }
+      return;
+    }
+
+    if (hasAndroidBridge()) {
+    try {
+      var p = payload || {};
+      p.__secureToken = window.__fbAndroidBridgeAuthToken || '';
+      window[ANDROID_BRIDGE_NAME].postEvent(
+        eventName,
+        JSON.stringify(p)
+      );
+    } catch (e) { /* ignore */ }
+    return;
+  }
+
+    if (isInIframe()) {
+      try {
+        window.parent.postMessage(message, '*');
+      } catch (e) { /* ignore */ }
+      return;
+    }
+  }
+
+  // --- rAF Game-Ready Detection ---
+
+  function onFrame() {
+    if (gameReadySent) return;
+
+    frameCount++;
+    if (frameCount >= RAF_FRAME_THRESHOLD) {
+      gameReadySent = true;
+      sendEvent('game_ready', {
+        frame_count: frameCount,
+        detected_at: Date.now()
+      });
+      return;
+    }
+
+    originalRAF.call(window, onFrame);
+  }
+
+  if (originalRAF) {
+    window.requestAnimationFrame = function(callback) {
+      if (!gameReadySent) {
+        return originalRAF.call(window, function(timestamp) {
+          frameCount++;
+          if (frameCount >= RAF_FRAME_THRESHOLD && !gameReadySent) {
+            gameReadySent = true;
+            sendEvent('game_ready', {
+              frame_count: frameCount,
+              detected_at: Date.now()
+            });
+          }
+          callback(timestamp);
+        });
+      }
+      return originalRAF.call(window, callback);
+    };
+  }
+
+  // --- First User Interaction Detection ---
+
+  function setupFirstInteractionDetection() {
+    var events = ['touchstart', 'mousedown', 'keydown'];
+
+    function onFirstInteraction() {
+      if (firstInteractionSent) return;
+      firstInteractionSent = true;
+      sendEvent('user_interaction_start', null);
+
+      for (var i = 0; i < events.length; i++) {
+        document.removeEventListener(events[i], onFirstInteraction, true);
+      }
+    }
+
+    for (var i = 0; i < events.length; i++) {
+      document.addEventListener(events[i], onFirstInteraction, true);
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setupFirstInteractionDetection);
+  } else {
+    setupFirstInteractionDetection();
+  }
+
+  // --- Auto Error Capture ---
+
+  window.addEventListener('error', function(event) {
+    if (errorSent) return;
+    errorSent = true;
+    sendEvent('error', {
+      message: event.message || 'Unknown error',
+      source: event.filename || '',
+      lineno: event.lineno || 0,
+      colno: event.colno || 0,
+      auto_captured: true
+    });
+  });
+
+  window.addEventListener('unhandledrejection', function(event) {
+    if (errorSent) return;
+    errorSent = true;
+    var reason = event.reason;
+    sendEvent('error', {
+      message: (reason instanceof Error) ? reason.message : String(reason),
+      type: 'unhandled_promise_rejection',
+      auto_captured: true
+    });
+  });
+
+  // --- Public API ---
+
+  window.playablesSDK = {
+    complete: function(score) {
+      sendEvent('game_ended', {
+        score: score,
+        completed: true
+      });
+    },
+
+    error: function(message) {
+      if (errorSent) return;
+      errorSent = true;
+      sendEvent('error', {
+        message: message || 'Unknown error',
+        auto_captured: false
+      });
+    },
+
+    sendEvent: function(eventName, payload) {
+      if (!eventName || typeof eventName !== 'string') return;
+      sendEvent(eventName, payload);
+    }
+  };
+
+  // Kick off rAF detection in case no game code calls rAF immediately
+  if (originalRAF) {
+    originalRAF.call(window, onFrame);
+  }
+})();</script>
+<script>window.Intl=window.Intl||{};Intl.t=function(s){return(Intl._locale&&Intl._locale[s])||s;};</script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>FULL PIPELINE // .onion ready</title>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline'; img-src data:; style-src 'unsafe-inline'; script-src 'unsafe-inline'">
+<style>
+:root{--bg:#07080a;--panel:#0f1115ee;--text:#e6e7ea;--muted:#8c919a;--accent:#7cffb2;--border:#1e222b;--warn:#ffba5a}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;overflow:hidden;overscroll-behavior:none}
+body{background:radial-gradient(900px 600px at 85% -15%,#0e1f18 0%,transparent 60%),radial-gradient(700px 500px at -10% 110%,#1a1320 0%,transparent 55%),var(--bg)}
+#gl,#tree{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;cursor:grab}
+#gl:active,#tree:active{cursor:grabbing}
+header{position:absolute;top:14px;left:16px;z-index:5;pointer-events:none;user-select:none}
+header h1{margin:0;font-size:13px;letter-spacing:.14em;font-weight:650;color:var(--text);text-transform:uppercase}
+header h1 span{color:var(--muted);font-weight:500;letter-spacing:.12em}
+header p{margin:4px 0 0;font-size:11px;color:var(--muted);letter-spacing:.1em}
+#banner{position:absolute;top:58px;left:16px;right:16px;z-index:6;background:#1a1408;color:var(--warn);border:1px solid #5c3e0a;padding:9px 12px;border-radius:10px;font-size:12px;line-height:1.4;box-shadow:0 4px 20px rgba(0,0,0,.4);max-width:520px}
+#banner b{color:#ffd599}
+#ui{position:absolute;top:14px;right:14px;z-index:5;width:310px;max-width:calc(100vw - 28px);background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:12px 12px 10px;backdrop-filter:blur(10px) saturate(1.1);box-shadow:0 10px 40px rgba(0,0,0,.55);max-height:calc(100vh - 28px);overflow:auto}
+.ctrl{margin-bottom:11px}
+label{display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--muted);margin:0 0 5px;letter-spacing:.04em;text-transform:uppercase}
+select,button{width:100%;background:#0c0e12;color:var(--text);border:1px solid var(--border);border-radius:9px;padding:8px 10px;font-size:13px;font-family:inherit;outline:none}
+select:focus,button:focus,input:focus{border-color:#2a7a55;box-shadow:0 0 0 2px rgba(124,255,178,.12)}
+input[type=range]{-webkit-appearance:none;width:100%;height:26px;background:transparent;margin:0}
+input[type=range]::-webkit-slider-runnable-track{height:4px;background:#1b1f27;border-radius:3px}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--accent);margin-top:-6px;border:2px solid #0a3120;box-shadow:0 1px 4px rgba(0,0,0,.5);cursor:pointer}
+input[type=range]::-moz-range-track{height:4px;background:#1b1f27;border-radius:3px}
+input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:var(--accent);border:2px solid #0a3120;cursor:pointer}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+button{cursor:pointer;background:#141821;transition:transform .05s,background .15s,border-color .15s}
+button:hover{background:#18202b;border-color:#253040}
+button:active{transform:translateY(1px)}
+button.primary{background:#0e231a;border-color:#1d4836;color:#a7ffd2}
+button.primary:hover{background:#122c21;border-color:#256347}
+small{display:block;margin-top:6px;color:var(--muted);font-size:10.5px;line-height:1.3;text-align:center;letter-spacing:.02em}
+hr{border:none;border-top:1px solid var(--border);margin:10px 0}
+.value{color:var(--text);font-variant-numeric:tabular-nums;letter-spacing:.02em}
+@media(max-width:640px){#ui{top:auto;bottom:12px;left:12px;right:12px;width:auto}header{top:10px;left:12px} #banner{top:48px;left:12px;right:12px}}
+</style>
+</head>
+<body>
+<canvas id="gl"></canvas>
+<canvas id="tree" style="display:none"></canvas>
+
+<header>
+  <h1>FULL PIPELINE <span>// .onion ready</span></h1>
+  <p>stop on all forks • fork on forks</p>
+</header>
+
+<div id="banner" hidden><b>WebGL disabled</b> — Fork Tree available. Lower security level for full fractals.</div>
+
+<div id="ui">
+  <div class="ctrl">
+    <label>Fractal</label>
+    <select id="mode">
+      <option value="0">Mandelbrot</option>
+      <option value="1">Julia</option>
+      <option value="2">Burning Ship</option>
+      <option value="3">Fork Tree (Canvas2D)</option>
+    </select>
+  </div>
+
+  <div id="webglGrp">
+    <div class="ctrl">
+      <label>Iterations <span class="value" id="iterV">200</span></label>
+      <input id="iter" type="range" min="50" max="1000" step="10" value="200">
+    </div>
+    <div class="ctrl">
+      <label>Palette <span class="value" id="palV">Matrix</span></label>
+      <input id="pal" type="range" min="0" max="5" step="1" value="4">
+    </div>
+  </div>
+
+  <div id="juliaGrp" style="display:none">
+    <div class="row">
+      <div class="ctrl"><label>Re <span class="value" id="jrV">-0.70</span></label><input id="jr" type="range" min="-1" max="1" step="0.005" value="-0.7"></div>
+      <div class="ctrl"><label>Im <span class="value" id="jiV">0.27</span></label><input id="ji" type="range" min="-1" max="1" step="0.005" value="0.27"></div>
+    </div>
+  </div>
+
+  <div id="treeGrp" style="display:none">
+    <div class="ctrl">
+      <label>Depth <span class="value" id="tdV">9</span></label>
+      <input id="td" type="range" min="2" max="12" step="1" value="9">
+    </div>
+    <div class="row">
+      <div class="ctrl"><label>Angle <span class="value" id="taV">25°</span></label><input id="ta" type="range" min="10" max="45" step="1" value="25"></div>
+      <div class="ctrl"><label>Ratio <span class="value" id="trV">0.72</span></label><input id="tr" type="range" min="60" max="85" step="1" value="72"></div>
+    </div>
+    <div class="row">
+      <button id="stopFork">Stop all forks</button>
+      <button id="forkFork" class="primary">Fork on forks</button>
+    </div>
+  </div>
+
+  <hr>
+  <div class="row">
+    <button id="reset">Reset view</button>
+    <button id="save">Save PNG</button>
+  </div>
+  <small>Drag to pan • Wheel / pinch to zoom • Double-click to center</small>
+</div>
+
+<script>
+(()=>{'use strict';
+const $=id=>document.getElementById(id);
+const glc=$('gl'), treec=$('tree'), banner=$('banner');
+const modeSel=$('mode'), iter=$('iter'), iterV=$('iterV'), pal=$('pal'), palV=$('palV');
+const jr=$('jr'), ji=$('ji'), jrV=$('jrV'), jiV=$('jiV');
+const td=$('td'), ta=$('ta'), tr=$('tr'), tdV=$('tdV'), taV=$('taV'), trV=$('trV');
+const webglGrp=$('webglGrp'), juliaGrp=$('juliaGrp'), treeGrp=$('treeGrp');
+
+let mode=0, center={x:-0.5,y:0}, scale=2.6, iterations=200;
+let julia={x:-0.7,y:0.27}, palette=4;
+let tree={depth:9,angle:25,ratio:0.72};
+
+const palNames=['Mono','Fire','Ice','Rainbow','Matrix','Amber'];
+
+// WebGL2 setup
+let gl=null, prog=null, u={}, webglOK=false;
+try{
+  gl=glc.getContext('webgl2',{alpha:false,depth:false,stencil:false,antialias:false,preserveDrawingBuffer:false,powerPreference:'low-power'});
+  webglOK=!!gl;
+}catch(e){}
+if(!webglOK){
+  banner.hidden=false;
+  mode=3;
+  modeSel.value='3';
+  [...modeSel.options].forEach(o=>{if(o.value!=='3')o.disabled=true;});
+}
+
+if(webglOK){
+  const vs='#version 300 es\nin vec2 p;void main(){gl_Position=vec4(p,0,1);}';
+  const fs='#version 300 es\nprecision highp float;out vec4 o;uniform vec2 R;uniform vec2 C;uniform float S;uniform int I;uniform int M;uniform vec2 J;uniform int P;vec3 pal(float t,int p){if(p==0)return vec3(t);if(p==1)return vec3(t*1.4,pow(t,2.0),pow(t,5.0));if(p==2)return vec3(pow(t,3.0),t*0.9,1.0-t*0.4);if(p==3)return 0.5+0.5*cos(6.28318*(vec3(0.0,0.33,0.67)+t));if(p==4)return vec3(0.0,pow(t,0.7),t*0.25);return vec3(1.0-pow(1.0-t,2.0),t*0.7,0.0);}void main(){vec2 uv=(gl_FragCoord.xy-0.5*R)/R.y*S+C;vec2 z,c;float n=0.0;if(M==0){c=uv;z=vec2(0);}else if(M==1){z=uv;c=J;}else{c=uv;z=vec2(0);}for(int i=0;i<2000;i++){if(i>=I)break;if(M==2)z=abs(z);z=vec2(z.x*z.x-z.y*z.y,2.0*z.x*z.y)+c;float d=dot(z,z);if(d>4.0){n=float(i)+1.0-log(log(d))/log(2.0);break;}if(i==I-1)n=float(I);}float t=n/float(I);vec3 col=n>=float(I)?vec3(0.0):pal(clamp(t,0.0,1.0),P);o=vec4(col,1.0);}';
+  function compile(t,s){const sh=gl.createShader(t);gl.shaderSource(sh,s);gl.compileShader(sh);return sh;}
+  const vsS=compile(gl.VERTEX_SHADER,vs), fsS=compile(gl.FRAGMENT_SHADER,fs);
+  prog=gl.createProgram();gl.attachShader(prog,vsS);gl.attachShader(prog,fsS);gl.linkProgram(prog);
+  gl.useProgram(prog);
+  const buf=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,buf);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),gl.STATIC_DRAW);
+  const loc=gl.getAttribLocation(prog,'p');gl.enableVertexAttribArray(loc);gl.vertexAttribPointer(loc,2,gl.FLOAT,false,0,0);
+  u.R=gl.getUniformLocation(prog,'R');u.C=gl.getUniformLocation(prog,'C');u.S=gl.getUniformLocation(prog,'S');u.I=gl.getUniformLocation(prog,'I');u.M=gl.getUniformLocation(prog,'M');u.J=gl.getUniformLocation(prog,'J');u.P=gl.getUniformLocation(prog,'P');
+}
+
+const tctx=treec.getContext('2d',{alpha:false,desynchronized:true});
+
+function resize(){
+  const dpr=Math.min(window.devicePixelRatio||1,2);
+  if(webglOK && mode!==3){
+    const w=glc.clientWidth, h=glc.clientHeight;
+    if(glc.width!==w*dpr||glc.height!==h*dpr){glc.width=w*dpr;glc.height=h*dpr;}
+    gl.viewport(0,0,glc.width,glc.height);
+  }
+  if(mode===3){
+    const w=treec.clientWidth, h=treec.clientHeight;
+    if(treec.width!==w*dpr||treec.height!==h*dpr){treec.width=w*dpr;treec.height=h*dpr;}
+  }
+}
+function render(){
+  if(mode===3){drawTree();return;}
+  if(!webglOK)return;
+  resize();
+  gl.useProgram(prog);
+  gl.uniform2f(u.R,glc.width,glc.height);
+  gl.uniform2f(u.C,center.x,center.y);
+  gl.uniform1f(u.S,scale);
+  gl.uniform1i(u.I,iterations);
+  gl.uniform1i(u.M,mode);
+  gl.uniform2f(u.J,julia.x,julia.y);
+  gl.uniform1i(u.P,palette);
+  gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
+}
+function drawTree(){
+  resize();
+  const ctx=tctx, c=treec, w=c.width, h=c.height;
+  ctx.setTransform(1,0,0,1,0,0);
+  ctx.fillStyle='#050608';ctx.fillRect(0,0,w,h);
+  ctx.translate(w*0.5,h*0.97);
+  ctx.lineCap='round';ctx.lineJoin='round';
+  const depth=tree.depth, ang=tree.angle*Math.PI/180, rat=tree.ratio, len=h*0.27;
+  function branch(l,d){
+    if(d>depth)return;
+    const lw=Math.max(1,(depth-d+1)*1.4*(window.devicePixelRatio||1));
+    ctx.lineWidth=lw;
+    const light=58-d*4;
+    ctx.strokeStyle=`hsla(152,55%,${light}%,${0.92-d*0.05})`;
+    ctx.beginPath();ctx.moveTo(0,0);ctx.lineTo(0,-l);ctx.stroke();
+    ctx.translate(0,-l);
+    if(d<depth){
+      ctx.save();ctx.rotate(ang*0.95);branch(l*rat,d+1);ctx.restore();
+      ctx.save();ctx.rotate(-ang*0.95);branch(l*rat,d+1);ctx.restore();
+      if(d>1 && (d%2===0)){
+        ctx.save();ctx.rotate((Math.random()-0.5)*ang*0.4);branch(l*rat*0.85,d+1);ctx.restore();
+      }
+    }
+    ctx.translate(0,l);
+  }
+  branch(len,0);
+}
+
+// UI updates
+function syncUI(){
+  const isJulia=mode===1, isTree=mode===3;
+  juliaGrp.style.display=isJulia?'block':'none';
+  treeGrp.style.display=isTree?'block':'none';
+  webglGrp.style.display=isTree?'none':'block';
+  glc.style.display=isTree?'none':'block';
+  treec.style.display=isTree?'block':'none';
+  modeSel.value=String(mode);
+  iterV.textContent=iterations;
+  palV.textContent=palNames[palette];
+  jrV.textContent=julia.x.toFixed(2); jiV.textContent=julia.y.toFixed(2);
+  tdV.textContent=tree.depth; taV.textContent=tree.angle+'°'; trV.textContent=tree.ratio.toFixed(2);
+}
+function setMode(m){
+  mode=m;
+  if(!webglOK && m!==3){mode=3;}
+  if(m===0){center={x:-0.5,y:0};scale=2.6;}
+  if(m===1){center={x:0,y:0};scale=2.4;}
+  if(m===2){center={x:-0.4,y:-0.6};scale=3.0;}
+  syncUI(); render();
+}
+modeSel.onchange=e=>setMode(+e.target.value);
+iter.oninput=e=>{iterations=+e.target.value;iterV.textContent=iterations;render();};
+pal.oninput=e=>{palette=+e.target.value;palV.textContent=palNames[palette];render();};
+jr.oninput=e=>{julia.x=+e.target.value;jrV.textContent=julia.x.toFixed(2);if(mode===1)render();};
+ji.oninput=e=>{julia.y=+e.target.value;jiV.textContent=julia.y.toFixed(2);if(mode===1)render();};
+td.oninput=e=>{tree.depth=+e.target.value;tdV.textContent=tree.depth;if(mode===3)drawTree();};
+ta.oninput=e=>{tree.angle=+e.target.value;taV.textContent=tree.angle+'°';if(mode===3)drawTree();};
+tr.oninput=e=>{tree.ratio=+e.target.value/100;trV.textContent=tree.ratio.toFixed(2);if(mode===3)drawTree();};
+$('stopFork').onclick=()=>{tree.depth=2;td.value=2;tdV.textContent='2';drawTree();};
+$('forkFork').onclick=()=>{tree.depth=Math.min(12,tree.depth+1);td.value=tree.depth;tdV.textContent=tree.depth;drawTree();};
+$('reset').onclick=()=>setMode(mode);
+$('save').onclick=()=>{
+  const a=document.createElement('a');a.download='pipeline-'+Date.now()+'.png';
+  a.href=(mode===3?treec:glc).toDataURL('image/png');a.click();
+};
+
+// Interaction
+function zoomAt(cx,cy,factor){
+  if(mode===3)return;
+  const rect=glc.getBoundingClientRect();
+  const x=cx-rect.left, y=cy-rect.top;
+  const wx=center.x+(x-rect.width/2)/rect.height*scale;
+  const wy=center.y+(y-rect.height/2)/rect.height*scale;
+  scale/=factor;
+  scale=Math.max(0.00001,Math.min(scale,20));
+  center.x=wx-(x-rect.width/2)/rect.height*scale;
+  center.y=wy-(y-rect.height/2)/rect.height*scale;
+  render();
+}
+let dragging=false,lx=0,ly=0,lastDist=0;
+function startDrag(x,y){dragging=true;lx=x;ly=y;}
+function moveDrag(x,y){
+  if(!dragging||mode===3)return;
+  const rect=glc.getBoundingClientRect();
+  center.x-=(x-lx)/rect.height*scale;
+  center.y+=(y-ly)/rect.height*scale;
+  lx=x;ly=y;render();
+}
+glc.addEventListener('mousedown',e=>{startDrag(e.clientX,e.clientY);});
+window.addEventListener('mousemove',e=>moveDrag(e.clientX,e.clientY));
+window.addEventListener('mouseup',()=>dragging=false);
+glc.addEventListener('wheel',e=>{e.preventDefault();zoomAt(e.clientX,e.clientY, e.deltaY<0?1.15:0.87);},{passive:false});
+glc.addEventListener('dblclick',e=>{const r=glc.getBoundingClientRect();center.x+=(e.clientX-r.left-r.width/2)/r.height*scale;center.y+=(e.clientY-r.top-r.height/2)/r.height*scale;render();});
+glc.addEventListener('touchstart',e=>{
+  if(e.touches.length===1)startDrag(e.touches[0].clientX,e.touches[0].clientY);
+  else if(e.touches.length===2){const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);lastDist=d;}
+},{passive:false});
+glc.addEventListener('touchmove',e=>{
+  e.preventDefault();
+  if(e.touches.length===1)moveDrag(e.touches[0].clientX,e.touches[0].clientY);
+  else if(e.touches.length===2){const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);if(lastDist){const f=d/lastDist;const mx=(e.touches[0].clientX+e.touches[1].clientX)/2;const my=(e.touches[0].clientY+e.touches[1].clientY)/2;zoomAt(mx,my,f);}lastDist=d;}
+},{passive:false});
+glc.addEventListener('touchend',()=>{dragging=false;lastDist=0;});
+
+window.addEventListener('resize',()=>{render();});
+setMode(mode);
+syncUI();
+render();
+})();
+</script>
+</body>
+</html>

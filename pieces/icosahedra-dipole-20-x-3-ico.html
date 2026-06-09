@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>ROOT0 · Icosidodecahedron (20×3 Isodecohedron)</title>
+<style>
+:root {
+  --paper: #e8dcc4;
+  --ink: #2d4a3e;
+  --border: #8a7558;
+  --a1: #2c5564;
+  --a3: #b8862a;
+}
+body {
+  margin: 0; background: var(--paper);
+  background-image: radial-gradient(circle at 20% 30%, #f0e5cd 0%, transparent 60%);
+  color: var(--ink); font-family: "JetBrains Mono", monospace;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  height: 100vh; overflow: hidden;
+}
+h1 {
+  font-family: "Cormorant SC", serif; font-size: 28px; margin: 0;
+  letter-spacing: 0.08em; color: var(--ink);
+}
+.sub {
+  font-size: 10px; letter-spacing: 0.2em; color: var(--ink);
+  opacity: 0.7; margin-bottom: 10px;
+}
+canvas {
+  border: 1px solid var(--border);
+  background: #f5eedb;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  margin: 10px 0;
+}
+.btn {
+  background: var(--ink); color: var(--paper);
+  border: 1px solid var(--ink); padding: 8px 24px;
+  font-family: inherit; font-size: 13px; font-weight: 700;
+  letter-spacing: 0.18em; cursor: pointer; transition: background 0.15s;
+}
+.btn:hover { background: var(--a1); border-color: var(--a1); }
+.note {
+  font-size: 9px; opacity: 0.6; text-align: center; margin-top: 8px;
+  max-width: 400px;
+}
+</style>
+</head>
+<body>
+<h1>20×3 ISODECOHEDRON</h1>
+<div class="sub">Archimedean witness · 32 faces (20△ + 12⬠)</div>
+<canvas id="polyCanvas" width="480" height="400"></canvas>
+<button class="btn" id="resonateBtn">⊛ RESONATE</button>
+<div class="note">
+  Icosidodecahedron — the intermediary between icosahedron and dodecahedron.
+  Its 60 vertices map to the 60 possible permutations of ROOT0 axiomatic states.
+</div>
+
+<script>
+const canvas = document.getElementById('polyCanvas');
+const ctx = canvas.getContext('2d');
+let rotationAngle = 0;
+let pulse = 0;
+let resonating = false;
+
+// Icosidodecahedron vertices (normalized) — core Archimedean solid coordinates
+const phi = (1 + Math.sqrt(5)) / 2;
+const vertices = [
+  // 12 vertices of an icosahedron (golden rectangles)
+  [0, 1, phi], [0, -1, phi], [0, 1, -phi], [0, -1, -phi],
+  [1, phi, 0], [-1, phi, 0], [1, -phi, 0], [-1, -phi, 0],
+  [phi, 0, 1], [-phi, 0, 1], [phi, 0, -1], [-phi, 0, -1],
+  // 20 additional points from the pentagonal truncation? Actually we can just use the icosidodecahedron vertices from known list
+  // I'll hard-code the 30 vertices of icosidodecahedron (simplified from canonical coordinates)
+  [1/2, phi/2, (1+phi)/2], [-1/2, phi/2, (1+phi)/2], [1/2, -phi/2, (1+phi)/2], [-1/2, -phi/2, (1+phi)/2],
+  [(1+phi)/2, 1/2, phi/2], [(1+phi)/2, -1/2, phi/2], [-(1+phi)/2, 1/2, phi/2], [-(1+phi)/2, -1/2, phi/2],
+  [phi/2, (1+phi)/2, 1/2], [-phi/2, (1+phi)/2, 1/2], [phi/2, -(1+phi)/2, 1/2], [-phi/2, -(1+phi)/2, 1/2],
+  // actually easier: derive from icosahedron and dodecahedron combination — but let's just use a known set:
+  // I'll use a precomputed set of 30 points from the icosahedron + dodecahedron edge midpoints? 
+  // To save time, I'll approximate the icosidodecahedron by using a truncated icosahedron? No. 
+  // Instead, I'll generate the 30 vertices as the union of an icosahedron's 12 and a dodecahedron's 20... but canonical icosidodecahedron has 30 vertices (since it's quasi-regular). Actually, icosidodecahedron has 30 vertices. I'll use a simple calculation: the vertices are all cyclic permutations of (±1, ±φ, 0) and (0, ±1, ±φ) and (±φ, 0, ±1) — wait, that's the icosahedron's 12 vertices. To get 30 vertices, we need to add the midpoints of the icosahedron's edges? The icosidodecahedron can be obtained by truncating the icosahedron at the vertices so that the original triangular faces become regular hexagons? No, that's truncated icosahedron. The icosidodecahedron is a rectified dodecahedron/icosahedron, having 30 vertices, each vertex is the meeting point of two triangles and two pentagons. I can compute the vertices as all even permutations of (±2, 0, ±1+φ) maybe. Let's just look up mental: The icosidodecahedron has vertices at all permutations of (±φ, ±1, 0), (±1, ±φ, 0), (0, ±φ, ±1) — that's 12*3=36? No. Actually, I'll just hard-code from a known reference quickly. I'll write a small function to generate the 30 vertices by taking the 12 icosahedron vertices and the 20 dodecahedron vertices, then normalizing. Dodecahedron: (±1,±1,±1) (8 vertices) and (±φ, ±1/φ, 0) cycles etc. But easier: The icosidodecahedron's vertices are all cyclic permutations of (±1/2, ±φ/2, ±(1+φ)/2). So I can generate 24 permutations? Let's do it properly.
+  // I'll define the golden ratio ratios: Let a = 1/2, b = phi/2, c = (1+phi)/2.
+  // All even permutations of (±a, ±b, ±c) gives 24 vertices. The remaining 6 vertices come from the (±c, ±a, ±b) with odd parity? Actually, the rectified dodecahedron has vertices at these 30 coordinates. I'll generate all permutations with overall sign, and then deduplicate and normalize to unit sphere.
+  // But for visual, I'll just compute the 30 points using known icosahedron edge midpoints.
+  const icosaVerts = [[0,1,phi],[0,-1,phi],[0,1,-phi],[0,-1,-phi],[1,phi,0],[-1,phi,0],[1,-phi,0],[-1,-phi,0],[phi,0,1],[-phi,0,1],[phi,0,-1],[-phi,0,-1]].map(v=>v.map(c=>c/Math.sqrt(1+phi*phi)));
+  // Midpoints of all edges: but that gives 30 points! Indeed, icosahedron has 30 edges, each midpoint is a vertex of the icosidodecahedron.
+  const edges = [];
+  // generate all edges of icosahedron (12 vertices, degree 5, 30 edges)
+  // brute force: connect vertices that are distance = edge length
+  const dist = (a,b) => Math.sqrt(a.reduce((s,v,i)=>s+(v-b[i])**2,0));
+  const edgelen = Math.sqrt((phi*phi+1)) / Math.sqrt(1+phi*phi); // approx 1.051
+  const mids = [];
+  for (let i=0;i<icosaVerts.length;i++){
+    for (let j=i+1;j<icosaVerts.length;j++){
+      const d = dist(icosaVerts[i], icosaVerts[j]);
+      if (Math.abs(d - 1.05146) < 0.01){ // edge length approx 1.051
+        const mid = icosaVerts[i].map((c,k) => (c+icosaVerts[j][k])/2);
+        mids.push(mid);
+      }
+    }
+  }
+  // mids should have 30 elements, normalize to unit sphere
+  return mids.map(v=>{
+    const len = Math.sqrt(v.reduce((s,x)=>s+x*x,0));
+    return v.map(x=>x/len);
+  });
+};
+const icosiVertices = (()=>{
+  const phi=(1+Math.sqrt(5))/2;
+  const ico=[[0,1,phi],[0,-1,phi],[0,1,-phi],[0,-1,-phi],[1,phi,0],[-1,phi,0],[1,-phi,0],[-1,-phi,0],[phi,0,1],[-phi,0,1],[phi,0,-1],[-phi,0,-1]].map(v=>v.map(c=>c/Math.sqrt(phi*phi+1)));
+  const mids=[];
+  for(let i=0;i<ico.length;i++){
+    for(let j=i+1;j<ico.length;j++){
+      let d=0; for(let k=0;k<3;k++) d+=(ico[i][k]-ico[j][k])**2;
+      if(Math.abs(d-4/(phi*phi+1))<0.01){ // edge squared length = 4/(phi^2+1)
+        mids.push(ico[i].map((c,k)=>(c+ico[j][k])/2));
+      }
+    }
+  }
+  // normalize
+  return mids.map(v=>{
+    const l=Math.sqrt(v.reduce((s,x)=>s+x*x,0));
+    return v.map(x=>x/l);
+  });
+})();
+
+// Predefine faces: 20 triangles, 12 pentagons. Hard to extract automatically, so we will draw all vertices as points and the 60 edges? Better to just draw vertices as small circles, and maybe lines for all edges of the icosidodecahedron (which has 120 edges). That would be too many lines. Instead, we can render edges by connecting vertices that are nearest neighbors on the unit sphere. But 120 lines might look messy. I'll display the vertices as dots, and as an extra, highlight a few triangular and pentagonal cycles when resonating. For simplicity, I'll just show the 30 vertices as glowing dots and rotate them, and when resonating, pulse them.
+
+let vertices = icosiVertices.map(v => ({x:v[0], y:v[1], z:v[2]}));
+
+function project(v, angle) {
+  const cosA = Math.cos(angle), sinA = Math.sin(angle);
+  // rotate around Y axis
+  const x = v.x * cosA - v.z * sinA;
+  const z = v.x * sinA + v.z * cosA;
+  const y = v.y;
+  // rotate around X axis a bit for perspective
+  const cosB = Math.cos(0.4), sinB = Math.sin(0.4);
+  const y2 = y * cosB - z * sinB;
+  const z2 = y * sinB + z * cosB;
+  // perspective
+  const scale = 280 / (z2 + 3.5);
+  return {
+    x: canvas.width/2 + x * scale,
+    y: canvas.height/2 - y2 * scale,
+    depth: z2,
+  };
+}
+
+function draw() {
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  const points = vertices.map(v => project(v, rotationAngle));
+  // sort by depth to draw back to front
+  points.forEach((p,i) => { p.idx = i; });
+  points.sort((a,b) => b.depth - a.depth);
+  // draw connections? Too many. Just draw dots
+  for (const p of points) {
+    const size = 3 + pulse * 0.5 * Math.sin(rotationAngle*3 + p.depth*2);
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, size, 0, 2*Math.PI);
+    // color based on depth
+    const t = (p.depth + 2) / 4;
+    const r = 44 + 20*Math.sin(t*2), g = 85 + 30*Math.cos(t*1.5), b = 100 + 30*Math.sin(t);
+    ctx.fillStyle = `rgb(${r},${g},${b})`;
+    ctx.fill();
+  }
+  // draw a subtle wireframe of some edges? I'll draw all edges between vertices that are close (within 0.9 radians). For 30 vertices, each vertex connects to 4 others? The icosidodecahedron each vertex is degree 4. So we can compute neighbors by threshold on dot product. Cosine of angle between adjacent vertices ≈ 0.85.
+  const threshold = 0.86;
+  const drawn = new Set();
+  for (let i=0;i<vertices.length;i++) {
+    for (let j=i+1;j<vertices.length;j++) {
+      const dot = vertices[i].x*vertices[j].x + vertices[i].y*vertices[j].y + vertices[i].z*vertices[j].z;
+      if (dot > threshold) {
+        const p1 = points[i], p2 = points[j];
+        ctx.beginPath();
+        ctx.moveTo(p1.x, p1.y);
+        ctx.lineTo(p2.x, p2.y);
+        ctx.strokeStyle = 'rgba(138,117,88,0.15)';
+        ctx.lineWidth = 0.8;
+        ctx.stroke();
+      }
+    }
+  }
+  rotationAngle += 0.005;
+  if (resonating) {
+    pulse = Math.sin(Date.now() * 0.02) * 2;
+  } else {
+    pulse = 0;
+  }
+  requestAnimationFrame(draw);
+}
+
+document.getElementById('resonateBtn').addEventListener('click', () => {
+  resonating = !resonating;
+});
+draw();
+</script>
+</body>
+</html>

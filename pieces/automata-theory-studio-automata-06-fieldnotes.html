@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Automata Field Notes</title>
+<style>
+  :root{--bg:#08080f;--panel:#10101e;--panel2:#13131f;--line:#1f1f33;--line2:#2a2a42;--ink:#e7e7f0;--dim:#9a9ab5;--faint:#5e5e7a;--teal:#2dd4bf;--cyan:#5eead4;--amber:#fbbf24;--violet:#a78bfa;--blue:#60a5fa;--rose:#fb7185;--green:#86efac;}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:radial-gradient(1150px 800px at 80% -15%,rgba(45,212,191,.08),transparent 58%),radial-gradient(900px 640px at -8% 106%,rgba(251,191,36,.035),transparent 55%),var(--bg);color:var(--ink);font-family:'IBM Plex Sans',sans-serif;font-weight:300;min-height:100vh;padding:28px 22px 56px;-webkit-font-smoothing:antialiased}
+  .shell{max-width:1160px;margin:0 auto}
+  .kicker{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.4em;text-transform:uppercase;color:var(--teal);margin-bottom:12px}
+  h1{font-family:'Spectral',serif;font-weight:300;font-size:clamp(26px,5vw,44px);letter-spacing:-.02em;line-height:1.04}
+  h1 em{font-style:italic;color:var(--teal)}
+  .sub{color:var(--dim);font-size:15px;margin-top:8px;max-width:820px;line-height:1.62}
+  .tabs{display:flex;gap:8px;margin-top:22px;flex-wrap:wrap}
+  .tab{font-family:'IBM Plex Mono',monospace;font-size:12px;border:1px solid var(--line);border-radius:10px;background:var(--panel);color:var(--dim);padding:10px 15px;cursor:pointer;transition:.15s}
+  .tab:hover{border-color:var(--teal)} .tab.on{border-color:var(--teal);color:var(--teal);background:rgba(45,212,191,.08)}
+  .pane{display:none;margin-top:18px}.pane.on{display:block}
+  .layout{display:grid;grid-template-columns:292px minmax(0,1fr);gap:18px;align-items:start}
+  @media(max-width:900px){.layout{grid-template-columns:1fr}}
+  .controls{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px}
+  .sec{font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--faint);margin-bottom:10px}
+  .sec:not(:first-child){margin-top:15px}
+  .seg{display:flex;border:1px solid var(--line);border-radius:9px;overflow:hidden;margin-top:8px;flex-wrap:wrap}
+  .seg button{flex:1;min-width:70px;font-family:'IBM Plex Mono',monospace;font-size:10.5px;background:transparent;color:var(--dim);border:0;padding:8px 3px;cursor:pointer}
+  .seg button.on{background:rgba(45,212,191,.16);color:var(--teal)}
+  .btns{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+  .btns button{flex:1;min-width:60px;font-family:'IBM Plex Mono',monospace;font-size:11px;border:1px solid var(--line);border-radius:8px;background:var(--panel2);color:var(--dim);padding:9px 5px;cursor:pointer}
+  .btns button:hover,.btns button.act{border-color:var(--teal);color:var(--teal);background:rgba(45,212,191,.1)}
+  .sliderrow{margin-top:12px}
+  .sliderrow .lab{display:flex;justify-content:space-between;font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--dim);margin-bottom:5px}
+  .sliderrow .lab b{color:var(--teal)}
+  input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:4px;border-radius:4px;background:var(--line);outline:none}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--teal);cursor:pointer;border:2px solid #0a0a14}
+  .stat{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--dim);margin-top:13px;border:1px solid var(--line);border-radius:11px;padding:10px}
+  .stat .r{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px dashed var(--line);gap:8px}
+  .stat .r:last-child{border:0}.stat .k{color:var(--faint)}.stat .v{color:var(--teal);text-align:right}.stat .v.g{color:var(--green)}.stat .v.a{color:var(--amber)}.stat .v.r{color:var(--rose)}.stat .v.b{color:var(--blue)}
+  .note{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--faint);line-height:1.55;margin-top:10px}
+  .panel{background:#06060c;border:1px solid var(--line);border-radius:16px;position:relative;overflow:hidden;line-height:0}
+  .plabel{position:absolute;top:10px;left:14px;font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--faint);background:rgba(6,6,12,.5);padding:2px 6px;border-radius:4px;z-index:2}
+  canvas{display:block;width:100%;height:auto}
+  footer{margin-top:24px;padding-top:22px;border-top:1px solid var(--line);color:var(--faint);font-family:'IBM Plex Mono',monospace;font-size:11.5px;line-height:1.9}
+  footer .seq{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+  footer .seq span{padding:5px 12px;border:1px solid var(--line);border-radius:30px}
+  footer .seq .here{border-color:var(--teal);color:var(--teal)}
+</style>
+</head>
+<body>
+<div class="shell">
+  <div>
+    <div class="kicker">Automata & Formal Languages · Instrument 06 · Field Notes</div>
+    <h1>From theory to <em>working systems</em></h1>
+    <p class="sub">Automata theory is not just a museum of little machines. It is a map for choosing memory, proving limits, building parsers, and debugging pattern matchers. This epilogue adds the practical heuristics I wish every course made explicit.</p>
+  </div>
+
+  <div class="tabs">
+    <div class="tab on" data-t="A">Machine chooser</div>
+    <div class="tab" data-t="B">Compiler pipeline</div>
+    <div class="tab" data-t="C">Closure laws</div>
+    <div class="tab" data-t="D">State explosion</div>
+  </div>
+
+  <div class="pane on" id="paneA">
+    <div class="layout">
+      <div class="controls">
+        <div class="sec">Choose a language</div>
+        <div class="seg" id="aLang"></div>
+        <div class="stat" id="statA"></div>
+        <div class="note">A useful rule of thumb: ask what memory the language forces. No memory beyond a state? regular. Nested matching? stack. Multiple unbounded comparisons or arbitrary simulation? tape. A question about all programs? expect undecidability.</div>
+      </div>
+      <div class="panel"><canvas id="cvA" height="430"></canvas><div class="plabel" id="aLab">machine chooser</div></div>
+    </div>
+  </div>
+
+  <div class="pane" id="paneB">
+    <div class="layout">
+      <div class="controls">
+        <div class="sec">Pipeline phase</div>
+        <div class="sliderrow"><div class="lab"><span>phase</span><b id="bPV">2</b></div><input type="range" id="bP" min="0" max="5" value="2"></div>
+        <div class="btns"><button id="bPrev">prev</button><button id="bNext">next</button></div>
+        <div class="stat" id="statB"></div>
+        <div class="note">Real language tooling layers machines. A lexer is usually regular. A parser is usually context-free-ish. Type checking and semantic analysis need richer computation. Keeping those layers separate is a power move.</div>
+      </div>
+      <div class="panel"><canvas id="cvB" height="430"></canvas><div class="plabel" id="bLab">lexer -> parser -> semantics</div></div>
+    </div>
+  </div>
+
+  <div class="pane" id="paneC">
+    <div class="layout">
+      <div class="controls">
+        <div class="sec">Operation</div>
+        <div class="seg" id="cOp"><button data-o="union" class="on">union</button><button data-o="intersect">intersect</button><button data-o="comp">complement</button><button data-o="star">star</button></div>
+        <div class="stat" id="statC"></div>
+        <div class="note">Closure properties are debugging tools. If a class is closed under an operation, you can transform machines safely. If it is not, the missing closure often tells you exactly why an attempted design feels slippery.</div>
+      </div>
+      <div class="panel"><canvas id="cvC" height="430"></canvas><div class="plabel" id="cLab">closure laws as engineering moves</div></div>
+    </div>
+  </div>
+
+  <div class="pane" id="paneD">
+    <div class="layout">
+      <div class="controls">
+        <div class="sec">NFA size</div>
+        <div class="sliderrow"><div class="lab"><span>states</span><b id="dNV">8</b></div><input type="range" id="dN" min="2" max="16" value="8"></div>
+        <div class="sec">Engine</div>
+        <div class="seg" id="dEngine"><button data-e="dfa" class="on">DFA compile</button><button data-e="backtrack">backtracking</button></div>
+        <div class="stat" id="statD"></div>
+        <div class="note">The theory warning that matters in practice: compact descriptions can expand violently. NFA-to-DFA conversion can cost 2^n states; backtracking regex engines can revisit the same choices many times unless constrained.</div>
+      </div>
+      <div class="panel"><canvas id="cvD" height="430"></canvas><div class="plabel" id="dLab">compact description, expensive execution</div></div>
+    </div>
+  </div>
+
+  <footer>
+    <div class="seq">
+      <span>00 primer</span><span>01 finite automata</span><span>02 regular expressions</span><span>03 pushdown automata</span><span>04 Turing machines</span><span>05 hierarchy & limits</span><span class="here">06 · field notes — you are here</span>
+    </div>
+    FIELD NOTES · choosing machines · parser architecture · closure laws · state explosion. Added as a practical epilogue.
+  </footer>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);const TAU=Math.PI*2;
+const C={teal:'#2dd4bf',cyan:'#5eead4',amber:'#fbbf24',violet:'#a78bfa',blue:'#60a5fa',rose:'#fb7185',green:'#86efac',dim:'#9a9ab5',faint:'#5e5e7a',line:'#2a2a42',panel:'#10101e'};
+function fit(c,h){const w=Math.max(340,c.parentElement.clientWidth||c.getBoundingClientRect().width||0);if(c.width!==w)c.width=w;c.height=h;}
+function hexA(hex,a){const n=parseInt(hex.slice(1),16);return `rgba(${n>>16&255},${n>>8&255},${n&255},${a})`;}
+function rr(x,a,b,w,h,r,fill,stroke){x.beginPath();x.roundRect(a,b,w,h,r);x.fillStyle=fill;x.fill();if(stroke){x.strokeStyle=stroke;x.lineWidth=1.3;x.stroke();}}
+function label(x,s,a,b,sz,col,align){x.font=`${sz||12}px 'IBM Plex Mono'`;x.fillStyle=col||C.dim;x.textAlign=align||'left';x.textBaseline='middle';x.fillText(s,a,b);x.textBaseline='alphabetic';}
+function title(x,s,a,b,sz,col,align){x.font=`600 ${sz||17}px 'IBM Plex Sans'`;x.fillStyle=col||'#e7e7f0';x.textAlign=align||'left';x.textBaseline='middle';x.fillText(s,a,b);x.textBaseline='alphabetic';}
+function wrap(x,text,a,b,w,line,max){const words=text.split(' ');let row=0,cur='';x.textAlign='left';x.textBaseline='top';for(const word of words){const t=cur?cur+' '+word:word;if(x.measureText(t).width>w&&cur){x.fillText(cur,a,b+row*line);cur=word;row++;if(row>=max)return;}else cur=t;}if(cur&&row<max)x.fillText(cur,a,b+row*line);}
+function arrow(x,x1,y1,x2,y2,col){col=col||C.teal;x.strokeStyle=col;x.fillStyle=col;x.lineWidth=2;x.beginPath();x.moveTo(x1,y1);x.lineTo(x2,y2);x.stroke();const a=Math.atan2(y2-y1,x2-x1);x.beginPath();x.moveTo(x2,y2);x.lineTo(x2-8*Math.cos(a-.42),y2-8*Math.sin(a-.42));x.lineTo(x2-8*Math.cos(a+.42),y2-8*Math.sin(a+.42));x.fill();}
+
+/* A */
+const LANGS=[
+  {id:'email',name:'email-ish token',need:'finite memory',machine:'DFA / regex',class:'regular',col:C.teal,why:'bounded local pattern rules; no nesting or arbitrary matching'},
+  {id:'paren',name:'balanced parens',need:'one stack',machine:'PDA / CFG',class:'context-free',col:C.violet,why:'each close must match the most recent unmatched open'},
+  {id:'abc',name:'a^n b^n c^n',need:'two counts',machine:'Turing machine',class:'decidable',col:C.amber,why:'one stack is not enough to compare all three blocks'},
+  {id:'halt',name:'halts on input?',need:'universal simulation',machine:'recognizer only',class:'recognizable',col:C.rose,why:'you can run the program, but non-termination gives no final signal'},
+  {id:'not-halt',name:'does not halt',need:'impossible oracle',machine:'none',class:'not recognizable',col:C.blue,why:'if both HALT and its complement were recognizable, HALT would be decidable'}
+];
+const cvA=$('cvA'),xA=cvA.getContext('2d');let A={sel:'paren'};
+function drawA(){fit(cvA,430);const x=xA,W=cvA.width,H=cvA.height;x.clearRect(0,0,W,H);const sel=LANGS.find(l=>l.id===A.sel);const cx=W/2,cy=H/2+8,base=Math.min(W,H)*.36;
+  const rings=[['regular',.25,C.teal],['context-free',.44,C.violet],['decidable',.63,C.amber],['recognizable',.81,C.rose],['beyond',1.02,C.blue]];
+  rings.forEach(([name,r,col])=>{x.strokeStyle=hexA(col,.58);x.lineWidth=1.5;x.beginPath();x.arc(cx,cy,base*r,0,TAU);x.stroke();label(x,name,cx,cy-base*r+12,10,col,'center');});
+  LANGS.forEach((l,i)=>{const ring=Math.max(0,rings.findIndex(r=>r[0]===l.class));const ang=-1.8+i*.9;const rr=(ring+1)/5*base*.95;const px=cx+Math.cos(ang)*rr,py=cy+Math.sin(ang)*rr;const on=l.id===A.sel;x.fillStyle=on?l.col:'#141426';x.strokeStyle=on?l.col:'#55556c';x.lineWidth=on?2:1.2;x.beginPath();x.arc(px,py,on?8:5,0,TAU);x.fill();x.stroke();label(x,l.name,px,py-17,on?11:10,on?l.col:C.dim,'center');});
+  const bx=34,by=H-102,bw=W-68;rr(x,bx,by,bw,72,10,hexA(sel.col,.1),sel.col);title(x,sel.machine,bx+18,by+24,18,sel.col);x.font="13px 'IBM Plex Sans'";x.fillStyle=C.dim;wrap(x,sel.why,bx+18,by+42,bw-36,20,2);
+  $('aLab').textContent=sel.class+' · '+sel.machine;$('statA').innerHTML=`<div class="r"><span class="k">language</span><span class="v">${sel.name}</span></div><div class="r"><span class="k">memory</span><span class="v a">${sel.need}</span></div><div class="r"><span class="k">machine</span><span class="v g">${sel.machine}</span></div><div class="r"><span class="k">class</span><span class="v">${sel.class}</span></div>`;}
+function initA(){ $('aLang').innerHTML=LANGS.map(l=>`<button data-id="${l.id}" class="${l.id===A.sel?'on':''}">${l.name}</button>`).join('');document.querySelectorAll('#aLang button').forEach(b=>b.onclick=()=>{A.sel=b.dataset.id;document.querySelectorAll('#aLang button').forEach(z=>z.classList.toggle('on',z.dataset.id===A.sel));drawA();});}
+
+/* B */
+const cvB=$('cvB'),xB=cvB.getContext('2d');let B={p:2};
+const PIPE=[
+  ['source text','characters and whitespace',C.faint],
+  ['lexer','regular languages split text into tokens',C.teal],
+  ['parser','a grammar builds a tree from tokens',C.violet],
+  ['semantic checks','scope, types, names, effects',C.amber],
+  ['IR / bytecode','a computable representation',C.blue],
+  ['runtime','a real machine executes the meaning',C.green]
+];
+function drawB(){fit(cvB,430);const x=xB,W=cvB.width,H=cvB.height;x.clearRect(0,0,W,H);const pad=34,gap=12,bw=(W-pad*2-gap*(PIPE.length-1))/PIPE.length,top=96;
+  PIPE.forEach(([name,body,col],i)=>{const on=i===B.p;const bx=pad+i*(bw+gap);rr(x,bx,top,bw,84,8,on?hexA(col,.16):'rgba(16,16,30,.85)',on?col:C.line);label(x,String(i).padStart(2,'0'),bx+13,top+20,10,on?col:C.faint);title(x,name,bx+13,top+46,14,on?col:'#e7e7f0');if(i<PIPE.length-1)arrow(x,bx+bw+2,top+42,bx+bw+gap-3,top+42,on?col:'#3a3a52');});
+  const [name,body,col]=PIPE[B.p];rr(x,pad,238,W-pad*2,120,10,hexA(col,.08),col);title(x,name.toUpperCase(),pad+20,264,18,col);x.font="14px 'IBM Plex Sans'";x.fillStyle=C.dim;wrap(x,body+'. The key engineering move is to use the weakest machine that naturally fits this phase, then hand a cleaner artifact to the next phase.',pad+20,290,W-pad*2-40,22,4);
+  const tokens=['let','x','=','(','3','+','4',')',';'];let tx=pad,ty=H-38;tokens.forEach((t,i)=>{const tw=26+t.length*9;rr(x,tx,ty-22,tw,30,5,i<=B.p+2?hexA(col,.14):'rgba(20,20,34,.6)',i<=B.p+2?col:C.line);label(x,t,tx+tw/2,ty-7,11,i<=B.p+2?col:C.faint,'center');tx+=tw+6;});
+  $('bLab').textContent=PIPE[B.p][0];$('statB').innerHTML=`<div class="r"><span class="k">phase</span><span class="v">${B.p} / 5</span></div><div class="r"><span class="k">current</span><span class="v b">${name}</span></div><div class="r"><span class="k">best fit</span><span class="v">${B.p<2?'regular':B.p===2?'context-free':'Turing-complete'}</span></div><div class="r"><span class="k">artifact</span><span class="v g">${B.p<2?'tokens':B.p===2?'parse tree':'program meaning'}</span></div>`;}
+$('bP').oninput=e=>{B.p=+e.target.value;$('bPV').textContent=B.p;drawB();};
+$('bPrev').onclick=()=>{B.p=Math.max(0,B.p-1);$('bP').value=B.p;$('bPV').textContent=B.p;drawB();};
+$('bNext').onclick=()=>{B.p=Math.min(5,B.p+1);$('bP').value=B.p;$('bPV').textContent=B.p;drawB();};
+
+/* C */
+const cvC=$('cvC'),xC=cvC.getContext('2d');let Cc={op:'union'};
+const OPS={
+  union:{name:'union',reg:'yes',cfg:'yes',dec:'yes',move:'Run either machine. For DFAs, product states combine verdicts with OR.',col:C.green},
+  intersect:{name:'intersection',reg:'yes',cfg:'no',dec:'yes',move:'DFAs close by product construction. CFGs do not close under CFG intersection.',col:C.amber},
+  comp:{name:'complement',reg:'yes',cfg:'no',dec:'yes',move:'For a complete DFA, swap accepting and rejecting states. For recognizers, beware loops.',col:C.rose},
+  star:{name:'Kleene star',reg:'yes',cfg:'yes',dec:'yes',move:'Add a way to restart the machine at accepting boundaries.',col:C.teal}
+};
+function drawC(){fit(cvC,430);const x=xC,W=cvC.width,H=cvC.height;x.clearRect(0,0,W,H);const op=OPS[Cc.op];title(x,'Closure table',34,42,20,'#e7e7f0');
+  const rows=['regular','context-free','decidable'];const cols=['union','intersection','complement','star'];const ox=160,oy=82,cw=(W-210)/cols.length,ch=62;
+  cols.forEach((c,j)=>label(x,c,ox+j*cw+cw/2,oy-24,11,c===op.name||c===Cc.op?op.col:C.faint,'center'));
+  rows.forEach((r,i)=>label(x,r,34,oy+i*ch+ch/2,12,C.dim));
+  rows.forEach((r,i)=>cols.forEach((c,j)=>{const key=c==='intersection'?'intersect':c==='complement'?'comp':c;const val=OPS[key][r==='regular'?'reg':r==='context-free'?'cfg':'dec'];const on=key===Cc.op;const col=val==='yes'?C.green:C.rose;rr(x,ox+j*cw,oy+i*ch,cw-7,ch-8,7,on?hexA(op.col,.13):'rgba(16,16,30,.85)',on?op.col:C.line);label(x,val,ox+j*cw+cw/2,oy+i*ch+ch/2,13,col,'center');}));
+  rr(x,34,H-122,W-68,82,10,hexA(op.col,.09),op.col);title(x,op.name.toUpperCase(),54,H-92,17,op.col);x.font="13px 'IBM Plex Sans'";x.fillStyle=C.dim;wrap(x,op.move,54,H-70,W-108,20,2);
+  $('cLab').textContent=op.name+' closure';$('statC').innerHTML=`<div class="r"><span class="k">operation</span><span class="v">${op.name}</span></div><div class="r"><span class="k">regular</span><span class="v g">${op.reg}</span></div><div class="r"><span class="k">context-free</span><span class="v ${op.cfg==='yes'?'g':'r'}">${op.cfg}</span></div><div class="r"><span class="k">decidable</span><span class="v g">${op.dec}</span></div>`;}
+document.querySelectorAll('#cOp button').forEach(b=>b.onclick=()=>{document.querySelectorAll('#cOp button').forEach(z=>z.classList.remove('on'));b.classList.add('on');Cc.op=b.dataset.o;drawC();});
+
+/* D */
+const cvD=$('cvD'),xD=cvD.getContext('2d');let D={n:8,e:'dfa'};
+function drawD(){fit(cvD,430);const x=xD,W=cvD.width,H=cvD.height;x.clearRect(0,0,W,H);const n=D.n;const max=Math.pow(2,n);const shown=Math.min(max,65536);title(x,D.e==='dfa'?'NFA to DFA state explosion':'Backtracking choice explosion',34,42,20,'#e7e7f0');
+  const graphX=54,graphY=86,graphW=W-108,graphH=220;x.strokeStyle=C.line;x.beginPath();x.moveTo(graphX,graphY);x.lineTo(graphX,graphY+graphH);x.lineTo(graphX+graphW,graphY+graphH);x.stroke();
+  x.strokeStyle=D.e==='dfa'?C.teal:C.rose;x.lineWidth=2;x.beginPath();for(let i=2;i<=16;i++){const val=D.e==='dfa'?Math.pow(2,i):Math.pow(1.62,i);const px=graphX+((i-2)/14)*graphW;const py=graphY+graphH-(Math.log2(val)/16)*graphH;if(i===2)x.moveTo(px,py);else x.lineTo(px,py);}x.stroke();
+  const px=graphX+((n-2)/14)*graphW;const py=graphY+graphH-(Math.log2(D.e==='dfa'?max:Math.pow(1.62,n))/16)*graphH;x.fillStyle=D.e==='dfa'?C.teal:C.rose;x.beginPath();x.arc(px,py,6,0,TAU);x.fill();
+  label(x,'description size n',graphX+graphW-122,graphY+graphH+24,11,C.faint);label(x,'execution space',graphX-20,graphY-14,11,C.faint);
+  const msg=D.e==='dfa'?`A ${n}-state NFA may need up to ${shown.toLocaleString()} DFA states. Usually it does not, but the worst case is real.`:`Nested choices can revisit paths. Add anchors, avoid ambiguous repeats, or use a guaranteed-linear engine when reliability matters.`;
+  rr(x,34,H-96,W-68,58,10,D.e==='dfa'?hexA(C.teal,.1):hexA(C.rose,.1),D.e==='dfa'?C.teal:C.rose);x.font="13px 'IBM Plex Sans'";x.fillStyle=C.dim;wrap(x,msg,54,H-78,W-108,20,2);
+  $('dLab').textContent=D.e==='dfa'?'2^n DFA states':'backtracking paths';$('statD').innerHTML=`<div class="r"><span class="k">n</span><span class="v">${n}</span></div><div class="r"><span class="k">engine</span><span class="v">${D.e}</span></div><div class="r"><span class="k">worst case</span><span class="v a">${D.e==='dfa'?'2^n':'many revisits'}</span></div><div class="r"><span class="k">at n</span><span class="v ${D.e==='dfa'?'g':'r'}">${D.e==='dfa'?shown.toLocaleString()+' states':'~'+Math.round(Math.pow(1.62,n)).toLocaleString()+' paths'}</span></div>`;}
+$('dN').oninput=e=>{D.n=+e.target.value;$('dNV').textContent=D.n;drawD();};
+document.querySelectorAll('#dEngine button').forEach(b=>b.onclick=()=>{document.querySelectorAll('#dEngine button').forEach(z=>z.classList.remove('on'));b.classList.add('on');D.e=b.dataset.e;drawD();});
+
+let active='A';
+function showTab(t){active=t;document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('on',b.dataset.t===t));document.querySelectorAll('.pane').forEach(p=>p.classList.remove('on'));$('pane'+t).classList.add('on');layout();}
+document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>showTab(b.dataset.t));
+function layout(){if(active==='A')drawA();if(active==='B')drawB();if(active==='C')drawC();if(active==='D')drawD();}
+window.addEventListener('resize',()=>{clearTimeout(window._r);window._r=setTimeout(layout,180);});
+initA();layout();
+</script>
+</body>
+</html>

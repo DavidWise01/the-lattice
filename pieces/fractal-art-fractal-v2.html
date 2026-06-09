@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Playables SDK -->
+<script>// Playables SDK v1.0.0
+// Game lifecycle bridge: rAF-based game-ready detection + event communication
+(function() {
+  'use strict';
+
+  // Idempotency: skip if already initialized (e.g., server-side injection
+  // followed by client-side inject-javascript via the Bloks webview component).
+  if (window.playablesSDK) return;
+
+  var HANDLER_NAME = 'playablesGameEventHandler';
+  var ANDROID_BRIDGE_NAME = '_MetaPlayablesBridge';
+  var RAF_FRAME_THRESHOLD = 3;
+
+  var gameReadySent = false;
+  var firstInteractionSent = false;
+  var errorSent = false;
+  var frameCount = 0;
+  var originalRAF = window.requestAnimationFrame;
+
+  // --- Transport Layer ---
+
+  function hasIOSBridge() {
+    return !!(window.webkit &&
+              window.webkit.messageHandlers &&
+              window.webkit.messageHandlers[HANDLER_NAME]);
+  }
+
+  function hasAndroidBridge() {
+    return !!(window[ANDROID_BRIDGE_NAME] &&
+              typeof window[ANDROID_BRIDGE_NAME].postEvent === 'function');
+  }
+
+  function isInIframe() {
+    return !!(window.parent && window.parent !== window);
+  }
+
+  function sendEvent(eventName, payload) {
+    var message = {
+      type: eventName,
+      payload: payload || {},
+      timestamp: Date.now()
+    };
+
+    if (hasIOSBridge()) {
+      try {
+        window.webkit.messageHandlers[HANDLER_NAME].postMessage(message);
+      } catch (e) { /* ignore */ }
+      return;
+    }
+
+    if (hasAndroidBridge()) {
+    try {
+      var p = payload || {};
+      p.__secureToken = window.__fbAndroidBridgeAuthToken || '';
+      window[ANDROID_BRIDGE_NAME].postEvent(
+        eventName,
+        JSON.stringify(p)
+      );
+    } catch (e) { /* ignore */ }
+    return;
+  }
+
+    if (isInIframe()) {
+      try {
+        window.parent.postMessage(message, '*');
+      } catch (e) { /* ignore */ }
+      return;
+    }
+  }
+
+  // --- rAF Game-Ready Detection ---
+
+  function onFrame() {
+    if (gameReadySent) return;
+
+    frameCount++;
+    if (frameCount >= RAF_FRAME_THRESHOLD) {
+      gameReadySent = true;
+      sendEvent('game_ready', {
+        frame_count: frameCount,
+        detected_at: Date.now()
+      });
+      return;
+    }
+
+    originalRAF.call(window, onFrame);
+  }
+
+  if (originalRAF) {
+    window.requestAnimationFrame = function(callback) {
+      if (!gameReadySent) {
+        return originalRAF.call(window, function(timestamp) {
+          frameCount++;
+          if (frameCount >= RAF_FRAME_THRESHOLD && !gameReadySent) {
+            gameReadySent = true;
+            sendEvent('game_ready', {
+              frame_count: frameCount,
+              detected_at: Date.now()
+            });
+          }
+          callback(timestamp);
+        });
+      }
+      return originalRAF.call(window, callback);
+    };
+  }
+
+  // --- First User Interaction Detection ---
+
+  function setupFirstInteractionDetection() {
+    var events = ['touchstart', 'mousedown', 'keydown'];
+
+    function onFirstInteraction() {
+      if (firstInteractionSent) return;
+      firstInteractionSent = true;
+      sendEvent('user_interaction_start', null);
+
+      for (var i = 0; i < events.length; i++) {
+        document.removeEventListener(events[i], onFirstInteraction, true);
+      }
+    }
+
+    for (var i = 0; i < events.length; i++) {
+      document.addEventListener(events[i], onFirstInteraction, true);
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setupFirstInteractionDetection);
+  } else {
+    setupFirstInteractionDetection();
+  }
+
+  // --- Auto Error Capture ---
+
+  window.addEventListener('error', function(event) {
+    if (errorSent) return;
+    errorSent = true;
+    sendEvent('error', {
+      message: event.message || 'Unknown error',
+      source: event.filename || '',
+      lineno: event.lineno || 0,
+      colno: event.colno || 0,
+      auto_captured: true
+    });
+  });
+
+  window.addEventListener('unhandledrejection', function(event) {
+    if (errorSent) return;
+    errorSent = true;
+    var reason = event.reason;
+    sendEvent('error', {
+      message: (reason instanceof Error) ? reason.message : String(reason),
+      type: 'unhandled_promise_rejection',
+      auto_captured: true
+    });
+  });
+
+  // --- Public API ---
+
+  window.playablesSDK = {
+    complete: function(score) {
+      sendEvent('game_ended', {
+        score: score,
+        completed: true
+      });
+    },
+
+    error: function(message) {
+      if (errorSent) return;
+      errorSent = true;
+      sendEvent('error', {
+        message: message || 'Unknown error',
+        auto_captured: false
+      });
+    },
+
+    sendEvent: function(eventName, payload) {
+      if (!eventName || typeof eventName !== 'string') return;
+      sendEvent(eventName, payload);
+    }
+  };
+
+  // Kick off rAF detection in case no game code calls rAF immediately
+  if (originalRAF) {
+    originalRAF.call(window, onFrame);
+  }
+})();</script>
+<script>window.Intl=window.Intl||{};Intl.t=function(s){return(Intl._locale&&Intl._locale[s])||s;};</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>FULL PIPELINE FRACTAL</title>
+<style>
+  :root{
+    --bg:#05060a;
+    --glass:rgba(14,16,22,0.72);
+    --border:rgba(255,255,255,0.08);
+    --accent:#7b8cff;
+    --text:#e6e9f2;
+    --muted:#9aa3b8;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;background:#000;color:var(--text);font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;overflow:hidden;overscroll-behavior:none}
+  #gl,#tree{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
+  #tree{display:none;background:#05060a}
+  header{
+    position:fixed;top:22px;left:50%;transform:translateX(-50%);z-index:30;
+    text-align:center;pointer-events:none;mix-blend-mode:screen;
+  }
+  h1{
+    margin:0;font-size:clamp(18px,2.6vw,26px);letter-spacing:0.22em;font-weight:800;
+    background:linear-gradient(180deg,#fff 0%,#b8c1ff 60%,#7b8cff 100%);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    text-shadow:0 0 40px rgba(123,140,255,0.35),0 0 80px rgba(123,140,255,0.15);
+  }
+  .subtitle{margin-top:6px;font-size:11px;letter-spacing:0.32em;text-transform:uppercase;color:var(--muted);opacity:0.85}
+  #panel{
+    position:fixed;left:20px;top:20px;bottom:20px;width:340px;z-index:40;
+    background:var(--glass);border:1px solid var(--border);border-radius:22px;
+    backdrop-filter:blur(22px) saturate(1.3);-webkit-backdrop-filter:blur(22px) saturate(1.3);
+    box-shadow:0 20px 60px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.05);
+    padding:18px;display:flex;flex-direction:column;gap:14px;overflow:auto;
+  }
+  #panel::-webkit-scrollbar{width:6px}
+  #panel::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.12);border-radius:3px}
+  .panel-section{
+    background:linear-gradient(180deg,rgba(255,255,255,0.03),rgba(255,255,255,0.01));
+    border:1px solid rgba(255,255,255,0.06);border-radius:16px;padding:12px 12px;
+    box-shadow:inset 0 1px 0 rgba(255,255,255,0.03);
+  }
+  .label{display:flex;justify-content:space-between;align-items:center;font-size:11px;text-transform:uppercase;letter-spacing:0.12em;color:var(--muted);margin-bottom:8px}
+  .label span{color:var(--text);font-variant-numeric:tabular-nums}
+  .mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .mode{
+    padding:10px 8px;border-radius:12px;background:rgba(255,255,255,0.03);
+    border:1px solid rgba(255,255,255,0.08);color:#c9d1e6;font-size:12px;font-weight:600;
+    cursor:pointer;transition:all .18s ease;position:relative;overflow:hidden;
+  }
+  .mode:hover{transform:translateY(-1px);border-color:rgba(123,140,255,0.4)}
+  .mode.active{
+    background:linear-gradient(180deg,rgba(123,140,255,0.28),rgba(123,140,255,0.08));
+    border-color:rgba(123,140,255,0.65);color:white;
+    box-shadow:0 0 24px rgba(123,140,255,0.25), inset 0 0 20px rgba(123,140,255,0.08);
+  }
+  .row{display:flex;gap:8px;align-items:center}
+  button.small{
+    padding:6px 10px;border-radius:10px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);
+    color:var(--text);font-size:11px;cursor:pointer;transition:.15s;
+  }
+  button.small:hover{background:rgba(255,255,255,0.1)}
+  input[type=range]{-webkit-appearance:none;width:100%;height:22px;background:transparent;cursor:pointer}
+  input[type=range]::-webkit-slider-runnable-track{height:4px;background:linear-gradient(90deg,rgba(123,140,255,0.7),rgba(123,140,255,0.2));border-radius:2px}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:white;border:2px solid var(--accent);margin-top:-6px;box-shadow:0 0 12px rgba(123,140,255,0.6);transition:transform .1s}
+  input[type=range]::-webkit-slider-thumb:active{transform:scale(1.15)}
+  input[type=range]::-moz-range-track{height:4px;background:linear-gradient(90deg,rgba(123,140,255,0.7),rgba(123,140,255,0.2));border-radius:2px}
+  input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:white;border:2px solid var(--accent);box-shadow:0 0 12px rgba(123,140,255,0.6)}
+  .palettes{display:flex;gap:8px;flex-wrap:wrap}
+  .pal{width:30px;height:30px;border-radius:50%;border:2px solid rgba(255,255,255,0.15);cursor:pointer;transition:.15s;position:relative}
+  .pal:hover{transform:scale(1.08);border-color:rgba(255,255,255,0.5)}
+  .pal.active{border-color:white;box-shadow:0 0 0 3px rgba(123,140,255,0.35),0 0 18px rgba(123,140,255,0.4)}
+  .action{flex:1;padding:9px 10px;border-radius:12px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);color:#dbe2f8;font-size:12px;font-weight:600;cursor:pointer;transition:.18s}
+  .action:hover{background:rgba(255,255,255,0.08);transform:translateY(-1px)}
+  .action.primary{background:linear-gradient(180deg,rgba(123,140,255,0.35),rgba(123,140,255,0.12));border-color:rgba(123,140,255,0.6);color:white;box-shadow:0 6px 20px rgba(123,140,255,0.22), inset 0 1px 0 rgba(255,255,255,0.1)}
+  .action.primary:hover{box-shadow:0 8px 26px rgba(123,140,255,0.32), inset 0 1px 0 rgba(255,255,255,0.15)}
+  .hidden{display:none !important}
+  #hud{
+    position:fixed;right:22px;top:22px;z-index:35;
+    background:rgba(8,10,16,0.7);border:1px solid var(--border);border-radius:14px;
+    padding:10px 14px;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;line-height:1.6;
+    color:#c7d0e6;box-shadow:0 10px 30px rgba(0,0,0,0.45);
+    display:grid;grid-template-columns:auto auto;column-gap:16px;row-gap:2px;
+  }
+  #hud span{color:white;text-align:right;min-width:70px;display:inline-block;font-variant-numeric:tabular-nums}
+  .hint{font-size:11px;color:var(--muted);line-height:1.5}
+  @media (max-width:920px){
+    #panel{left:12px;right:12px;top:auto;bottom:12px;width:auto;max-height:54vh;padding:14px;border-radius:18px}
+    header{top:14px}
+    #hud{top:14px;right:12px;transform:scale(0.92);transform-origin:top right}
+  }
+</style>
+</head>
+<body>
+<canvas id="gl"></canvas>
+<canvas id="tree"></canvas>
+
+<header>
+  <h1>FULL PIPELINE FRACTAL</h1>
+  <div class="subtitle">stop on all forks • fork on forks</div>
+</header>
+
+<div id="hud">
+  <div>ITER</div><span id="hudIter">300</span>
+  <div>RENDER</div><span id="hudTime">0.0ms</span>
+  <div>ZOOM</div><span id="hudZoom">1.0×</span>
+</div>
+
+<aside id="panel">
+  <div class="panel-section">
+    <div class="label">Fractal Mode</div>
+    <div class="mode-grid">
+      <button class="mode active" data-mode="0">Mandelbrot</button>
+      <button class="mode" data-mode="1">Julia</button>
+      <button class="mode" data-mode="2">Burning Ship</button>
+      <button class="mode" data-mode="3">Fork Tree</button>
+    </div>
+  </div>
+
+  <div class="panel-section" id="fractalCtrls">
+    <div class="label">Iterations <span id="iterVal">300</span></div>
+    <input type="range" id="iter" min="50" max="2000" step="10" value="300">
+    <div class="label" style="margin-top:10px">Zoom <span id="zoomVal">1.0×</span></div>
+    <div class="row"><button class="small" id="resetView" style="width:100%">Reset View (R)</button></div>
+  </div>
+
+  <div class="panel-section">
+    <div class="label">Color Palette</div>
+    <div class="palettes" id="palettes">
+      <button class="pal active" data-pal="0" title="Nebula" style="background:conic-gradient(from 200deg,#0a0a1a,#7b2cff,#ff3bdc,#0a0a1a)"></button>
+      <button class="pal" data-pal="1" title="Fire" style="background:linear-gradient(180deg,#ff3b00,#ffb300)"></button>
+      <button class="pal" data-pal="2" title="Ocean" style="background:linear-gradient(180deg,#003955,#00d4ff)"></button>
+      <button class="pal" data-pal="3" title="Aurora" style="background:conic-gradient(#00ffaa,#2b8cff,#b84dff,#00ffaa)"></button>
+      <button class="pal" data-pal="4" title="Monochrome" style="background:linear-gradient(180deg,#fff,#666)"></button>
+      <button class="pal" data-pal="5" title="Psychedelic" style="background:conic-gradient(red,orange,yellow,lime,cyan,blue,violet,red)"></button>
+    </div>
+    <div class="label" style="margin-top:12px">Cycle Speed <span id="speedVal">1.0</span></div>
+    <input type="range" id="colSpeed" min="0" max="5" step="0.1" value="1">
+  </div>
+
+  <div class="panel-section hidden" id="juliaCtrls">
+    <div class="label">Julia C Real <span id="juliaRVal">-0.800</span></div>
+    <input type="range" id="juliaR" min="-2" max="2" step="0.001" value="-0.8">
+    <div class="label" style="margin-top:8px">Julia C Imag <span id="juliaIVal">0.156</span></div>
+    <input type="range" id="juliaI" min="-2" max="2" step="0.001" value="0.156">
+    <div class="hint">Shift + click on fractal to set C</div>
+  </div>
+
+  <div class="panel-section hidden" id="treeCtrls">
+    <div class="label">Depth <span id="depthVal">9</span></div>
+    <input type="range" id="depth" min="2" max="14" step="1" value="9">
+    <div class="label" style="margin-top:8px">Angle <span id="angleVal">25°</span></div>
+    <input type="range" id="angle" min="10" max="45" step="1" value="25">
+    <div class="label" style="margin-top:8px">Fork Ratio <span id="ratioVal">0.72</span></div>
+    <input type="range" id="ratio" min="0.5" max="0.9" step="0.01" value="0.72">
+    <div class="label" style="margin-top:8px">Thickness <span id="thickVal">2.2</span></div>
+    <input type="range" id="thick" min="0.5" max="5" step="0.1" value="2.2">
+    <div class="label" style="margin-top:8px">Anim Speed <span id="tSpeedVal">0.8</span></div>
+    <input type="range" id="tSpeed" min="0" max="2" step="0.05" value="0.8">
+    <div class="row" style="margin-top:12px">
+      <button id="stopForks" class="action">Stop all forks</button>
+      <button id="forkBomb" class="action primary">Fork on forks</button>
+    </div>
+  </div>
+
+  <div class="panel-section hint">
+    Drag to pan • Scroll to zoom • Double-click center<br>
+    Keys: 1-4 modes • Space pause • R reset
+  </div>
+</aside>
+
+<script>
+(() => {
+  const glCanvas = document.getElementById('gl');
+  const treeCanvas = document.getElementById('tree');
+  const gl = glCanvas.getContext('webgl2', {antialias:true, alpha:false, depth:false});
+  const treeCtx = treeCanvas.getContext('2d');
+
+  // State
+  const state = {
+    mode:0,
+    maxIter:300,
+    zoom:1,
+    center:{x:-0.5,y:0},
+    juliaC:{x:-0.8,y:0.156},
+    palette:0,
+    colorSpeed:1,
+    paused:false,
+    tree:{depth:9,angle:25,ratio:0.72,thick:2.2,speed:0.8,paused:false}
+  };
+  const defaults = [
+    {x:-0.5,y:0,z:1},
+    {x:0,y:0,z:1.1},
+    {x:-1.8,y:-0.03,z:1.2},
+  ];
+
+  // UI refs
+  const $ = id=>document.getElementById(id);
+  const iter=$('iter'), iterVal=$('iterVal'), zoomVal=$('zoomVal'), resetView=$('resetView');
+  const colSpeed=$('colSpeed'), speedVal=$('speedVal');
+  const juliaCtrls=$('juliaCtrls'), juliaR=$('juliaR'), juliaI=$('juliaI'), juliaRVal=$('juliaRVal'), juliaIVal=$('juliaIVal');
+  const treeCtrls=$('treeCtrls'), depth=$('depth'), depthVal=$('depthVal'), angle=$('angle'), angleVal=$('angleVal'), ratio=$('ratio'), ratioVal=$('ratioVal'), thick=$('thick'), thickVal=$('thickVal'), tSpeed=$('tSpeed'), tSpeedVal=$('tSpeedVal');
+  const stopForks=$('stopForks'), forkBomb=$('forkBomb');
+  const hudIter=$('hudIter'), hudTime=$('hudTime'), hudZoom=$('hudZoom');
+  const fractalCtrls=$('fractalCtrls');
+
+  // WebGL setup
+  const vertSrc = `#version 300 es
+  precision highp float;
+  in vec2 aPos;
+  out vec2 vUv;
+  void main(){ vUv = aPos*0.5+0.5; gl_Position = vec4(aPos,0.0,1.0); }`;
+
+  const fragSrc = `#version 300 es
+  precision highp float;
+  in vec2 vUv;
+  out vec4 outColor;
+  uniform vec2 u_res;
+  uniform vec2 u_center;
+  uniform float u_zoom;
+  uniform int u_maxIter;
+  uniform int u_mode;
+  uniform vec2 u_juliaC;
+  uniform int u_palette;
+  uniform float u_time;
+  uniform float u_colorSpeed;
+
+  vec3 palNebula(float t){return 0.5+0.5*cos(6.28318*(vec3(0.0,0.33,0.67)+t));}
+  vec3 palFire(float t){float x=pow(t,0.5);return vec3(1.0*x,0.35*pow(t,1.5),0.02*pow(t,4.0))+vec3(0.2,0.05,0.0)*pow(t,3.0);}
+  vec3 palOcean(float t){return vec3(0.0,0.2,0.35)+vec3(0.0,0.5,0.6)*t+0.1*sin(6.28*t+vec3(0,1,2));}
+  vec3 palAurora(float t){return 0.5+0.5*cos(6.28318*(vec3(0.37,0.5,0.65)+t*0.85));}
+  vec3 palMono(float t){return vec3(pow(t,0.75));}
+  vec3 palPsy(float t){return 0.5+0.5*sin(6.28318*t*1.3+vec3(0.0,2.094,4.188));}
+
+  vec3 getColor(float t){
+    t = fract(t + u_time * u_colorSpeed * 0.03);
+    if(u_palette==0) return palNebula(t);
+    if(u_palette==1) return palFire(t);
+    if(u_palette==2) return palOcean(t);
+    if(u_palette==3) return palAurora(t);
+    if(u_palette==4) return palMono(t);
+    return palPsy(t);
+  }
+
+  vec2 mapCoord(vec2 uv){
+    float scale = 1.5 / u_zoom;
+    float aspect = u_res.x / u_res.y;
+    return u_center + (uv - 0.5) * vec2(scale*aspect, scale) * 2.0;
+  }
+
+  float mandelbrot(vec2 c){
+    vec2 z=vec2(0.0); float i=0.0;
+    for(int n=0;n<2000;n++){ if(n>=u_maxIter) break; z=vec2(z.x*z.x - z.y*z.y, 2.0*z.x*z.y)+c; if(dot(z,z)>4.0){ i=float(n); float l=log(dot(z,z))*0.5; i = i+1.0 - log(l/log(2.0))/log(2.0); break; } i=float(n);}
+    return i/float(u_maxIter);
+  }
+  float julia(vec2 z){
+    vec2 c=u_juliaC; float i=0.0;
+    for(int n=0;n<2000;n++){ if(n>=u_maxIter) break; z=vec2(z.x*z.x - z.y*z.y, 2.0*z.x*z.y)+c; if(dot(z,z)>4.0){ i=float(n); float l=log(dot(z,z))*0.5; i = i+1.0 - log(l/log(2.0))/log(2.0); break; } i=float(n);}
+    return i/float(u_maxIter);
+  }
+  float burning(vec2 c){
+    vec2 z=vec2(0.0); float i=0.0;
+    for(int n=0;n<2000;n++){ if(n>=u_maxIter) break; z=abs(z); z=vec2(z.x*z.x - z.y*z.y, 2.0*z.x*z.y)+c; if(dot(z,z)>4.0){ i=float(n); float l=log(dot(z,z))*0.5; i = i+1.0 - log(l/log(2.0))/log(2.0); break; } i=float(n);}
+    return i/float(u_maxIter);
+  }
+
+  void main(){
+    vec2 c = mapCoord(vUv);
+    float t=0.0;
+    if(u_mode==0) t=mandelbrot(c);
+    else if(u_mode==1) t=julia(c);
+    else t=burning(c);
+    vec3 col = t>=0.999 ? vec3(0.0) : getColor(t);
+    // vignette & tone
+    float d = distance(vUv, vec2(0.5));
+    col *= 1.0 - d*0.25;
+    col = pow(col, vec3(0.92));
+    outColor = vec4(col,1.0);
+  }`;
+
+  function compile(type, src){
+    const s=gl.createShader(type); gl.shaderSource(s,src); gl.compileShader(s);
+    if(!gl.getShaderParameter(s,gl.COMPILE_STATUS)) throw gl.getShaderInfoLog(s);
+    return s;
+  }
+  const prog=gl.createProgram();
+  gl.attachShader(prog, compile(gl.VERTEX_SHADER, vertSrc));
+  gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, fragSrc));
+  gl.linkProgram(prog);
+  const quad=gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, quad);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1,1,-1,-1,1,-1,1,1,-1,1,1]), gl.STATIC_DRAW);
+  const locPos=gl.getAttribLocation(prog,'aPos');
+  const uni={}; ['u_res','u_center','u_zoom','u_maxIter','u_mode','u_juliaC','u_palette','u_time','u_colorSpeed'].forEach(n=>uni[n]=gl.getUniformLocation(prog,n));
+
+  // Resize
+  function resize(){
+    const dpr=Math.min(window.devicePixelRatio||1,2);
+    [glCanvas, treeCanvas].forEach(c=>{
+      const w=c.clientWidth, h=c.clientHeight;
+      if(c.width!==Math.floor(w*dpr)||c.height!==Math.floor(h*dpr)){c.width=Math.floor(w*dpr);c.height=Math.floor(h*dpr);}
+    });
+    gl.viewport(0,0,glCanvas.width,glCanvas.height);
+  }
+  window.addEventListener('resize', resize); resize();
+
+  // Interactions
+  let dragging=false,lastX=0,lastY=0,lastDist=0;
+  function screenToWorld(px,py){
+    const rect=glCanvas.getBoundingClientRect();
+    const x=(px-rect.left)/rect.width, y=(py-rect.top)/rect.height;
+    const scale=1.5/state.zoom, aspect=glCanvas.width/glCanvas.height;
+    return {x:state.center.x + (x-0.5)*2*scale*aspect, y:state.center.y + (0.5-y)*2*scale};
+  }
+  function zoomAt(px,py,factor){
+    const w=screenToWorld(px,py);
+    state.zoom=Math.min(1e12,Math.max(0.1,state.zoom*factor));
+    const scale=1.5/state.zoom, aspect=glCanvas.width/glCanvas.height;
+    const rect=glCanvas.getBoundingClientRect();
+    const x=(px-rect.left)/rect.width, y=(py-rect.top)/rect.height;
+    state.center.x = w.x - (x-0.5)*2*scale*aspect;
+    state.center.y = w.y - (0.5-y)*2*scale;
+    updateZoom();
+  }
+  glCanvas.addEventListener('pointerdown',e=>{if(state.mode===3)return;dragging=true;lastX=e.clientX;lastY=e.clientY;glCanvas.setPointerCapture(e.pointerId);if(e.shiftKey && state.mode===1){const w=screenToWorld(e.clientX,e.clientY);state.juliaC.x=w.x;state.juliaC.y=w.y;juliaR.value=w.x.toFixed(3);juliaI.value=w.y.toFixed(3);juliaRVal.textContent=w.x.toFixed(3);juliaIVal.textContent=w.y.toFixed(3);}});
+  window.addEventListener('pointermove',e=>{if(!dragging||state.mode===3)return;const dx=e.clientX-lastX, dy=e.clientY-lastY;lastX=e.clientX;lastY=e.clientY;const scale=1.5/state.zoom, aspect=glCanvas.width/glCanvas.height;state.center.x -= dx/glCanvas.clientWidth*2*scale*aspect; state.center.y += dy/glCanvas.clientHeight*2*scale;});
+  window.addEventListener('pointerup',()=>dragging=false);
+  glCanvas.addEventListener('wheel',e=>{if(state.mode===3)return;e.preventDefault();zoomAt(e.clientX,e.clientY,e.deltaY<0?1.1:0.9);},{passive:false});
+  glCanvas.addEventListener('dblclick',e=>{if(state.mode===3)return;const w=screenToWorld(e.clientX,e.clientY);state.center.x=w.x;state.center.y=w.y;zoomAt(e.clientX,e.clientY,2);});
+  // touch pinch
+  glCanvas.addEventListener('touchstart',e=>{if(e.touches.length===2){const dx=e.touches[0].clientX-e.touches[1].clientX, dy=e.touches[0].clientY-e.touches[1].clientY;lastDist=Math.hypot(dx,dy);}});
+  glCanvas.addEventListener('touchmove',e=>{if(e.touches.length===2 && state.mode!==3){e.preventDefault();const dx=e.touches[0].clientX-e.touches[1].clientX, dy=e.touches[0].clientY-e.touches[1].clientY;const d=Math.hypot(dx,dy);if(lastDist){const cx=(e.touches[0].clientX+e.touches[1].clientX)/2, cy=(e.touches[0].clientY+e.touches[1].clientY)/2;zoomAt(cx,cy,d/lastDist);}lastDist=d;}}, {passive:false});
+
+  // UI bindings
+  document.querySelectorAll('.mode').forEach(b=>b.onclick=()=>switchMode(+b.dataset.mode));
+  iter.oninput=()=>{state.maxIter=+iter.value;iterVal.textContent=iter.value;hudIter.textContent=iter.value;};
+  colSpeed.oninput=()=>{state.colorSpeed=+colSpeed.value;speedVal.textContent=(+colSpeed.value).toFixed(1)};
+  document.querySelectorAll('.pal').forEach(p=>p.onclick=()=>{document.querySelectorAll('.pal').forEach(x=>x.classList.remove('active'));p.classList.add('active');state.palette=+p.dataset.pal;});
+  resetView.onclick=reset;
+  juliaR.oninput=()=>{state.juliaC.x=+juliaR.value;juliaRVal.textContent=(+juliaR.value).toFixed(3)};
+  juliaI.oninput=()=>{state.juliaC.y=+juliaI.value;juliaIVal.textContent=(+juliaI.value).toFixed(3)};
+  depth.oninput=()=>{state.tree.depth=+depth.value;depthVal.textContent=depth.value};
+  angle.oninput=()=>{state.tree.angle=+angle.value;angleVal.textContent=angle.value+'°'};
+  ratio.oninput=()=>{state.tree.ratio=+ratio.value;ratioVal.textContent=(+ratio.value).toFixed(2)};
+  thick.oninput=()=>{state.tree.thick=+thick.value;thickVal.textContent=(+thick.value).toFixed(1)};
+  tSpeed.oninput=()=>{state.tree.speed=+tSpeed.value;tSpeedVal.textContent=(+tSpeed.value).toFixed(1)};
+  stopForks.onclick=()=>{state.tree.paused=true; state.paused=true};
+  forkBomb.onclick=()=>{
+    state.tree.depth=14; depth.value=14; depthVal.textContent='14';
+    state.tree.angle=35; angle.value=35; angleVal.textContent='35°';
+    state.tree.ratio=0.85; ratio.value=0.85; ratioVal.textContent='0.85';
+    state.tree.thick=1.3; thick.value=1.3; thickVal.textContent='1.3';
+    state.tree.speed=1.6; tSpeed.value=1.6; tSpeedVal.textContent='1.6';
+    state.tree.paused=false; state.paused=false;
+    switchMode(3);
+  };
+
+  function switchMode(m){
+    state.mode=m;
+    document.querySelectorAll('.mode').forEach((b,i)=>b.classList.toggle('active',i===m));
+    const isTree=m===3;
+    glCanvas.style.display=isTree?'none':'block';
+    treeCanvas.style.display=isTree?'block':'none';
+    juliaCtrls.classList.toggle('hidden', m!==1);
+    treeCtrls.classList.toggle('hidden', !isTree);
+    fractalCtrls.classList.toggle('hidden', isTree);
+    hudIter.textContent = isTree ? '—' : state.maxIter;
+  }
+  function updateZoom(){
+    const z=state.zoom;
+    const fmt=z<1e3?z.toFixed(1)+'×':z<1e6?(z/1e3).toFixed(1)+'K×':z<1e9?(z/1e6).toFixed(1)+'M×':(z/1e9).toFixed(1)+'G×';
+    zoomVal.textContent=fmt; hudZoom.textContent=fmt;
+  }
+  function reset(){
+    if(state.mode<3){const d=defaults[state.mode];state.center.x=d.x;state.center.y=d.y;state.zoom=d.z;updateZoom();}
+  }
+  updateZoom();
+
+  window.addEventListener('keydown',e=>{
+    if(e.target.tagName==='INPUT') return;
+    if(e.key>='1'&&e.key<='4') switchMode(+e.key-1);
+    if(e.code==='Space'){e.preventDefault();state.paused=!state.paused;state.tree.paused=state.paused;}
+    if(e.key.toLowerCase()==='r') reset();
+  });
+
+  // Render loop
+  let t0=performance.now();
+  function render(now){
+    requestAnimationFrame(render);
+    const t = now*0.001;
+    const start=performance.now();
+
+    if(state.mode<3){
+      gl.useProgram(prog);
+      gl.bindBuffer(gl.ARRAY_BUFFER, quad);
+      gl.enableVertexAttribArray(locPos);
+      gl.vertexAttribPointer(locPos,2,gl.FLOAT,false,0,0);
+      gl.uniform2f(uni.u_res, glCanvas.width, glCanvas.height);
+      gl.uniform2f(uni.u_center, state.center.x, state.center.y);
+      gl.uniform1f(uni.u_zoom, state.zoom);
+      gl.uniform1i(uni.u_maxIter, state.maxIter);
+      gl.uniform1i(uni.u_mode, state.mode);
+      gl.uniform2f(uni.u_juliaC, state.juliaC.x, state.juliaC.y);
+      gl.uniform1i(uni.u_palette, state.palette);
+      gl.uniform1f(uni.u_time, state.paused? t0 : t);
+      gl.uniform1f(uni.u_colorSpeed, state.colorSpeed);
+      gl.drawArrays(gl.TRIANGLES,0,6);
+      hudIter.textContent = state.maxIter;
+    }else{
+      // Fork Tree
+      const w=treeCanvas.width, h=treeCanvas.height;
+      if(!state.tree.paused){
+        treeCtx.fillStyle='rgba(5,6,10,0.1)';
+        treeCtx.fillRect(0,0,w,h);
+      }else{
+        treeCtx.fillStyle='#05060a';
+        treeCtx.fillRect(0,0,w,h);
+      }
+      treeCtx.save();
+      treeCtx.translate(w*0.5, h*0.93);
+      const time = state.paused? t0 : t;
+      const maxD = state.tree.depth;
+      const grow = state.tree.paused?1:0.5+0.5*Math.sin(time*state.tree.speed*0.6);
+      const effDepth = 2 + (maxD-2)*grow;
+      const baseLen = h*0.19;
+      const ang = state.tree.angle*Math.PI/180;
+      const ratio = state.tree.ratio;
+      treeCtx.lineCap='round'; treeCtx.lineJoin='round';
+      function branch(x,y,len,a,d){
+        if(d<=0||len<1.5) return;
+        const p=Math.min(1,d);
+        const nx=x+Math.sin(a)*len*p;
+        const ny=y-Math.cos(a)*len*p;
+        const depthT=1 - d/effDepth;
+        let hue=270,sat=80,lig=60;
+        const pal=state.palette, cyc=(time*state.colorSpeed*0.04+depthT*0.25)%1;
+        if(pal===0){hue=265+35*Math.sin(cyc*6.283);sat=85;lig=55+depthT*12;}
+        else if(pal===1){hue=18+depthT*28;sat=95;lig=52+depthT*8;}
+        else if(pal===2){hue=192+depthT*35;sat=75;lig=58;}
+        else if(pal===3){hue=(160+cyc*140)%360;sat=80;lig=60;}
+        else if(pal===4){hue=220;sat=0;lig=68+depthT*18;}
+        else {hue=(cyc*360+depthT*90)%360;sat=100;lig=58;}
+        const col=`hsl(${hue},${sat}%,${lig}%)`;
+        treeCtx.strokeStyle=col;
+        treeCtx.shadowColor=col;
+        treeCtx.shadowBlur=14*(state.tree.thick/2.2);
+        treeCtx.lineWidth=Math.max(1, state.tree.thick*2*Math.pow(d/effDepth,0.72));
+        treeCtx.beginPath(); treeCtx.moveTo(x,y); treeCtx.lineTo(nx,ny); treeCtx.stroke();
+        if(d>0.15){
+          const nl=len*ratio; const wob=Math.sin(time*state.tree.speed*1.2 + d)*0.02;
+          branch(nx,ny,nl,a-ang+wob,d-1);
+          branch(nx,ny,nl,a+ang+wob,d-1);
+          if(ratio>0.82 && d>3 && (Math.floor(d*2)%3===0)){
+            branch(nx,ny,nl*0.88,a+wob*0.5,d-1.2);
+          }
+        }
+      }
+      branch(0,0,baseLen,0,effDepth);
+      treeCtx.restore();
+      hudIter.textContent = Math.floor(Math.pow(2, effDepth)).toLocaleString();
+      hudZoom.textContent = 'DEPTH '+effDepth.toFixed(1);
+    }
+
+    const elapsed=performance.now()-start;
+    hudTime.textContent=elapsed.toFixed(1)+'ms';
+    if(!state.paused) t0=t;
+  }
+  requestAnimationFrame(render);
+  // init UI
+  iterVal.textContent=iter.value; speedVal.textContent=colSpeed.value;
+})();
+</script>
+</body>
+</html>

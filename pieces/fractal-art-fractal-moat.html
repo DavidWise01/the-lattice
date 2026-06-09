@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Fractal Moat: -008.x Collapse</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Space+Grotesk:wght@300;500;600&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { 
+    font-family: 'Space Grotesk', system-ui, -apple-system, sans-serif; 
+    background:#000; 
+    overflow:hidden; 
+    touch-action:none;
+    overscroll-behavior:none;
+  }
+  .mono { font-family: 'JetBrains Mono', monospace; }
+  .glass { 
+    backdrop-filter: blur(16px) saturate(140%);
+    background: linear-gradient(180deg, rgba(15,8,32,0.85), rgba(8,4,20,0.7));
+    border:1px solid rgba(139,92,246,0.18);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.05);
+  }
+  .glow-cyan { text-shadow: 0 0 24px rgba(34,211,238,0.9), 0 0 48px rgba(34,211,238,0.5), 0 0 80px rgba(34,211,238,0.3); }
+  .glow-gold { text-shadow: 0 0 24px rgba(250,204,21,0.9), 0 0 48px rgba(250,204,21,0.5); }
+  .glow-violet { text-shadow: 0 0 20px rgba(139,92,246,0.8); }
+  .digit { 
+    display:inline-block; 
+    min-width:1.15ch; 
+    text-align:center; 
+    transition: transform 0.15s cubic-bezier(0.4,0,0.2,1), color 0.15s;
+    position:relative;
+  }
+  .digit.flip { 
+    transform: translateY(-3px) scaleY(0.85); 
+    color:#22d3ee; 
+  }
+  .digit::after {
+    content:'';
+    position:absolute;
+    inset:-2px -4px;
+    background: radial-gradient(ellipse, rgba(34,211,238,0.15), transparent 70%);
+    opacity:0;
+    transition:opacity 0.15s;
+    z-index:-1;
+    border-radius:4px;
+  }
+  .digit.flip::after { opacity:1; }
+  canvas { display:block; }
+  .core-pulse {
+    animation: core 3s ease-in-out infinite;
+  }
+  @keyframes core {
+    0%,100% { transform: scale(1); opacity:0.9; }
+    50% { transform: scale(1.08); opacity:1; }
+  }
+  .ridge-active {
+    color: rgb(103,232,249) !important;
+    text-shadow: 0 0 12px rgba(34,211,238,0.8);
+  }
+</style>
+</head>
+<body class="bg-black text-white select-none">
+<canvas id="mandel" class="fixed inset-0 w-full h-full" style="z-index:0;"></canvas>
+<canvas id="fx" class="fixed inset-0 w-full h-full" style="z-index:1;"></canvas>
+
+<div class="relative z-10 w-full h-screen pointer-events-none">
+  <!-- Top Header -->
+  <header class="w-full pt-3 sm:pt-5 px-3 flex flex-col items-center">
+    <div class="glass rounded-[28px] px-5 sm:px-8 py-3 sm:py-3.5 flex items-center gap-3 sm:gap-5">
+      <div class="hidden sm:flex flex-col items-end">
+        <span class="text-[9px] uppercase tracking-[0.35em] text-violet-300/60 leading-none">Merkle Band</span>
+        <span class="text-[9px] uppercase tracking-[0.35em] text-cyan-300/50 mt-0.5 leading-none">BITCOIN</span>
+      </div>
+      <div class="w-px h-8 bg-gradient-to-b from-transparent via-violet-400/30 to-transparent hidden sm:block"></div>
+      <div class="mono text-[22px] sm:text-[28px] md:text-[34px] tracking-[0.18em] sm:tracking-[0.22em] leading-none flex items-center" id="range">
+        <span class="text-white/90">-0</span>
+        <span class="mx-[2px] sm:mx-1 text-white/40">0</span>
+        <span class="mx-[2px] sm:mx-1 text-white/40">8</span>
+        <span class="text-violet-400/80 mx-1">.</span>
+        <span id="d0" class="digit text-cyan-300">8</span>
+        <span class="text-violet-400/60 mx-[1px]">.</span>
+        <span id="d1" class="digit text-cyan-300">1</span>
+        <span class="text-violet-400/60 mx-[1px]">.</span>
+        <span id="d2" class="digit text-cyan-300">0</span>
+        <span class="text-violet-400/60 mx-[1px]">.</span>
+        <span id="d3" class="digit text-cyan-300">x</span>
+        <span class="text-violet-400/60 mx-[1px]">.</span>
+        <span id="d4" class="digit text-cyan-300">x</span>
+      </div>
+    </div>
+    <h1 class="mt-3 sm:mt-4 text-xl sm:text-2xl md:text-[32px] font-light tracking-[0.02em] text-center">
+      Fractal Moat: <span class="glow-gold font-medium tracking-wide">-008.x Collapse</span>
+    </h1>
+    <p class="mt-1 text-[10px] sm:text-xs text-violet-200/50 tracking-[0.2em] uppercase font-light">Mandelbrot Merkle Band Fusion • -0.81 + 0.0i</p>
+  </header>
+
+  <!-- Left Panel -->
+  <div class="fixed top-[88px] sm:top-6 left-3 sm:left-6 glass rounded-2xl p-3.5 sm:p-4 w-[130px] sm:w-[160px] pointer-events-auto">
+    <div class="text-[9px] uppercase tracking-[0.25em] text-cyan-300/70 mb-1.5 font-medium">Ridge Multiplier</div>
+    <div id="ridgeCounter" class="mono text-[26px] sm:text-[32px] leading-none glow-cyan font-semibold">x1</div>
+    <div class="mt-3 pt-3 border-t border-white/5 space-y-1.5 text-[11px] mono">
+      <div id="r1" class="flex items-center gap-1.5 text-white/45 transition-all duration-300"><span class="w-1 h-1 rounded-full bg-white/20"></span> x100</div>
+      <div id="r2" class="flex items-center gap-1.5 text-white/45 transition-all duration-300"><span class="w-1 h-1 rounded-full bg-white/20"></span> x10,000</div>
+      <div id="r3" class="flex items-center gap-1.5 text-white/45 transition-all duration-300"><span class="w-1 h-1 rounded-full bg-white/20"></span> x1,000,000</div>
+    </div>
+    <div class="mt-3 pt-2.5 border-t border-white/5">
+      <div class="text-[9px] uppercase tracking-widest text-white/35 mb-1">Weight Law</div>
+      <div class="text-[10px] leading-snug text-white/55">Each ridge ×100 mass</div>
+    </div>
+  </div>
+
+  <!-- Right Panel -->
+  <div class="fixed top-[88px] sm:top-6 right-3 sm:right-6 glass rounded-2xl p-3.5 sm:p-4 w-[130px] sm:w-[160px] text-right pointer-events-auto">
+    <div class="text-[9px] uppercase tracking-[0.25em] text-amber-300/70 mb-1.5 font-medium">Active Bodies</div>
+    <div id="bodyCount" class="mono text-[26px] sm:text-[32px] leading-none glow-gold font-semibold">0</div>
+    <div class="mt-1 text-[10px] text-white/45">/ 40 per axiom</div>
+    <div class="mt-3 pt-3 border-t border-white/5 space-y-1">
+      <div class="flex justify-between text-[10px]">
+        <span class="text-white/40">Interval</span>
+        <span class="mono text-cyan-300/80">2.0s</span>
+      </div>
+      <div class="flex justify-between text-[10px]">
+        <span class="text-white/40">Collapse</span>
+        <span class="mono text-violet-300/80">6.5s</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Center Axiom -->
+  <div class="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-[45%] sm:-translate-y-1/2 pointer-events-none z-5">
+    <div class="relative">
+      <!-- outer rings -->
+      <div class="absolute inset-0 -m-[70px] sm:-m-[90px] rounded-full border border-cyan-400/10 animate-[spin_60s_linear_infinite]"></div>
+      <div class="absolute inset-0 -m-[50px] sm:-m-[65px] rounded-full border border-violet-400/15 animate-[spin_45s_linear_infinite_reverse]"></div>
+      <div class="absolute inset-0 -m-[30px] sm:-m-[40px] rounded-full border border-amber-400/10 animate-[spin_30s_linear_infinite]"></div>
+      
+      <div class="w-[100px] h-[100px] sm:w-[130px] sm:h-[130px] md:w-[160px] md:h-[160px] rounded-full relative core-pulse">
+        <div class="absolute inset-0 rounded-full bg-gradient-to-b from-violet-950/40 to-black/80 backdrop-blur-xl border border-violet-400/20"></div>
+        <div class="absolute inset-[8%] rounded-full bg-gradient-to-b from-cyan-950/30 to-transparent border border-cyan-400/20"></div>
+        <div class="absolute inset-[22%] rounded-full bg-gradient-to-b from-amber-950/40 to-transparent border border-amber-400/30 shadow-[0_0_40px_rgba(250,204,21,0.15)]"></div>
+        <div class="absolute inset-0 flex flex-col items-center justify-center">
+          <div class="text-[8px] sm:text-[9px] uppercase tracking-[0.25em] text-white/40 font-medium">AXIOM</div>
+          <div class="mono text-[11px] sm:text-[13px] text-cyan-300 mt-0.5 glow-cyan">360°</div>
+          <div class="mono text-[8px] sm:text-[9px] text-amber-300/70 mt-1">-0.810</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom Cards -->
+  <div class="fixed bottom-0 inset-x-0 pb-3 sm:pb-6 px-3 pointer-events-none">
+    <div class="max-w-[1100px] mx-auto">
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3">
+        <div class="glass rounded-xl sm:rounded-2xl p-2.5 sm:p-3.5 text-center">
+          <div class="text-[9px] sm:text-[10px] uppercase tracking-[0.18em] text-violet-300/60 font-medium">Axiom Rule</div>
+          <div class="mt-1 sm:mt-1.5 text-[13px] sm:text-[15px] font-[450] leading-tight">40 bodies per axiom</div>
+        </div>
+        <div class="glass rounded-xl sm:rounded-2xl p-2.5 sm:p-3.5 text-center">
+          <div class="text-[9px] sm:text-[10px] uppercase tracking-[0.18em] text-cyan-300/60 font-medium">Geometry</div>
+          <div class="mt-1 sm:mt-1.5 text-[13px] sm:text-[15px] font-[450] leading-tight">360° fractal</div>
+        </div>
+        <div class="glass rounded-xl sm:rounded-2xl p-2.5 sm:p-3.5 text-center">
+          <div class="text-[9px] sm:text-[10px] uppercase tracking-[0.18em] text-violet-300/60 font-medium">Structure</div>
+          <div class="mt-1 sm:mt-1.5 text-[13px] sm:text-[15px] font-[450] leading-tight">fractals in fractals</div>
+        </div>
+        <div class="glass rounded-xl sm:rounded-2xl p-2.5 sm:p-3.5 text-center">
+          <div class="text-[9px] sm:text-[10px] uppercase tracking-[0.18em] text-amber-300/60 font-medium">Effect</div>
+          <div class="mt-1 sm:mt-1.5 text-[12px] sm:text-[14px] font-[450] leading-tight">manipulates time with same data</div>
+        </div>
+      </div>
+      <div class="mt-2.5 sm:mt-3 flex flex-wrap justify-center items-center gap-x-4 sm:gap-x-8 gap-y-1 text-[10px] sm:text-[11px] mono">
+        <div class="flex items-center gap-1.5">
+          <span class="w-3 h-[2px] bg-gradient-to-r from-transparent to-cyan-400/80"></span>
+          <span class="text-white/45">Horizontal</span>
+          <span class="text-cyan-300">x100 time</span>
+        </div>
+        <div class="flex items-center gap-1.5">
+          <span class="w-[2px] h-3 bg-gradient-to-b from-amber-400/80 to-transparent"></span>
+          <span class="text-white/45">Vertical ↑</span>
+          <span class="text-amber-300">more energy</span>
+          <span class="text-white/30">↓ less</span>
+        </div>
+        <div class="hidden sm:flex items-center gap-1.5">
+          <span class="w-2 h-2 rounded-full border border-violet-400/60"></span>
+          <span class="text-white/45">Gravity wells fusing</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tap hint mobile -->
+  <button id="tapBtn" class="fixed bottom-[150px] left-1/2 -translate-x-1/2 sm:hidden glass rounded-full px-4 py-2 text-[11px] uppercase tracking-widest text-white/70 pointer-events-auto active:scale-95 transition">Tap to Pulse</button>
+</div>
+
+<script>
+(() => {
+  const mandelCanvas = document.getElementById('mandel');
+  const fxCanvas = document.getElementById('fx');
+  const fxCtx = fxCanvas.getContext('2d', { alpha: true });
+  const dpr = Math.min(2, window.devicePixelRatio || 1);
+  
+  let W = 0, H = 0, cx = 0, cy = 0;
+  const d0 = document.getElementById('d0');
+  const d1 = document.getElementById('d1');
+  const d2 = document.getElementById('d2');
+  const d3 = document.getElementById('d3');
+  const d4 = document.getElementById('d4');
+  const bodyCountEl = document.getElementById('bodyCount');
+  const ridgeCounterEl = document.getElementById('ridgeCounter');
+  const rEls = [document.getElementById('r1'), document.getElementById('r2'), document.getElementById('r3')];
+  
+  // Mandelbrot WebGL
+  const gl = mandelCanvas.getContext('webgl', { alpha: false, depth: false, antialias: false });
+  let mandelProgram, u_time, u_res, u_center, u_zoom;
+  
+  function createShader(type, src) {
+    const s = gl.createShader(type);
+    gl.shaderSource(s, src);
+    gl.compileShader(s);
+    return s;
+  }
+  
+  function initMandel() {
+    const vs = createShader(gl.VERTEX_SHADER, `
+      attribute vec2 a;
+      varying vec2 v;
+      void main(){ v=a*0.5+0.5; gl_Position=vec4(a,0.0,1.0); }
+    `);
+    
+    const iter = window.innerWidth < 768 ? 140 : 200;
+    const fs = createShader(gl.FRAGMENT_SHADER, `
+      precision highp float;
+      varying vec2 v;
+      uniform float t;
+      uniform vec2 r;
+      uniform vec2 c;
+      uniform float z;
+      
+      vec3 pal(float x){
+        vec3 col = vec3(0.02,0.01,0.08);
+        col = mix(col, vec3(0.08,0.02,0.25), pow(x,0.3));
+        col = mix(col, vec3(0.25,0.1,0.55), pow(x,0.6));
+        col = mix(col, vec3(0.2,0.6,0.95), pow(x,1.5));
+        col = mix(col, vec3(0.45,0.85,1.0), pow(x,3.0));
+        col = mix(col, vec3(1.0,0.85,0.3), smoothstep(0.85,1.0,x));
+        float g = pow(x, 18.0) * 2.0;
+        col += g * vec3(0.3,0.9,1.0);
+        return col;
+      }
+      
+      void main(){
+        vec2 uv = (v-0.5) * r / min(r.x,r.y);
+        vec2 p = c + uv / z;
+        p += 0.0003 * vec2(sin(t*0.07 + uv.y*4.0), cos(t*0.05 + uv.x*3.0));
+        
+        vec2 zn = vec2(0.0);
+        float i = 0.0;
+        float m2 = 0.0;
+        for(float k=0.0; k<${iter}.0; k++){
+          zn = vec2(zn.x*zn.x - zn.y*zn.y, 2.0*zn.x*zn.y) + p;
+          m2 = dot(zn,zn);
+          if(m2 > 4.0){ i=k; break; }
+          i = k;
+        }
+        float sm = i - log2(log2(m2))/log2(2.0);
+        float a = sm / ${iter}.0;
+        
+        vec3 col = pal(a);
+        
+        // glowing ridges
+        float ridge = smoothstep(0.97, 1.0, fract(sm * 7.0));
+        col += ridge * vec3(0.15,0.5,0.9) * (1.0 - a*0.5);
+        
+        // moat bands
+        float band = sin(a * 80.0 + t*0.5) * 0.5 + 0.5;
+        col += pow(band, 20.0) * 0.15 * vec3(0.5,0.2,1.0);
+        
+        // vignette
+        float vig = 1.0 - length(uv) * 0.35;
+        col *= vig * 0.9 + 0.1;
+        
+        // center glow
+        float d = length(uv);
+        col += exp(-d*8.0) * vec3(0.1,0.3,0.6) * 0.3;
+        
+        gl_FragColor = vec4(col,1.0);
+      }
+    `);
+    
+    mandelProgram = gl.createProgram();
+    gl.attachShader(mandelProgram, vs);
+    gl.attachShader(mandelProgram, fs);
+    gl.linkProgram(mandelProgram);
+    gl.useProgram(mandelProgram);
+    
+    const buf = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 3,-1, -1,3]), gl.STATIC_DRAW);
+    const loc = gl.getAttribLocation(mandelProgram, 'a');
+    gl.enableVertexAttribArray(loc);
+    gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+    
+    u_time = gl.getUniformLocation(mandelProgram, 't');
+    u_res = gl.getUniformLocation(mandelProgram, 'r');
+    u_center = gl.getUniformLocation(mandelProgram, 'c');
+    u_zoom = gl.getUniformLocation(mandelProgram, 'z');
+  }
+  
+  function renderMandel(now) {
+    const t = now * 0.001;
+    gl.useProgram(mandelProgram);
+    gl.uniform1f(u_time, t);
+    gl.uniform2f(u_res, mandelCanvas.width, mandelCanvas.height);
+    const zoom = 1650.0 + Math.sin(t*0.11)*120 + Math.sin(t*0.043)*80;
+    gl.uniform1f(u_zoom, zoom);
+    gl.uniform2f(u_center, -0.81 + Math.sin(t*0.06)*0.0004, Math.cos(t*0.047)*0.00025);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+  }
+  
+  // Particle System
+  const waves = [];
+  let lastSpawn = 0;
+  const SPAWN_INTERVAL = 2000;
+  const COLLAPSE_DUR = 6500;
+  let pulseBoost = 0;
+  
+  function spawnWave(now) {
+    const bodies = [];
+    for(let i=0;i<40;i++){
+      bodies.push({
+        id:i,
+        a0: (i/40) * Math.PI * 2,
+        x:0,y:0,vx:0,vy:0,r:0,
+        crossed:[0,0,0],
+        phase: Math.random()*Math.PI*2
+      });
+    }
+    waves.push({ t0: now, bodies, hue: 185 + Math.random()*30 });
+  }
+  
+  function animate(now) {
+    renderMandel(now);
+    
+    // fade trails
+    fxCtx.globalCompositeOperation = 'source-over';
+    fxCtx.fillStyle = 'rgba(0,0,0,0.085)';
+    fxCtx.fillRect(0,0,W,H);
+    fxCtx.globalCompositeOperation = 'lighter';
+    
+    const outer = Math.min(W, H) * (W < 640 ? 0.32 : 0.38);
+    cx = W/2; cy = H/2 + (W < 640 ? 10 : 20);
+    
+    // gravity well rings
+    fxCtx.lineWidth = 1;
+    for(let i=1;i<=3;i++){
+      const rr = outer * (0.25 + i*0.23);
+      fxCtx.beginPath();
+      fxCtx.arc(cx, cy, rr, 0, Math.PI*2);
+      const pulse = 0.06 + 0.03 * Math.sin(now*0.0012 + i*2.1);
+      fxCtx.strokeStyle = `rgba(124,58,237,${pulse})`;
+      fxCtx.stroke();
+      
+      // ridge glow
+      if(i <= 2) {
+        fxCtx.beginPath();
+        fxCtx.arc(cx, cy, rr, 0, Math.PI*2);
+        fxCtx.strokeStyle = `rgba(34,211,238,${0.03 + pulseBoost*0.1})`;
+        fxCtx.lineWidth = 2;
+        fxCtx.stroke();
+      }
+    }
+    
+    // spawn
+    if(now - lastSpawn > SPAWN_INTERVAL) {
+      spawnWave(now);
+      lastSpawn = now;
+    }
+    if(pulseBoost > 0) pulseBoost *= 0.92;
+    
+    let totalBodies = 0;
+    let maxRidge = 0;
+    const positions = [];
+    
+    // update waves
+    for(let wi = waves.length-1; wi >=0; wi--) {
+      const w = waves[wi];
+      const age = now - w.t0;
+      const prog = age / COLLAPSE_DUR;
+      if(prog > 1.18) { waves.splice(wi,1); continue; }
+      
+      totalBodies += w.bodies.length;
+      const eased = 1 - Math.pow(1 - Math.min(1, prog), 1.7);
+      
+      w.bodies.forEach(b => {
+        const r = outer * Math.pow(1 - eased, 0.88);
+        const spins = 3;
+        const ang = b.a0 + eased * Math.PI*2*spins + Math.sin(b.phase + eased*4)*0.08;
+        const x = cx + Math.cos(ang) * r;
+        const y = cy + Math.sin(ang) * r;
+        
+        const px = b.x || x;
+        const py = b.y || y;
+        b.vx = x - px;
+        b.vy = y - py;
+        b.x = x; b.y = y; b.r = r;
+        
+        const ridges = [outer*0.71, outer*0.46, outer*0.24];
+        ridges.forEach((rr,i)=>{
+          if(!b.crossed[i] && r < rr) b.crossed[i] = 1;
+        });
+        const rc = b.crossed[0]+b.crossed[1]+b.crossed[2];
+        maxRidge = Math.max(maxRidge, rc);
+        positions.push({x,y,r,rc,b,w, vx:b.vx, vy:b.vy});
+      });
+    }
+    
+    // field lines
+    fxCtx.lineWidth = 0.6;
+    for(let i=0;i<positions.length;i++){
+      const a = positions[i];
+      // to center when close
+      if(a.r < outer*0.35) {
+        fxCtx.beginPath();
+        fxCtx.moveTo(a.x, a.y);
+        fxCtx.lineTo(cx, cy);
+        const alpha = (1 - a.r/(outer*0.35)) * 0.09;
+        fxCtx.strokeStyle = `rgba(250,204,21,${alpha * (0.7 + pulseBoost)})`;
+        fxCtx.stroke();
+      }
+      // inter-body
+      for(let j=i+1;j<Math.min(i+8, positions.length);j++){
+        const b = positions[j];
+        if(b.w !== a.w) continue;
+        const dx = a.x-b.x, dy = a.y-b.y;
+        const d = Math.hypot(dx,dy);
+        if(d < outer*0.22) {
+          const al = (1 - d/(outer*0.22)) * 0.13;
+          fxCtx.beginPath();
+          fxCtx.moveTo(a.x,a.y);
+          fxCtx.lineTo(b.x,b.y);
+          fxCtx.strokeStyle = `rgba(34,211,238,${al})`;
+          fxCtx.stroke();
+        }
+      }
+    }
+    
+    // draw particles
+    positions.forEach(p => {
+      const {x,y,r,rc,vx,vy,b,w} = p;
+      const isHoriz = Math.abs(vx) > Math.abs(vy)*1.25;
+      const isUp = vy < -0.15;
+      const speed = Math.hypot(vx,vy);
+      
+      const size = 2.2 + (1 - r/outer) * 3.8 + (isUp?0.7:0);
+      const hue = w.hue + rc*18;
+      const sat = isHoriz ? 75 : 92;
+      const light = isUp ? 78 : isHoriz ? 58 : 68;
+      
+      // outer glow
+      const grd = fxCtx.createRadialGradient(x,y,0,x,y,size*5);
+      grd.addColorStop(0, `hsla(${hue},${sat}%,${light}%,${0.85 + pulseBoost*0.1})`);
+      grd.addColorStop(0.35, `hsla(${hue+12},${sat}%,65%,0.25)`);
+      grd.addColorStop(1, `hsla(${hue},${sat}%,55%,0)`);
+      fxCtx.fillStyle = grd;
+      fxCtx.beginPath();
+      fxCtx.arc(x,y,size*5,0,Math.PI*2);
+      fxCtx.fill();
+      
+      // core
+      fxCtx.shadowColor = isUp ? '#facc15' : isHoriz ? '#22d3ee' : '#a78bfa';
+      fxCtx.shadowBlur = isUp ? 18 : isHoriz ? 10 : 14;
+      fxCtx.fillStyle = isUp ? '#fef08a' : isHoriz ? '#67e8f9' : '#c4b5fd';
+      fxCtx.beginPath();
+      fxCtx.arc(x,y, size*0.55, 0, Math.PI*2);
+      fxCtx.fill();
+      fxCtx.shadowBlur = 0;
+      
+      // horizontal weight indicator
+      if(isHoriz && speed > 0.1) {
+        fxCtx.strokeStyle = 'rgba(34,211,238,0.85)';
+        fxCtx.lineWidth = 1.3;
+        fxCtx.beginPath();
+        const tr = size + 6.5;
+        const a1 = -Math.PI/2;
+        const a2 = a1 + Math.PI*1.6 * (0.4 + 0.6*Math.abs(Math.sin(now*0.003 + b.id)));
+        fxCtx.arc(x,y,tr,a1,a2);
+        fxCtx.stroke();
+        fxCtx.fillStyle = 'rgba(103,232,249,0.95)';
+        fxCtx.font = '600 9px JetBrains Mono';
+        fxCtx.fillText('×100', x+9, y-7);
+      }
+      
+      // vertical energy spark
+      if(isUp && Math.random() < 0.25) {
+        fxCtx.fillStyle = `rgba(250,204,21,${0.6 + Math.random()*0.4})`;
+        fxCtx.beginPath();
+        fxCtx.arc(x + (Math.random()-0.5)*2, y - size*2.2 - Math.random()*3, 1.1, 0, Math.PI*2);
+        fxCtx.fill();
+      }
+    });
+    
+    // center fusion core
+    const corePulse = 0.5 + 0.5*Math.sin(now*0.002);
+    const coreGrad = fxCtx.createRadialGradient(cx,cy,0,cx,cy,28);
+    coreGrad.addColorStop(0, `rgba(250,204,21,${0.25 + corePulse*0.15})`);
+    coreGrad.addColorStop(0.5, `rgba(139,92,246,${0.15})`);
+    coreGrad.addColorStop(1, 'rgba(0,0,0,0)');
+    fxCtx.fillStyle = coreGrad;
+    fxCtx.beginPath();
+    fxCtx.arc(cx,cy,28 + corePulse*6,0,Math.PI*2);
+    fxCtx.fill();
+    
+    // UI updates
+    bodyCountEl.textContent = totalBodies;
+    const mults = [1,100,10000,1000000];
+    const mult = mults[maxRidge] || 1;
+    ridgeCounterEl.textContent = 'x' + mult.toLocaleString();
+    
+    rEls.forEach((el,i)=>{
+      const active = i < maxRidge;
+      el.classList.toggle('ridge-active', active);
+      el.style.opacity = active ? '1' : '0.45';
+      const dot = el.querySelector('span');
+      if(dot) {
+        dot.style.background = active ? 'rgb(103,232,249)' : 'rgba(255,255,255,0.2)';
+        dot.style.boxShadow = active ? '0 0 8px rgba(34,211,238,0.8)' : 'none';
+      }
+    });
+    
+    // digit cycling
+    const digits = [d0,d1,d2,d3,d4];
+    const base = Math.floor((now*0.0008 + totalBodies*0.03) % 10);
+    digits.forEach((el,i)=>{
+      const target = (base + i*3 + Math.floor(Math.sin(now*0.001 + i)*2)) % 10;
+      const val = Math.abs(target);
+      if(el.textContent !== String(val)) {
+        el.classList.add('flip');
+        setTimeout(()=>el.classList.remove('flip'), 160);
+        el.textContent = val;
+      }
+    });
+    
+    requestAnimationFrame(animate);
+  }
+  
+  function resize(){
+    W = fxCanvas.width = mandelCanvas.width = window.innerWidth * dpr;
+    H = fxCanvas.height = mandelCanvas.height = window.innerHeight * dpr;
+    fxCanvas.style.width = mandelCanvas.style.width = window.innerWidth + 'px';
+    fxCanvas.style.height = mandelCanvas.style.height = window.innerHeight + 'px';
+    fxCtx.setTransform(1,0,0,1,0,0);
+    fxCtx.scale(dpr, dpr);
+    W = window.innerWidth;
+    H = window.innerHeight;
+    cx = W/2; cy = H/2;
+    if(gl) {
+      gl.viewport(0,0,mandelCanvas.width, mandelCanvas.height);
+    }
+  }
+  
+  window.addEventListener('resize', resize, {passive:true});
+  
+  document.getElementById('tapBtn').addEventListener('click', () => {
+    pulseBoost = 1;
+    spawnWave(performance.now());
+  });
+  
+  fxCanvas.addEventListener('click', (e) => {
+    if(e.clientY > window.innerHeight*0.7) return;
+    pulseBoost = 1;
+    if(waves.length < 6) spawnWave(performance.now());
+  });
+  
+  // init
+  initMandel();
+  resize();
+  spawnWave(performance.now() - 800);
+  requestAnimationFrame(animate);
+  
+  // initial digits
+  [d0,d1,d2,d3,d4].forEach((el,i)=> el.textContent = [8,1,0,0,7][i] || '0');
+})();
+</script>
+</body>
+</html>

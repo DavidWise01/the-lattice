@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fractal Stack: 1-0-1 Fulcrum</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            font-variant-ligatures: common-ligatures;
+        }
+        body {
+            font-family: 'Instrument Sans', system-ui, -apple-system, sans-serif;
+            background: #020617;
+            overflow-x: hidden;
+        }
+        .font-mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .bg-grid {
+            background-image: 
+                linear-gradient(rgba(148,163,184,0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(148,163,184,0.05) 1px, transparent 1px);
+            background-size: 32px 32px;
+        }
+        .layer-bar {
+            transition: all 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+            transform-origin: left;
+        }
+        .layer-row:hover .layer-bar {
+            filter: brightness(1.3);
+            transform: scaleX(1.02);
+        }
+        .layer-row.active-1 .layer-bar {
+            background: linear-gradient(90deg, rgba(8,145,178,0.2) 0%, rgba(34,211,238,0.9) 100%);
+            border: 1px solid rgba(103,232,249,0.8);
+            box-shadow: 
+                        0 0 20px rgba(34,211,238,0.4),
+                        inset 0 1px 0 rgba(255,255,255,0.2),
+                        inset 0 -1px 20px rgba(34,211,238,0.2);
+        }
+        .layer-row.active-0 .layer-bar {
+            background: linear-gradient(90deg, rgba(30,41,59,0.4) 0%, rgba(51,65,85,0.6) 100%);
+            border: 1px solid rgba(71,85,105,0.5);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
+        }
+        .layer-row.fulcrum .layer-bar {
+            background: linear-gradient(90deg, rgba(180,83,9,0.3) 0%, rgba(245,158,11,1) 50%, rgba(180,83,9,0.3) 100%);
+            border: 1px solid rgba(253,224,71,1);
+            box-shadow: 
+                        0 0 40px rgba(245,158,11,0.6),
+                        0 0 80px rgba(245,158,11,0.3),
+                        inset 0 1px 0 rgba(255,255,255,0.4);
+            animation: fulcrumPulse 3s ease-in-out infinite;
+        }
+        @keyframes fulcrumPulse {
+            0%, 100% { filter: brightness(1); }
+            50% { filter: brightness(1.15); }
+        }
+        .decoherence-glow {
+            position: absolute;
+            inset: -2px;
+            border-radius: 12px;
+            background: linear-gradient(90deg, transparent, rgba(239,68,68,0.4), transparent);
+            filter: blur(12px);
+            opacity: 0;
+            transition: opacity 0.4s;
+            pointer-events: none;
+        }
+        .layer-row.decoherence:hover .decoherence-glow {
+            opacity: 1;
+        }
+        .decoherence-edge::before {
+            content: '';
+            position: absolute;
+            left: -24px;
+            top: 50%;
+            width: 16px;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, rgb(239,68,68));
+            transform: translateY(-50%);
+            box-shadow: 0 0 10px rgb(239,68,68);
+            animation: blink 2s infinite;
+        }
+        .decoherence-edge::after {
+            content: '';
+            position: absolute;
+            right: -24px;
+            top: 50%;
+            width: 16px;
+            height: 2px;
+            background: linear-gradient(270deg, transparent, rgb(239,68,68));
+            transform: translateY(-50%);
+            box-shadow: 0 0 10px rgb(239,68,68);
+            animation: blink 2s infinite;
+        }
+        @keyframes blink {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+        .fractal-node {
+            position: absolute;
+            border: 1px solid currentColor;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%) rotate(0deg);
+            transition: all 0.5s ease;
+        }
+        .layer-row:hover .fractal-node {
+            transform: translate(-50%, -50%) rotate(45deg);
+        }
+        canvas {
+            image-rendering: crisp-edges;
+        }
+        .scanline {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(transparent 0%, rgba(34,211,238,0.03) 50%, transparent 100%);
+            background-size: 100% 4px;
+            pointer-events: none;
+            mix-blend-mode: screen;
+        }
+    </style>
+</head>
+<body class="text-slate-200 min-h-screen relative">
+    <div class="fixed inset-0">
+        <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-cyan-950/20 via-slate-950 to-slate-950"></div>
+        <div class="absolute inset-0 bg-grid opacity-[0.015]"></div>
+        <div class="absolute top-[-20%] left-[10%] w-[600px] h-[600px] bg-cyan-500/10 rounded-full blur-[150px]"></div>
+        <div class="absolute bottom-[-10%] right-[5%] w-[500px] h-[500px] bg-amber-500/10 rounded-full blur-[140px]"></div>
+    </div>
+
+    <div class="relative z-10 max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+        <!-- Header -->
+        <header class="text-center mb-10 md:mb-14">
+            <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-900/80 border border-cyan-900/50 backdrop-blur-md mb-6">
+                <div class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse"></div>
+                <span class="text-[11px] tracking-[0.18em] uppercase font-medium text-cyan-300/80 font-mono">Fractal Coherence Model</span>
+            </div>
+            <h1 class="text-4xl md:text-6xl font-semibold tracking-tight">
+                <span class="bg-gradient-to-b from-white to-slate-400 bg-clip-text text-transparent">Fractal Stack:</span>
+                <span class="bg-gradient-to-b from-cyan-300 to-cyan-500 bg-clip-text text-transparent ml-2">1-0-1 Fulcrum</span>
+            </h1>
+            <p class="mt-4 text-slate-400 max-w-2xl mx-auto text-sm md:text-base">Symmetric binary stack centered on zero — alternating coherence states with self-similar scaling</p>
+        </header>
+
+        <!-- Scaling Factor -->
+        <div class="flex justify-center mb-12">
+            <div class="relative group">
+                <div class="absolute -inset-1 bg-gradient-to-r from-cyan-600/20 to-violet-600/20 rounded-2xl blur-xl group-hover:blur-2xl transition-all"></div>
+                <div class="relative flex items-center gap-4 md:gap-6 px-6 md:px-10 py-4 md:py-5 bg-slate-900/80 backdrop-blur-2xl border border-slate-800 rounded-2xl shadow-2xl">
+                    <div class="hidden sm:block">
+                        <div class="w-10 h-10 rounded-xl bg-slate-800/80 border border-slate-700 grid place-items-center">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="text-cyan-400">
+                                <path d="M12 3v18M3 12h18"/>
+                            </svg>
+                        </div>
+                    <div>
+                        <div class="text-[10px] uppercase tracking-widest text-slate-500 font-mono mb-1">Scaling Factor</div>
+                        <div class="flex items-baseline gap-2 md:gap-3 font-mono">
+                            <span class="text-slate-300">16</span>
+                            <span class="text-slate-600">per side</span>
+                            <span class="text-slate-500">×</span>
+                            <span class="text-slate-300">2</span>
+                            <span class="text-slate-500">×</span>
+                            <span class="text-slate-300">4</span>
+                            <span class="text-slate-600 mx-1">=</span>
+                            <span class="text-2xl md:text-3xl font-semibold text-white tracking-tight">128</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main -->
+        <div class="grid lg:grid-cols-5 gap-8 lg:gap-10 items-start">
+            <!-- Stack -->
+            <div class="lg:col-span-3">
+                <div class="relative bg-slate-900/40 backdrop-blur-xl border border-slate-800/80 rounded-[28px] p-6 md:p-8 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)]">
+                    <div class="scanline rounded-[28px]"></div>
+                    
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-sm font-medium uppercase tracking-widest text-slate-400">Vertical Stack</h2>
+                        <div class="flex items-center gap-3 text-[11px] font-mono">
+                            <div class="flex items-center gap-1.5"><div class="w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_8px_rgba(34,211,238,0.8)]"></div><span class="text-slate-500">1 ACTIVE</span></div>
+                            <div class="flex items-center gap-1.5"><div class="w-2 h-2 rounded-full bg-slate-600"></div><span class="text-slate-500">0 INACTIVE</span></div>
+                        </div>
+                    </div>
+
+                    <div id="stack" class="relative space-y-[10px]">
+                        <!-- Layers injected by JS -->
+                        <div class="absolute left-[88px] md:left-[104px] top-0 bottom-0 w-px bg-gradient-to-b from-transparent via-slate-700/50 to-transparent pointer-events-none hidden sm:block"></div>
+                    </div>
+
+                    <!-- Decoherence labels -->
+                    <div class="mt-8 pt-6 border-t border-slate-800/50 flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-red-400/80">
+                                <path d="M12 9v4M12 17h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            <span class="text-[11px] uppercase tracking-widest font-mono text-red-400/70">Decoherence Threshold · Layer ±4</span>
+                        </div>
+                        <div class="text-[11px] font-mono text-slate-600">OUTER EDGE</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detail -->
+            <div class="lg:col-span-2">
+                <div class="sticky top-8">
+                    <div class="relative bg-slate-900/60 backdrop-blur-2xl border border-slate-800 rounded-[28px] overflow-hidden shadow-2xl">
+                        <div class="absolute inset-0">
+                            <div class="absolute inset-0 opacity-[0.03]" style="background-image: radial-gradient(circle at 1px 1px, white 1px, transparent 0); background-size: 24px 24px;"></div>
+                        </div>
+                        
+                        <div class="relative p-6 md:p-8">
+                            <div class="flex items-start justify-between mb-6">
+                                <div>
+                                    <div class="text-[11px] uppercase tracking-widest text-slate-500 font-mono mb-1">Fractal Preview</div>
+                                    <h3 id="detail-title" class="text-2xl font-medium tracking-tight">Fulcrum 0</h3>
+                                </div>
+                                <div id="detail-badge" class="px-2.5 py-1 rounded-lg bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs font-mono font-medium">Φ</div>
+                            </div>
+
+                            <div class="relative aspect-square w-full max-w-[320px] mx-auto">
+                                <div class="absolute inset-0 rounded-[20px] bg-slate-950/80 border border-slate-800 overflow-hidden">
+                                    <canvas id="fractal" class="w-full h-full"></canvas>
+                                    <div class="absolute inset-0 mix-blend-plus-lighter opacity-40" style="background: radial-gradient(circle at center, transparent 30%, rgba(2,6,23,0.8) 70%);"></div>
+                                </div>
+                                <div class="absolute -inset-3 bg-gradient-to-b from-cyan-500/0 via-cyan-500/10 to-transparent blur-2xl -z-10"></div>
+                            </div>
+
+                            <div class="grid grid-cols-3 gap-3 mt-6">
+                                <div class="group relative overflow-hidden rounded-2xl bg-slate-950/60 border border-slate-800/80 p-3.5 hover:border-slate-700/80 transition-colors">
+                                    <div class="text-[10px] uppercase tracking-widest text-slate-500 font-mono mb-1">State</div>
+                                    <div id="stat-state" class="text-xl font-medium text-amber-300 font-mono">Φ</div>
+                                </div>
+                                <div class="group relative overflow-hidden rounded-2xl bg-slate-950/60 border border-slate-800/80 p-3.5 hover:border-slate-700/80 transition-colors">
+                                    <div class="text-[10px] uppercase tracking-widest text-slate-500 font-mono mb-1">Scaled</div>
+                                    <div id="stat-scaled" class="text-xl font-medium text-white font-mono">128</div>
+                                </div>
+                                <div class="group relative overflow-hidden rounded-2xl bg-slate-950/60 border border-slate-800/80 p-3.5 hover:border-slate-700/80 transition-colors">
+                                    <div class="text-[10px] uppercase tracking-widest text-slate-500 font-mono mb-1">Depth</div>
+                                    <div id="stat-depth" class="text-xl font-medium text-white font-mono">0</div>
+                                </div>
+                            </div>
+
+                            <div class="mt-5 p-3.5 rounded-2xl bg-slate-950/40 border border-slate-800/50">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-[11px] font-mono text-slate-500 uppercase tracking-wider">Formula</span>
+                                    <span class="text-[11px] font-mono text-slate-600">128 / 2^|layer|</span>
+                                </div>
+                                <div id="formula-calc" class="mt-1.5 font-mono text-sm text-cyan-300/90">128 / 2⁰ = 128</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bottom text -->
+                    <div class="mt-6 flex items-center justify-between px-2">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-8 h-px bg-gradient-to-r from-transparent to-cyan-400/50"></div>
+                            <span class="text-sm tracking-wide text-slate-300">Wave up, bloom balanced</span>
+                        </div>
+                        <div class="text-xs font-mono text-slate-500">Maximum coherence: 8 layers</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tooltip -->
+    <div id="tooltip" class="fixed z-50 pointer-events-none opacity-0 transition-opacity duration-200">
+        <div class="px-3 py-2 rounded-xl bg-slate-900/95 backdrop-blur-xl border border-slate-700 shadow-2xl">
+            <div class="text-[11px] font-mono leading-relaxed whitespace-nowrap" id="tooltip-content"></div>
+        </div>
+    </div>
+
+    <script>
+        const layers = [
+            { id: 4, label: '+4', state: 1 },
+            { id: 3, label: '+3', state: 0 },
+            { id: 2, label: '+2', state: 1 },
+            { id: 1, label: '+1', state: 0 },
+            { id: 0, label: '0', state: 'fulcrum', isFulcrum: true },
+            { id: -1, label: '-1', state: 0 },
+            { id: -2, label: '-2', state: 1 },
+            { id: -3, label: '-3', state: 0 },
+            { id: -4, label: '-4', state: 1 },
+        ];
+
+        const stack = document.getElementById('stack');
+        const tooltip = document.getElementById('tooltip');
+        const tooltipContent = document.getElementById('tooltip-content');
+
+        let activeLayer = layers[4]; // fulcrum
+
+        function createLayer(layer) {
+            const absId = Math.abs(layer.id);
+            const scaled = layer.isFulcrum ? 128 : 128 / Math.pow(2, absId);
+            const widthPct = (scaled / 128) * 100;
+            
+            const row = document.createElement('div');
+            row.className = `layer-row group relative ${layer.isFulcrum ? 'fulcrum' : `active-${layer.state}`} ${absId === 4 ? 'decoherence' : ''}`;
+            row.dataset.id = layer.id;
+
+            const isDecoherence = absId === 4;
+            
+            row.innerHTML = `
+                <div class="relative">
+                    ${isDecoherence ? '<div class="decoherence-glow"></div>' : ''}
+                    <div class="flex items-center gap-3 md:gap-4 ${isDecoherence ? 'decoherence-edge' : ''}">
+                        <div class="w-[72px] md:w-[88px] shrink-0 text-right">
+                            <div class="inline-flex items-center gap-1.5">
+                                <span class="text-[11px] font-mono ${layer.isFulcrum ? 'text-amber-300' : 'text-slate-500'} uppercase tracking-wide">Layer</span>
+                                <span class="text-[15px] font-mono font-medium ${layer.isFulcrum ? 'text-amber-200' : 'text-slate-300'} w-[28px] text-left">${layer.label}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="flex-1 relative h-[44px] md:h-[48px]">
+                            <div class="layer-bar absolute inset-y-[6px] left-0 right-0 rounded-xl" style="width: ${widthPct}%">
+                                <div class="absolute inset-0 rounded-xl overflow-hidden">
+                                    <div class="absolute inset-0 opacity-[0.15]" style="background-image: linear-gradient(90deg, transparent 0%, white 50%, transparent 100%); background-size: 200% 100%; animation: ${layer.state === 1 || layer.isFulcrum ? 'shimmer 3s linear infinite' : 'none'};"></div>
+                                </div>
+                                
+                                <!-- fractal miniature -->
+                                <div class="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 hidden sm:grid place-items-center">
+                                    <div class="relative w-full h-full" style="color: ${layer.isFulcrum ? 'rgb(251,191,36)' : layer.state === 1 ? 'rgb(103,232,249)' : 'rgb(100,116,139)'}; opacity: ${layer.isFulcrum ? 0.9 : layer.state === 1 ? 0.7 : 0.4}">
+                                        ${Array.from({length: 3}, (_,i) => `<div class="fractal-node rounded-[2px]" style="width:${20 - i*5}px; height:${20 - i*5}px; opacity:${1 - i*0.25}"></div>`).join('')}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="w-[44px] shrink-0 grid place-items-center">
+                            <div class="w-9 h-9 rounded-xl grid place-items-center font-mono text-[17px] font-medium transition-all
+                                ${layer.isFulcrum 
+                                    ? 'bg-amber-500/15 text-amber-200 border border-amber-400/40 shadow-[0_0_20px_rgba(245,158,11,0.2)]' 
+                                    : layer.state === 1 
+                                        ? 'bg-cyan-500/15 text-cyan-200 border border-cyan-400/30 group-hover:shadow-[0_0_16px_rgba(34,211,238,0.3)]' 
+                                        : 'bg-slate-800/60 text-slate-500 border border-slate-700/50'}">
+                                ${layer.isFulcrum ? 'Φ' : layer.state}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // hover
+            row.addEventListener('mouseenter', () => {
+                setActiveLayer(layer, scaled);
+                showTooltip(row, layer, scaled);
+            });
+            row.addEventListener('mouseleave', () => {
+                hideTooltip();
+            });
+            row.addEventListener('mousemove', (e) => {
+                moveTooltip(e);
+            });
+
+            return row;
+        }
+
+        layers.forEach(l => stack.appendChild(createLayer(l)));
+
+        // add shimmer keyframes
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes shimmer {
+                0% { background-position: 200% 0; }
+                100% { background-position: -200% 0; }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Canvas fractal
+        const canvas = document.getElementById('fractal');
+        const ctx = canvas.getContext('2d');
+        let animationId;
+
+        function resizeCanvas() {
+            const rect = canvas.getBoundingClientRect();
+            const dpr = window.devicePixelRatio || 1;
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+            ctx.setTransform(1,0,0,1,0,0);
+            ctx.scale(dpr, dpr);
+        }
+        resizeCanvas();
+        window.addEventListener('resize', () => { resizeCanvas(); drawFractal(); });
+
+        function drawFractal() {
+            cancelAnimationFrame(animationId);
+            const w = canvas.clientWidth;
+            const h = canvas.clientHeight;
+            const centerX = w / 2;
+            const centerY = h / 2;
+            
+            const layer = activeLayer;
+            const absId = Math.abs(layer.id);
+            const scaled = layer.isFulcrum ? 128 : 128 / Math.pow(2, absId);
+            const baseSize = Math.min(w, h) * 0.65 * (scaled / 128);
+            
+            const isActive = layer.state === 1 || layer.isFulcrum;
+            const color = layer.isFulcrum ? [245,158,11] : isActive ? [34,211,238] : [100,116,139];
+            const depth = 7 - absId;
+            
+            let rotation = 0;
+
+            function frame() {
+                ctx.clearRect(0, 0, w, h);
+                
+                // glow background
+                const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, baseSize*1.5);
+                gradient.addColorStop(0, `rgba(${color[0]},${color[1]},${color[2]},${isActive ? 0.15 : 0.05})`);
+                gradient.addColorStop(1, 'rgba(0,0,0,0)');
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, baseSize*1.5, 0, Math.PI*2);
+                ctx.fill();
+
+                // draw nested squares
+                for (let i = 0; i < Math.max(3, depth); i++) {
+                    const size = baseSize * Math.pow(0.68, i);
+                    const alpha = isActive ? Math.max(0.15, 1 - i * 0.14) : Math.max(0.08, 0.5 - i * 0.08);
+                    
+                    ctx.save();
+                    ctx.translate(centerX, centerY);
+                    ctx.rotate(rotation * (i % 2 === 0 ? 1 : -1) * 0.3 + (i * 0.1));
+                    
+                    ctx.strokeStyle = `rgba(${color[0]},${color[1]},${color[2]},${alpha})`;
+                    ctx.lineWidth = i === 0 ? 2 : 1.5;
+                    ctx.shadowColor = `rgba(${color[0]},${color[1]},${color[2]},${isActive ? 0.8 : 0.3})`;
+                    ctx.shadowBlur = isActive ? 12 - i : 4;
+                    
+                    const s = size;
+                    ctx.beginPath();
+                    ctx.roundRect(-s/2, -s/2, s, s, s*0.08);
+                    ctx.stroke();
+                    
+                    // inner cross for active
+                    if (isActive && i < 2) {
+                        ctx.globalAlpha = alpha * 0.5;
+                        ctx.beginPath();
+                        ctx.moveTo(-s/2, 0); ctx.lineTo(s/2, 0);
+                        ctx.moveTo(0, -s/2); ctx.lineTo(0, s/2);
+                        ctx.stroke();
+                        ctx.globalAlpha = 1;
+                    }
+                    
+                    ctx.restore();
+                }
+
+                // center dot
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, isActive ? 2.5 : 1.5, 0, Math.PI*2);
+                ctx.fillStyle = `rgba(${color[0]},${color[1]},${color[2]},1)`;
+                ctx.shadowColor = `rgba(${color[0]},${color[1]},${color[2]},1)`;
+                ctx.shadowBlur = isActive ? 15 : 5;
+                ctx.fill();
+                ctx.shadowBlur = 0;
+
+                if (isActive) {
+                    rotation += 0.003;
+                    animationId = requestAnimationFrame(frame);
+                }
+            }
+            frame();
+        }
+
+        function setActiveLayer(layer, scaled) {
+            activeLayer = layer;
+            const absId = Math.abs(layer.id);
+            
+            document.getElementById('detail-title').textContent = layer.isFulcrum ? 'Fulcrum 0' : `Layer ${layer.label}`;
+            document.getElementById('stat-state').textContent = layer.isFulcrum ? 'Φ' : layer.state;
+            document.getElementById('stat-state').className = `text-xl font-medium font-mono ${layer.isFulcrum ? 'text-amber-300' : layer.state === 1 ? 'text-cyan-300' : 'text-slate-500'}`;
+            document.getElementById('stat-scaled').textContent = scaled;
+            document.getElementById('stat-depth').textContent = absId;
+            document.getElementById('formula-calc').textContent = `128 / 2^${absId} = ${scaled}`;
+            
+            const badge = document.getElementById('detail-badge');
+            if (layer.isFulcrum) {
+                badge.textContent = 'Φ';
+                badge.className = 'px-2.5 py-1 rounded-lg bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs font-mono font-medium';
+            } else if (layer.state === 1) {
+                badge.textContent = 'ACTIVE';
+                badge.className = 'px-2.5 py-1 rounded-lg bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 text-xs font-mono font-medium';
+            } else {
+                badge.textContent = 'INACTIVE';
+                badge.className = 'px-2.5 py-1 rounded-lg bg-slate-700/50 border border-slate-600/50 text-slate-400 text-xs font-mono font-medium';
+            }
+            
+            drawFractal();
+        }
+
+        function showTooltip(el, layer, scaled) {
+            const absId = Math.abs(layer.id);
+            tooltipContent.innerHTML = `
+                <div class="flex items-center gap-2 mb-1">
+                    <span class="text-slate-400">Layer</span>
+                    <span class="text-white">${layer.label}</span>
+                    <span class="ml-2 px-1.5 py-0.5 rounded text-[10px] ${layer.isFulcrum ? 'bg-amber-500/20 text-amber-300' : layer.state ? 'bg-cyan-500/20 text-cyan-300' : 'bg-slate-700 text-slate-400'}">${layer.isFulcrum ? 'FULCRUM' : layer.state ? '1' : '0'}</span>
+                </div>
+                <div class="text-slate-500">scaled: <span class="text-cyan-300">${scaled}</span> · depth: <span class="text-white">${absId}</span></div>
+            `;
+            tooltip.style.opacity = '1';
+        }
+        function hideTooltip() {
+            tooltip.style.opacity = '0';
+        }
+        function moveTooltip(e) {
+            tooltip.style.left = (e.clientX + 14) + 'px';
+            tooltip.style.top = (e.clientY - 10) + 'px';
+        }
+
+        // init
+        setActiveLayer(layers[4], 128);
+        
+        // auto-cycle demo
+        let demoIndex = 0;
+        setInterval(() => {
+            if (document.querySelector('.layer-row:hover')) return;
+            demoIndex = (demoIndex + 1) % layers.length;
+            const l = layers[demoIndex];
+            const scaled = l.isFulcrum ? 128 : 128 / Math.pow(2, Math.abs(l.id));
+            setActiveLayer(l, scaled);
+        }, 4000);
+    </script>
+</body>
+</html>

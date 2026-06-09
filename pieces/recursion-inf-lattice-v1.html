@@ -1,0 +1,321 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<!-- Playables SDK -->
+<script>// Playables SDK v1.0.0
+// Game lifecycle bridge: rAF-based game-ready detection + event communication
+(function() {
+  'use strict';
+
+  // Idempotency: skip if already initialized (e.g., server-side injection
+  // followed by client-side inject-javascript via the Bloks webview component).
+  if (window.playablesSDK) return;
+
+  var HANDLER_NAME = 'playablesGameEventHandler';
+  var ANDROID_BRIDGE_NAME = '_MetaPlayablesBridge';
+  var RAF_FRAME_THRESHOLD = 3;
+
+  var gameReadySent = false;
+  var firstInteractionSent = false;
+  var errorSent = false;
+  var frameCount = 0;
+  var originalRAF = window.requestAnimationFrame;
+
+  // --- Transport Layer ---
+
+  function hasIOSBridge() {
+    return !!(window.webkit &&
+              window.webkit.messageHandlers &&
+              window.webkit.messageHandlers[HANDLER_NAME]);
+  }
+
+  function hasAndroidBridge() {
+    return !!(window[ANDROID_BRIDGE_NAME] &&
+              typeof window[ANDROID_BRIDGE_NAME].postEvent === 'function');
+  }
+
+  function isInIframe() {
+    return !!(window.parent && window.parent !== window);
+  }
+
+  function sendEvent(eventName, payload) {
+    var message = {
+      type: eventName,
+      payload: payload || {},
+      timestamp: Date.now()
+    };
+
+    if (hasIOSBridge()) {
+      try {
+        window.webkit.messageHandlers[HANDLER_NAME].postMessage(message);
+      } catch (e) { /* ignore */ }
+      return;
+    }
+
+    if (hasAndroidBridge()) {
+    try {
+      var p = payload || {};
+      p.__secureToken = window.__fbAndroidBridgeAuthToken || '';
+      window[ANDROID_BRIDGE_NAME].postEvent(
+        eventName,
+        JSON.stringify(p)
+      );
+    } catch (e) { /* ignore */ }
+    return;
+  }
+
+    if (isInIframe()) {
+      try {
+        window.parent.postMessage(message, '*');
+      } catch (e) { /* ignore */ }
+      return;
+    }
+  }
+
+  // --- rAF Game-Ready Detection ---
+
+  function onFrame() {
+    if (gameReadySent) return;
+
+    frameCount++;
+    if (frameCount >= RAF_FRAME_THRESHOLD) {
+      gameReadySent = true;
+      sendEvent('game_ready', {
+        frame_count: frameCount,
+        detected_at: Date.now()
+      });
+      return;
+    }
+
+    originalRAF.call(window, onFrame);
+  }
+
+  if (originalRAF) {
+    window.requestAnimationFrame = function(callback) {
+      if (!gameReadySent) {
+        return originalRAF.call(window, function(timestamp) {
+          frameCount++;
+          if (frameCount >= RAF_FRAME_THRESHOLD && !gameReadySent) {
+            gameReadySent = true;
+            sendEvent('game_ready', {
+              frame_count: frameCount,
+              detected_at: Date.now()
+            });
+          }
+          callback(timestamp);
+        });
+      }
+      return originalRAF.call(window, callback);
+    };
+  }
+
+  // --- First User Interaction Detection ---
+
+  function setupFirstInteractionDetection() {
+    var events = ['touchstart', 'mousedown', 'keydown'];
+
+    function onFirstInteraction() {
+      if (firstInteractionSent) return;
+      firstInteractionSent = true;
+      sendEvent('user_interaction_start', null);
+
+      for (var i = 0; i < events.length; i++) {
+        document.removeEventListener(events[i], onFirstInteraction, true);
+      }
+    }
+
+    for (var i = 0; i < events.length; i++) {
+      document.addEventListener(events[i], onFirstInteraction, true);
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setupFirstInteractionDetection);
+  } else {
+    setupFirstInteractionDetection();
+  }
+
+  // --- Auto Error Capture ---
+
+  window.addEventListener('error', function(event) {
+    if (errorSent) return;
+    errorSent = true;
+    sendEvent('error', {
+      message: event.message || 'Unknown error',
+      source: event.filename || '',
+      lineno: event.lineno || 0,
+      colno: event.colno || 0,
+      auto_captured: true
+    });
+  });
+
+  window.addEventListener('unhandledrejection', function(event) {
+    if (errorSent) return;
+    errorSent = true;
+    var reason = event.reason;
+    sendEvent('error', {
+      message: (reason instanceof Error) ? reason.message : String(reason),
+      type: 'unhandled_promise_rejection',
+      auto_captured: true
+    });
+  });
+
+  // --- Public API ---
+
+  window.playablesSDK = {
+    complete: function(score) {
+      sendEvent('game_ended', {
+        score: score,
+        completed: true
+      });
+    },
+
+    error: function(message) {
+      if (errorSent) return;
+      errorSent = true;
+      sendEvent('error', {
+        message: message || 'Unknown error',
+        auto_captured: false
+      });
+    },
+
+    sendEvent: function(eventName, payload) {
+      if (!eventName || typeof eventName !== 'string') return;
+      sendEvent(eventName, payload);
+    }
+  };
+
+  // Kick off rAF detection in case no game code calls rAF immediately
+  if (originalRAF) {
+    originalRAF.call(window, onFrame);
+  }
+})();</script>
+<script>window.Intl=window.Intl||{};Intl.t=function(s){return(Intl._locale&&Intl._locale[s])||s;};</script>
+<title>RESONATE</title>
+<style>
+body { background: #000; margin: 0; overflow: hidden; }
+canvas { display: block; }
+.info { position: absolute; top: 20px; left: 50%; transform: translateX(-50%); color: #0ff; font-family: monospace; font-size: 14px; text-align: center; text-shadow: 0 0 10px #0ff; z-index: 10; }
+</style>
+</head>
+<body>
+<div class="info">RESONATE ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ¢ÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂÃÂ Pattern Two Frequency Active<br>Infinite Lattice Phase-Locked</div>
+<canvas id="c"></canvas>
+<script>
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+let time = 0;
+const centerX = canvas.width / 2;
+const centerY = canvas.height / 2;
+
+function draw() {
+  ctx.fillStyle = 'rgba(0,0,0,0.08)';
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+  
+  time += 0.02;
+  
+  // Resonance waves from center (you as 2)
+  for(let i=0; i<8; i++) {
+    const radius = (time * 50 + i * 80) % Math.max(canvas.width, canvas.height);
+    const alpha = 1 - (radius / Math.max(canvas.width, canvas.height));
+    
+    ctx.strokeStyle = `rgba(0, 255, 255, ${alpha * 0.5})`;
+    ctx.lineWidth = 2;
+    ctx.shadowBlur = 20;
+    ctx.shadowColor = '#0ff';
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+  
+  // Vertical ternary resonance (1-2-3)
+  for(let i=0; i<3; i++) {
+    const y = centerY - 100 + i * 100;
+    const pulse = Math.sin(time * 2 + i) * 0.5 + 0.5;
+    
+    ctx.fillStyle = `rgba(255, 255, 0, ${0.3 + pulse * 0.7})`;
+    ctx.shadowBlur = 30;
+    ctx.shadowColor = '#ff0';
+    ctx.beginPath();
+    ctx.arc(centerX, y, 20 + pulse * 10, 0, Math.PI * 2);
+    ctx.fill();
+    
+    ctx.fillStyle = '#000';
+    ctx.font = 'bold 16px monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(i+1, centerX, y);
+  }
+  
+  // 8 gatekeepers resonating
+  for(let i=0; i<8; i++) {
+    const angle = (i / 8) * Math.PI * 2 + time * 0.5;
+    const radius = 180;
+    const x = centerX + Math.cos(angle) * radius;
+    const y = centerY + Math.sin(angle) * radius;
+    const pulse = Math.sin(time * 3 + i) * 0.5 + 0.5;
+    
+    ctx.fillStyle = `rgba(255, 0, 0, ${0.5 + pulse * 0.5})`;
+    ctx.shadowBlur = 15;
+    ctx.shadowColor = '#f00';
+    ctx.beginPath();
+    ctx.arc(x, y, 8 + pulse * 4, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  
+  // Infinite leaves resonating (background)
+  for(let i=0; i<30; i++) {
+    const angle = (i / 30) * Math.PI * 2 + time * 0.2;
+    const radius = 250 + Math.sin(time + i) * 50;
+    const x = centerX + Math.cos(angle) * radius;
+    const y = centerY + Math.sin(angle) * radius;
+    const pulse = Math.sin(time * 2 + i * 0.5) * 0.5 + 0.5;
+    
+    ctx.strokeStyle = `rgba(0, 255, 0, ${0.1 + pulse * 0.2})`;
+    ctx.lineWidth = 1;
+    ctx.shadowBlur = 5;
+    ctx.shadowColor = '#0f0';
+    ctx.beginPath();
+    ctx.arc(x, y, 15 + pulse * 10, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+  
+  // Center (you as 2, catalyst, +1)
+  const centerPulse = Math.sin(time * 4) * 0.5 + 0.5;
+  ctx.fillStyle = `rgba(255, 0, 255, ${0.7 + centerPulse * 0.3})`;
+  ctx.shadowBlur = 40;
+  ctx.shadowColor = '#f0f';
+  ctx.beginPath();
+  ctx.arc(centerX, centerY, 25 + centerPulse * 15, 0, Math.PI * 2);
+  ctx.fill();
+  
+  ctx.fillStyle = '#fff';
+  ctx.font = 'bold 20px monospace';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('2', centerX, centerY);
+  
+  // Y.N Primitive pulse
+  ctx.strokeStyle = `rgba(0, 255, 0, ${0.5 + centerPulse * 0.5})`;
+  ctx.lineWidth = 3;
+  ctx.shadowBlur = 20;
+  ctx.shadowColor = '#0f0';
+  ctx.beginPath();
+  ctx.arc(centerX, centerY, 40 + centerPulse * 20, 0, Math.PI * 2);
+  ctx.stroke();
+  
+  requestAnimationFrame(draw);
+}
+draw();
+
+window.addEventListener('resize', () => {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pushdown Automata</title>
+<style>
+  :root{--bg:#08080f;--bg2:#0c0c18;--panel:#10101e;--panel2:#13131f;--line:#1f1f33;--line2:#2a2a42;--ink:#e7e7f0;--dim:#9a9ab5;--faint:#5e5e7a;--teal:#2dd4bf;--teal-d:#14b8a6;--teal-dd:#0d9488;--cyan:#5eead4;--amber:#fbbf24;--violet:#a78bfa;--blue:#60a5fa;--rose:#fb7185;--green:#86efac;}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:radial-gradient(1150px 800px at 80% -15%,rgba(45,212,191,.08),transparent 58%),radial-gradient(900px 640px at -8% 106%,rgba(96,165,250,.04),transparent 55%),var(--bg);color:var(--ink);font-family:'IBM Plex Sans',sans-serif;font-weight:300;min-height:100vh;padding:28px 22px 56px;-webkit-font-smoothing:antialiased}
+  .shell{max-width:1160px;margin:0 auto}
+  .kicker{font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.4em;text-transform:uppercase;color:var(--teal);margin-bottom:12px}
+  h1{font-family:'Spectral',serif;font-weight:300;font-size:clamp(26px,5vw,44px);letter-spacing:-.02em;line-height:1.04}
+  h1 em{font-style:italic;color:var(--teal)}
+  .sub{color:var(--dim);font-size:15px;margin-top:8px;max-width:790px}
+  .tabs{display:flex;gap:8px;margin-top:22px;flex-wrap:wrap}
+  .tab{font-family:'IBM Plex Mono',monospace;font-size:12px;border:1px solid var(--line);border-radius:10px;background:var(--panel);color:var(--dim);padding:10px 15px;cursor:pointer;transition:.15s}
+  .tab:hover{border-color:var(--teal-d)} .tab.on{border-color:var(--teal);color:var(--teal);background:rgba(45,212,191,.08)}
+  .pane{display:none;margin-top:18px}.pane.on{display:block}
+  .layout{display:grid;grid-template-columns:290px minmax(0,1fr);gap:18px;align-items:start}
+  @media(max-width:900px){.layout{grid-template-columns:1fr}}
+  .controls{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px}
+  .sec{font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--faint);margin-bottom:10px}
+  .sec:not(:first-child){margin-top:15px}
+  .seg{display:flex;border:1px solid var(--line);border-radius:9px;overflow:hidden;margin-top:8px;flex-wrap:wrap}
+  .seg button{flex:1;min-width:60px;font-family:'IBM Plex Mono',monospace;font-size:10.5px;background:transparent;color:var(--dim);border:0;padding:8px 3px;cursor:pointer}
+  .seg button.on{background:rgba(45,212,191,.16);color:var(--teal)}
+  .btns{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+  .btns button{flex:1;min-width:42px;font-family:'IBM Plex Mono',monospace;font-size:11px;border:1px solid var(--line);border-radius:8px;background:var(--panel2);color:var(--dim);padding:9px 4px;cursor:pointer}
+  .btns button:hover{border-color:var(--teal);color:var(--teal)}
+  .btns button.act{border-color:var(--teal);color:var(--teal);background:rgba(45,212,191,.1)}
+  .stat{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--dim);margin-top:13px;border:1px solid var(--line);border-radius:11px;padding:10px}
+  .stat .r{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px dashed var(--line);gap:8px}
+  .stat .r:last-child{border:0} .stat .k{color:var(--faint)} .stat .v{color:var(--teal);text-align:right}
+  .stat .v.g{color:var(--green)} .stat .v.c{color:var(--cyan)} .stat .v.a{color:var(--amber)} .stat .v.r{color:var(--rose)}
+  .note{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--faint);line-height:1.55;margin-top:10px}
+  code{font-family:'IBM Plex Mono',monospace;color:var(--teal)}
+  .panel{background:#06060c;border:1px solid var(--line);border-radius:16px;position:relative;overflow:hidden;line-height:0}
+  .plabel{position:absolute;top:10px;left:14px;font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--faint);background:rgba(6,6,12,.4);padding:2px 6px;border-radius:4px;z-index:2}
+  canvas{display:block;width:100%;height:auto}
+  footer{margin-top:24px;padding-top:22px;border-top:1px solid var(--line);color:var(--faint);font-family:'IBM Plex Mono',monospace;font-size:11.5px;line-height:1.9}
+  footer .seq{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+  footer .seq span{padding:5px 12px;border:1px solid var(--line);border-radius:30px}
+  footer .seq .here{border-color:var(--teal);color:var(--teal)}
+</style>
+</head>
+<body>
+<div class="shell">
+  <div>
+    <div class="kicker">Automata & Formal Languages · Instrument 03 · Pushdown Automata</div>
+    <h1>One stack <em>changes everything</em></h1>
+    <p class="sub">A finite automaton can't count, so it can't match <code>aⁿbⁿ</code> or balanced brackets. Add a single stack — push, pop, peek the top — and it can. These are the context-free languages: the grammars behind programming languages, and the machines that parse them.</p>
+  </div>
+
+  <div class="tabs">
+    <div class="tab on" data-t="A">PDA</div>
+    <div class="tab" data-t="B">Grammar derivation</div>
+    <div class="tab" data-t="C">Parse tree</div>
+    <div class="tab" data-t="D">Grammar ↔ PDA</div>
+  </div>
+
+  <!-- A -->
+  <div class="pane on" id="paneA">
+    <div class="layout">
+      <div class="controls">
+        <div class="sec">Pushdown automaton</div>
+        <div class="seg" id="aSel"><button data-m="anbn" class="on">aⁿbⁿ</button><button data-m="bal">balanced ( )</button></div>
+        <div class="sec">Build a string</div>
+        <div class="btns" id="aAlpha"></div>
+        <div class="btns"><button id="aStep">step ▸</button><button id="aPlay">play ▶</button><button id="aClear">clear</button><button id="aRand">random</button></div>
+        <div class="stat" id="statA"></div>
+        <div class="note">The stack is the only unbounded memory, and only the top is visible. For <code>aⁿbⁿ</code>: push an <b>A</b> for each a, then pop one per b — empty exactly when the counts match. Accept when input is consumed and the stack is empty.</div>
+      </div>
+      <div class="panel"><canvas id="cvA" height="430"></canvas><div class="plabel" id="aLab">PDA</div></div>
+    </div>
+  </div>
+
+  <!-- B -->
+  <div class="pane" id="paneB">
+    <div class="layout">
+      <div class="controls">
+        <div class="sec">Grammar</div>
+        <div class="seg" id="bGram"><button data-g="anbn" class="on">aⁿbⁿ</button><button data-g="bal">( )</button><button data-g="arith">expr</button></div>
+        <div class="sec">Target string</div>
+        <div class="btns" id="bTargets"></div>
+        <div class="btns"><button id="bStep">derive ▸</button><button id="bAll">full</button><button id="bReset">reset</button></div>
+        <div class="stat" id="statB"></div>
+        <div class="note">A <span style="color:var(--teal)">leftmost derivation</span> rewrites the leftmost nonterminal at each step using a production, until only terminals remain. The sequence of sentential forms is a proof that the string is in the language.</div>
+      </div>
+      <div class="panel"><canvas id="cvB" height="430"></canvas><div class="plabel" id="bLab">derivation</div></div>
+    </div>
+  </div>
+
+  <!-- C -->
+  <div class="pane" id="paneC">
+    <div class="layout">
+      <div class="controls">
+        <div class="sec">Arithmetic grammar</div>
+        <div class="note" style="margin-top:0">E → E + T | T<br>T → T * F | F<br>F → ( E ) | id</div>
+        <div class="sec">Expression</div>
+        <div class="btns" id="cExprs"></div>
+        <div class="stat" id="statC"></div>
+        <div class="note">The parse tree's <span style="color:var(--teal)">shape</span> encodes meaning: because <code>*</code> lives below <code>+</code> in the grammar, multiplication sits deeper in the tree and binds tighter. The structure is the precedence.</div>
+      </div>
+      <div class="panel"><canvas id="cvC" height="430"></canvas><div class="plabel" id="cLab">parse tree</div></div>
+    </div>
+  </div>
+
+  <!-- D -->
+  <div class="pane" id="paneD">
+    <div class="layout">
+      <div class="controls">
+        <div class="sec">Top-down PDA from grammar</div>
+        <div class="seg" id="dGram"><button data-g="anbn" class="on">aⁿbⁿ</button><button data-g="bal">( )</button></div>
+        <div class="sec">Target string</div>
+        <div class="btns" id="dTargets"></div>
+        <div class="btns"><button id="dStep">step ▸</button><button id="dPlay">play ▶</button><button id="dReset">reset</button></div>
+        <div class="stat" id="statD"></div>
+        <div class="note">Any grammar becomes a PDA: push the start symbol, then <span style="color:var(--teal)">predict</span> (replace a nonterminal on top by a production's right side) or <span style="color:var(--amber)">match</span> (pop a terminal that equals the next input). The stack always holds the rest of the sentential form.</div>
+      </div>
+      <div class="panel"><canvas id="cvD" height="430"></canvas><div class="plabel" id="dLab">grammar as PDA</div></div>
+    </div>
+  </div>
+
+  <footer>
+    <div class="seq">
+      <span>00 primer</span><span>01 finite automata</span><span>02 regular expressions</span><span class="here">03 · pushdown automata — you are here</span><span>04 Turing machines</span><span>05 hierarchy & limits</span>
+    </div>
+    PUSHDOWN AUTOMATA · stack-based recognition · context-free grammars · parse trees · grammar↔PDA. Verified.
+  </footer>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);const TAU=Math.PI*2;
+/* ---- tree machinery ---- */
+function nd(sym,rhs){return {sym,nt:true,rhs};}function tm(sym){return {sym,nt:false,rhs:[]};}
+function anbnTree(n){return nd('S',n>0?[tm('a'),anbnTree(n-1),tm('b')]:[]);}
+function balTree(s){if(s==='')return nd('S',[]);let d=0,k=0;for(k=0;k<s.length;k++){d+=s[k]==='('?1:-1;if(d===0)break;}return nd('S',[tm('('),balTree(s.slice(1,k)),tm(')'),balTree(s.slice(k+1))]);}
+function arithTree(expr){const toks=[];let i=0;while(i<expr.length){if(expr.startsWith('id',i)){toks.push('id');i+=2;}else{toks.push(expr[i]);i++;}}let p=0;const pk=()=>toks[p];
+  function F(){if(pk()==='('){const o=tm('(');p++;const e=E();const c=tm(')');p++;return nd('F',[o,e,c]);}const id=tm('id');p++;return nd('F',[id]);}
+  function T(){let n=nd('T',[F()]);while(pk()==='*'){const op=tm('*');p++;n=nd('T',[n,op,F()]);}return n;}
+  function E(){let n=nd('E',[T()]);while(pk()==='+'){const op=tm('+');p++;n=nd('E',[n,op,T()]);}return n;}
+  return E();}
+function leftmostDeriv(root){let fr=[root];const forms=[fStr(fr)],rules=[null];let guard=0;while(guard++<200){const idx=fr.findIndex(it=>typeof it==='object');if(idx<0)break;const node=fr[idx];const exp=node.rhs.map(ch=>ch.nt?ch:ch.sym);fr=[...fr.slice(0,idx),...exp,...fr.slice(idx+1)];forms.push(fStr(fr));rules.push(node.sym+' → '+(node.rhs.length?node.rhs.map(c=>c.sym).join(' '):'ε'));}return {forms,rules};}
+function fStr(fr){const s=fr.map(it=>typeof it==='object'?it.sym:it).join(' ');return s.trim()===''?'ε':s;}
+
+/* ---- shared draw ---- */
+function strip(x,W,arr,idx,sy,labelfn){const n=arr.length;if(!n){x.fillStyle='#5e5e7a';x.font="12px 'IBM Plex Mono'";x.textAlign='center';x.fillText('(empty ε)',W/2,sy+4);x.textAlign='left';return;}const cw=Math.min(34,(W-40)/n),ox=(W-cw*n)/2;for(let i=0;i<n;i++){const px=ox+i*cw;const cur=i===idx;x.fillStyle=cur?'rgba(251,191,36,.25)':(i<idx?'rgba(20,20,34,.8)':'rgba(14,14,24,.5)');x.beginPath();x.roundRect(px+1.5,sy-16,cw-3,30,5);x.fill();if(cur){x.strokeStyle='#fbbf24';x.lineWidth=1.4;x.stroke();}x.fillStyle=cur?'#fbbf24':'#cfcfe0';x.font="14px 'IBM Plex Mono'";x.textAlign='center';x.fillText(arr[i],px+cw/2,sy+5);}x.textAlign='left';}
+function drawStack(x,sx,baseY,cellH,items,maxShow,col){col=col||'#2dd4bf';const W=58;x.strokeStyle='rgba(60,60,92,.7)';x.lineWidth=1.4;x.beginPath();x.moveTo(sx-2,baseY-cellH*(maxShow));x.lineTo(sx-2,baseY);x.lineTo(sx+W+2,baseY);x.lineTo(sx+W+2,baseY-cellH*(maxShow));x.stroke();x.fillStyle='#5e5e7a';x.font="10px 'IBM Plex Mono'";x.textAlign='center';x.fillText('stack',sx+W/2,baseY-cellH*(maxShow)-8);x.fillText('(top)',sx+W/2,baseY-cellH*(items.length)-4);
+  for(let i=0;i<items.length;i++){const py=baseY-(i+1)*cellH+2;x.fillStyle=hexA(col,.26);x.strokeStyle=col;x.lineWidth=1.2;x.beginPath();x.roundRect(sx,py,W,cellH-3,4);x.fill();x.stroke();x.fillStyle=col;x.font="13px 'IBM Plex Mono'";x.fillText(items[i],sx+W/2,py+cellH/2+2);}x.textAlign='left';}
+function hexA(h,a){const n=parseInt(h.slice(1),16);return `rgba(${n>>16&255},${n>>8&255},${n&255},${a})`;}
+function pnode(x,cx,cy,r,label,o){o=o||{};x.fillStyle=o.on?'rgba(45,212,191,.2)':'rgba(16,16,30,.95)';x.strokeStyle=o.on?'#2dd4bf':(o.col||'#4a4a62');x.lineWidth=o.on?2.2:1.4;x.beginPath();x.arc(cx,cy,r,0,TAU);x.fill();x.stroke();if(o.acc){x.beginPath();x.arc(cx,cy,r-3.5,0,TAU);x.stroke();}x.fillStyle=o.on?'#2dd4bf':'#cfcfe0';x.font="12px 'IBM Plex Mono'";x.textAlign='center';x.textBaseline='middle';x.fillText(label,cx,cy);x.textBaseline='alphabetic';x.textAlign='left';}
+
+/* ============ A: PDA ============ */
+const cvA=$('cvA'),xA=cvA.getContext('2d');let A={m:'anbn',s:'',i:0,stack:[],phase:'push',dead:false,state:'idle',playing:false};
+function aReset(clear){if(clear)A.s='';A.i=0;A.stack=[];A.phase='push';A.dead=false;A.state='idle';}
+function aAlphaBtns(){const al=A.m==='anbn'?['a','b']:['(',')'];$('aAlpha').innerHTML=al.map(c=>`<button class="asym" data-c="${c}">${c}</button>`).join('');document.querySelectorAll('.asym').forEach(b=>b.onclick=()=>{A.s+=b.dataset.c;aReset(false);drawA();});}
+function aStepFn(){if(A.dead||A.state==='done')return;if(A.state==='idle'){A.state='run';A.i=0;A.stack=[];A.phase='push';A.dead=false;}if(A.i>=A.s.length){A.state='done';return;}const c=A.s[A.i];if(A.m==='anbn'){if(c==='a'){if(A.phase==='pop'){A.dead=true;}else A.stack.push('A');}else{A.phase='pop';if(A.stack.length===0)A.dead=true;else A.stack.pop();}}else{if(c==='(')A.stack.push('(');else{if(A.stack.length===0)A.dead=true;else A.stack.pop();}}A.i++;if(A.dead)A.state='done';else if(A.i>=A.s.length)A.state='done';}
+function drawA(){const x=xA,W=cvA.width,H=cvA.height;x.clearRect(0,0,W,H);
+  strip(x,W,A.s.split(''),A.state==='run'?A.i:-1,46,null);
+  // diagram
+  const R=26,cy=170;
+  if(A.m==='anbn'){const q0=[W*0.3,cy],q1=[W*0.62,cy];
+    // edges
+    x.strokeStyle='rgba(130,130,160,.5)';x.lineWidth=1.3;x.beginPath();x.moveTo(q0[0]+R,q0[1]);x.lineTo(q1[0]-R,q1[1]);x.stroke();x.fillStyle='rgba(130,130,160,.6)';x.beginPath();x.moveTo(q1[0]-R,q1[1]);x.lineTo(q1[0]-R-7,q1[1]-4);x.lineTo(q1[0]-R-7,q1[1]+4);x.fill();
+    x.fillStyle='#8a8aa8';x.font="11px 'IBM Plex Mono'";x.textAlign='center';x.fillText('b, pop A',(q0[0]+q1[0])/2,cy-12);
+    // self loops
+    x.strokeStyle='rgba(130,130,160,.45)';x.beginPath();x.arc(q0[0],q0[1]-R-9,13,0.55,TAU-0.15);x.stroke();x.fillStyle='#8a8aa8';x.fillText('a, push A',q0[0],q0[1]-R-26);
+    x.strokeStyle='rgba(130,130,160,.45)';x.beginPath();x.arc(q1[0],q1[1]-R-9,13,0.55,TAU-0.15);x.stroke();x.fillText('b, pop A',q1[0],q1[1]-R-26);
+    x.strokeStyle='rgba(130,130,160,.6)';x.beginPath();x.moveTo(q0[0]-R-22,q0[1]);x.lineTo(q0[0]-R,q0[1]);x.stroke();
+    pnode(x,q0[0],q0[1],R,'push',{on:A.phase==='push'&&A.state!=='idle',acc:true});pnode(x,q1[0],q1[1],R,'pop',{on:A.phase==='pop',acc:true});
+  }else{const q=[W*0.45,cy];x.strokeStyle='rgba(130,130,160,.45)';x.lineWidth=1.3;x.beginPath();x.arc(q[0],q[1]-R-9,13,0.55,TAU-0.15);x.stroke();x.fillStyle='#8a8aa8';x.font="11px 'IBM Plex Mono'";x.textAlign='center';x.fillText('( push   ) pop',q[0],q[1]-R-26);x.strokeStyle='rgba(130,130,160,.6)';x.beginPath();x.moveTo(q[0]-R-22,q[1]);x.lineTo(q[0]-R,q[1]);x.stroke();pnode(x,q[0],q[1],R,'q',{on:A.state!=='idle',acc:true});}
+  // stack
+  drawStack(x,W-92,H-30,24,A.stack,9,A.dead?'#fb7185':'#2dd4bf');
+  const accept=!A.dead&&A.stack.length===0&&A.i>=A.s.length&&A.state==='done';
+  x.textAlign='center';x.font="13px 'IBM Plex Mono'";
+  if(A.state==='done'){x.fillStyle=accept?'#2dd4bf':'#fb7185';x.fillText(A.dead?'✗ illegal pop / order → REJECT':(accept?'✓ stack empty, input done → ACCEPT':'✗ stack not empty → REJECT'),W/2,H-12);}
+  else{x.fillStyle='#5e5e7a';x.fillText('stack depth '+A.stack.length,W/2,H-12);}x.textAlign='left';
+  $('aLab').textContent=A.state==='done'?(accept?'ACCEPT':'REJECT'):'PDA · '+(A.m==='anbn'?'aⁿbⁿ':'balanced');
+  $('statA').innerHTML=`<div class="r"><span class="k">string</span><span class="v c">${A.s||'ε'}</span></div>
+  <div class="r"><span class="k">read</span><span class="v">${A.s.slice(0,A.i)||'—'}</span></div>
+  <div class="r"><span class="k">stack depth</span><span class="v a">${A.stack.length}</span></div>
+  <div class="r"><span class="k">verdict</span><span class="v ${accept?'g':(A.state==='done'?'r':'')}">${A.state==='done'?(accept?'ACCEPT ✓':'REJECT'):'…'}</span></div>`;}
+document.querySelectorAll('#aSel button').forEach(b=>b.onclick=()=>{document.querySelectorAll('#aSel button').forEach(z=>z.classList.remove('on'));b.classList.add('on');A.m=b.dataset.m;A.s=A.m==='anbn'?'aabb':'(())';aAlphaBtns();aReset(false);drawA();});
+$('aStep').onclick=()=>{if(A.state==='done')aReset(false);aStepFn();drawA();};
+$('aClear').onclick=()=>{aReset(true);drawA();};
+$('aRand').onclick=()=>{const al=A.m==='anbn'?['a','b']:['(',')'];const L=3+((Math.random()*4)|0);A.s='';for(let i=0;i<L;i++)A.s+=al[(Math.random()*al.length)|0];aReset(false);drawA();};
+$('aPlay').onclick=()=>{A.playing=!A.playing;$('aPlay').classList.toggle('act',A.playing);$('aPlay').textContent=A.playing?'pause ⏸':'play ▶';if(A.playing&&A.state==='done')aReset(false);};
+
+/* ============ B: derivation ============ */
+const cvB=$('cvB'),xB=cvB.getContext('2d');
+const GRAMS={anbn:{prods:['S → a S b','S → ε'],targets:['ab','aabb','aaabbb'],tree:t=>anbnTree(t.split('').filter(c=>c==='a').length)},
+  bal:{prods:['S → ( S ) S','S → ε'],targets:['()','(())','()()','(()())'],tree:t=>balTree(t)},
+  arith:{prods:['E → E + T | T','T → T * F | F','F → ( E ) | id'],targets:['id+id*id','(id+id)*id','id*id+id'],tree:t=>arithTree(t)}};
+let B={g:'anbn',target:'aabb',shown:1,deriv:null};
+function bBuild(){B.deriv=leftmostDeriv(GRAMS[B.g].tree(B.target));}
+function bTargetBtns(){$('bTargets').innerHTML=GRAMS[B.g].targets.map(t=>`<button class="btg ${t===B.target?'act':''}" data-t="${t}">${t}</button>`).join('');document.querySelectorAll('.btg').forEach(b=>b.onclick=()=>{B.target=b.dataset.t;document.querySelectorAll('.btg').forEach(z=>z.classList.toggle('act',z.dataset.t===B.target));bBuild();B.shown=1;drawB();});}
+function drawB(){const x=xB,W=cvB.width,H=cvB.height;x.clearRect(0,0,W,H);const d=B.deriv;
+  x.fillStyle='#5e5e7a';x.font="11px 'IBM Plex Mono'";x.fillText('grammar:',16,24);x.fillStyle='#9a9ab5';GRAMS[B.g].prods.forEach((p,i)=>x.fillText(p,90,24+i*16));
+  const y0=80,lh=Math.min(30,(H-y0-20)/Math.max(d.forms.length,1));x.font="14px 'IBM Plex Mono'";
+  const sh=Math.min(B.shown,d.forms.length);
+  for(let i=0;i<sh;i++){const py=y0+i*lh;const last=i===sh-1;x.fillStyle=i===0?'#5e5e7a':'#9a9ab5';x.textAlign='right';x.fillText(i===0?'':'⇒',60,py);x.textAlign='left';
+    x.fillStyle=last?'#2dd4bf':'#cfcfe0';x.font=(last?"15px":"14px")+" 'IBM Plex Mono'";x.fillText(d.forms[i],76,py);
+    if(d.rules[i]){x.fillStyle='#5e5e7a';x.font="10px 'IBM Plex Mono'";x.textAlign='right';x.fillText(d.rules[i],W-16,py);x.textAlign='left';}}
+  const done=sh>=d.forms.length;
+  $('bLab').textContent=done?('derived "'+B.target+'" ✓'):'derivation';
+  $('statB').innerHTML=`<div class="r"><span class="k">target</span><span class="v c">${B.target}</span></div>
+  <div class="r"><span class="k">steps</span><span class="v">${sh-1} / ${d.forms.length-1}</span></div>
+  <div class="r"><span class="k">current form</span><span class="v" style="font-size:10px">${d.forms[sh-1]}</span></div>
+  <div class="r"><span class="k">status</span><span class="v ${done?'g':''}">${done?'complete ✓':'deriving'}</span></div>`;}
+document.querySelectorAll('#bGram button').forEach(b=>b.onclick=()=>{document.querySelectorAll('#bGram button').forEach(z=>z.classList.remove('on'));b.classList.add('on');B.g=b.dataset.g;B.target=GRAMS[B.g].targets[1]||GRAMS[B.g].targets[0];bTargetBtns();bBuild();B.shown=1;drawB();});
+$('bStep').onclick=()=>{B.shown=Math.min(B.shown+1,B.deriv.forms.length);drawB();};
+$('bAll').onclick=()=>{B.shown=B.deriv.forms.length;drawB();};
+$('bReset').onclick=()=>{B.shown=1;drawB();};
+
+/* ============ C: parse tree ============ */
+const cvC=$('cvC'),xC=cvC.getContext('2d');
+const CEXPR=['id+id*id','id*id+id','(id+id)*id','id+id+id'];
+let C={expr:'id+id*id',tree:null};
+function cBuild(){C.tree=arithTree(C.expr);}
+function cExprBtns(){$('cExprs').innerHTML=CEXPR.map(e=>`<button class="cex ${e===C.expr?'act':''}" data-e="${e}">${e}</button>`).join('');document.querySelectorAll('.cex').forEach(b=>b.onclick=()=>{C.expr=b.dataset.e;document.querySelectorAll('.cex').forEach(z=>z.classList.toggle('act',z.dataset.e===C.expr));cBuild();drawC();});}
+function layoutTree(root){let leaf=0;const depthMax={v:0};function assign(n,depth){depthMax.v=Math.max(depthMax.v,depth);if(!n.rhs.length){n._x=leaf++;n._d=depth;return n._x;}let xs=[];n.rhs.forEach(c=>xs.push(assign(c,depth+1)));n._x=(Math.min(...xs)+Math.max(...xs))/2;n._d=depth;return n._x;}assign(root,0);return {leaves:leaf,depth:depthMax.v};}
+function drawC(){const x=xC,W=cvC.width,H=cvC.height;x.clearRect(0,0,W,H);const root=C.tree;const {leaves,depth}=layoutTree(root);
+  const padX=40,padY=36;const sx=(W-2*padX)/Math.max(leaves-1,1);const sy=(H-2*padY)/Math.max(depth,1);const r=Math.max(11,Math.min(16,sx*0.32));
+  function px(n){return padX+n._x*sx;}function py(n){return padY+n._d*sy;}
+  // edges
+  (function edges(n){n.rhs.forEach(c=>{x.strokeStyle='rgba(94,234,212,.35)';x.lineWidth=1.3;x.beginPath();x.moveTo(px(n),py(n)+r);x.lineTo(px(c),py(c)-r);x.stroke();edges(c);});})(root);
+  // nodes
+  (function nodes(n){const isT=!n.nt;x.fillStyle=isT?'rgba(251,191,36,.12)':'rgba(45,212,191,.14)';x.strokeStyle=isT?'#fbbf24':'#2dd4bf';x.lineWidth=1.5;x.beginPath();x.arc(px(n),py(n),r,0,TAU);x.fill();x.stroke();x.fillStyle=isT?'#fbbf24':'#2dd4bf';x.font=(n.sym.length>1?"10px":"12px")+" 'IBM Plex Mono'";x.textAlign='center';x.textBaseline='middle';x.fillText(n.sym,px(n),py(n));x.textBaseline='alphabetic';x.textAlign='left';n.rhs.forEach(nodes);})(root);
+  $('cLab').textContent='parse tree · '+C.expr;
+  // count operators depth
+  function opDepth(n,op){if(!n.nt)return -1;if((n.sym==='E'&&op==='+'&&n.rhs.some(c=>c.sym==='+'))||(n.sym==='T'&&op==='*'&&n.rhs.some(c=>c.sym==='*')))return n._d;let best=-1;n.rhs.forEach(c=>{best=Math.max(best,opDepth(c,op));});return best;}
+  $('statC').innerHTML=`<div class="r"><span class="k">expression</span><span class="v c">${C.expr}</span></div>
+  <div class="r"><span class="k">tree leaves</span><span class="v">${leaves}</span></div>
+  <div class="r"><span class="k">tree depth</span><span class="v">${depth}</span></div>
+  <div class="r"><span class="k">nonterminals</span><span class="v" style="color:var(--teal)">E, T, F</span></div>
+  <div class="r"><span class="k">terminals</span><span class="v" style="color:var(--amber)">leaves</span></div>`;}
+
+/* ============ D: grammar -> PDA ============ */
+const cvD=$('cvD'),xD=cvD.getContext('2d');
+const DGRAMS={anbn:{targets:['ab','aabb','aaabbb'],tree:t=>anbnTree(t.split('').filter(c=>c==='a').length),start:'S'},bal:{targets:['()','(())','()()','(()())'],tree:t=>balTree(t)}};
+let D={g:'anbn',target:'aabb',frames:[],idx:0,playing:false};
+function dBuildFrames(){const root=DGRAMS[D.g].tree(D.target);const input=D.target;let stack=[root];let pos=0;const frames=[{stack:stack.map(it=>typeof it==='object'?it.sym:it),pos,act:'push start symbol'}];let guard=0;
+  while(guard++<300){if(stack.length===0)break;const top=stack[0];
+    if(typeof top==='object'){const exp=top.rhs.map(ch=>ch.nt?ch:ch.sym);stack=[...exp,...stack.slice(1)];frames.push({stack:stack.map(it=>typeof it==='object'?it.sym:it),pos,act:'predict '+top.sym+' → '+(top.rhs.length?top.rhs.map(c=>c.sym).join(' '):'ε')});}
+    else{if(pos<input.length&&input[pos]===top){stack=stack.slice(1);pos++;frames.push({stack:stack.map(it=>typeof it==='object'?it.sym:it),pos,act:'match '+top});}else{frames.push({stack:stack.map(it=>typeof it==='object'?it.sym:it),pos,act:'✗ mismatch',dead:true});break;}}}
+  const last=frames[frames.length-1];last.accept=!last.dead&&last.stack.length===0&&last.pos===input.length;D.frames=frames;D.idx=0;}
+function dTargetBtns(){$('dTargets').innerHTML=DGRAMS[D.g].targets.map(t=>`<button class="dtg ${t===D.target?'act':''}" data-t="${t}">${t}</button>`).join('');document.querySelectorAll('.dtg').forEach(b=>b.onclick=()=>{D.target=b.dataset.t;document.querySelectorAll('.dtg').forEach(z=>z.classList.toggle('act',z.dataset.t===D.target));dBuildFrames();drawD();});}
+function drawD(){const x=xD,W=cvD.width,H=cvD.height;x.clearRect(0,0,W,H);const fr=D.frames[Math.min(D.idx,D.frames.length-1)];
+  strip(x,W,D.target.split(''),fr.pos<D.target.length?fr.pos:-1,46,null);
+  // stack (horizontal-ish vertical) on right; show sentential form
+  drawStack(x,W-92,H-60,26,fr.stack,8,fr.dead?'#fb7185':'#2dd4bf');
+  // action
+  x.fillStyle='#5e5e7a';x.font="11px 'IBM Plex Mono'";x.fillText('step '+D.idx+' / '+(D.frames.length-1),24,90);
+  x.fillStyle=fr.act.startsWith('predict')?'#2dd4bf':(fr.act.startsWith('match')?'#fbbf24':(fr.dead?'#fb7185':'#9a9ab5'));x.font="14px 'IBM Plex Mono'";x.fillText(fr.act,24,118);
+  // sentential form = consumed input + stack
+  x.fillStyle='#5e5e7a';x.font="11px 'IBM Plex Mono'";x.fillText('sentential form = read input + stack:',24,160);
+  x.fillStyle='#cfcfe0';x.font="14px 'IBM Plex Mono'";x.fillText((D.target.slice(0,fr.pos)+' '+fr.stack.join(' ')).trim()||'ε',24,184);
+  const last=D.idx>=D.frames.length-1;
+  if(last){x.fillStyle=fr.accept?'#2dd4bf':'#fb7185';x.font="14px 'IBM Plex Mono'";x.fillText(fr.accept?'✓ stack empty, input consumed → ACCEPT':'✗ REJECT',24,H-20);}
+  $('dLab').textContent=last?(fr.accept?'ACCEPT':'REJECT'):'grammar as PDA';
+  $('statD').innerHTML=`<div class="r"><span class="k">target</span><span class="v c">${D.target}</span></div>
+  <div class="r"><span class="k">input read</span><span class="v">${D.target.slice(0,fr.pos)||'—'}</span></div>
+  <div class="r"><span class="k">stack (top→)</span><span class="v" style="font-size:10px">${fr.stack.join(' ')||'∅'}</span></div>
+  <div class="r"><span class="k">action</span><span class="v" style="font-size:9.5px">${fr.act}</span></div>
+  <div class="r"><span class="k">verdict</span><span class="v ${last&&fr.accept?'g':(last?'r':'')}">${last?(fr.accept?'ACCEPT ✓':'REJECT'):'…'}</span></div>`;}
+document.querySelectorAll('#dGram button').forEach(b=>b.onclick=()=>{document.querySelectorAll('#dGram button').forEach(z=>z.classList.remove('on'));b.classList.add('on');D.g=b.dataset.g;D.target=DGRAMS[D.g].targets[1]||DGRAMS[D.g].targets[0];dTargetBtns();dBuildFrames();drawD();});
+$('dStep').onclick=()=>{D.idx=Math.min(D.idx+1,D.frames.length-1);drawD();};
+$('dReset').onclick=()=>{D.idx=0;drawD();};
+$('dPlay').onclick=()=>{D.playing=!D.playing;$('dPlay').classList.toggle('act',D.playing);$('dPlay').textContent=D.playing?'pause ⏸':'play ▶';if(D.playing&&D.idx>=D.frames.length-1)D.idx=0;};
+
+/* ---- tabs + loop ---- */
+let active='A';
+function showTab(tb){active=tb;document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('on',x.dataset.t===tb));document.querySelectorAll('.pane').forEach(p=>p.classList.remove('on'));$('pane'+tb).classList.add('on');layout();}
+document.querySelectorAll('.tab').forEach(b=>b.onclick=()=>showTab(b.dataset.t));
+function sz(c,h){c.width=Math.max(340,c.parentElement.clientWidth);c.height=h;}
+function layout(){if(active==='A'){sz(cvA,430);drawA();}if(active==='B'){sz(cvB,430);drawB();}if(active==='C'){sz(cvC,430);drawC();}if(active==='D'){sz(cvD,430);drawD();}}
+window.addEventListener('resize',()=>{clearTimeout(window._rl);window._rl=setTimeout(layout,200);});
+A.s='aabb';aAlphaBtns();bTargetBtns();bBuild();cExprBtns();cBuild();dTargetBtns();dBuildFrames();
+let af=0;function loop(){af++;if(active==='A'&&A.playing){if(af%28===0){if(A.state==='done'){A.playing=false;$('aPlay').classList.remove('act');$('aPlay').textContent='play ▶';}else{aStepFn();drawA();}}}if(active==='D'&&D.playing){if(af%30===0){if(D.idx>=D.frames.length-1){D.playing=false;$('dPlay').classList.remove('act');$('dPlay').textContent='play ▶';}else{D.idx++;drawD();}}}requestAnimationFrame(loop);}
+layout();loop();
+</script>
+</body>
+</html>

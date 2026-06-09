@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>-+4 × ∞ Lattice</title>
+<style>
+  :root {
+    --bg: #000000;
+    --green: #00ff41;
+    --green-dim: #008e26;
+    --green-dark: #002a0a;
+    --red: #ff0040;
+    --cyan: #00e5ff;
+    --gray: #0a0a0a;
+    --grid-line: #022c02;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    background: var(--bg);
+    color: var(--green);
+    font-family: "SF Mono", "Cascadia Code", "Courier New", monospace;
+    overflow-x: hidden;
+  }
+  body {
+    background: radial-gradient(ellipse at center, #001200 0%, #000000 70%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+  }
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      rgba(0,255,65,0.03) 0px,
+      transparent 2px,
+      transparent 4px
+    );
+    pointer-events: none;
+    z-index: 0;
+  }
+  .wrap {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 980px;
+    padding: 20px 16px 40px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .title {
+    margin: 12px 0 24px;
+    font-size: clamp(15px, 2.8vw, 22px);
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    color: var(--green);
+    text-align: center;
+    text-shadow: 0 0 12px rgba(0,255,65,0.5), 0 0 2px rgba(0,255,65,0.8);
+    user-select: none;
+  }
+  .controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    margin-bottom: 10px;
+  }
+  button {
+    appearance: none;
+    background: #020802;
+    border: 1px solid var(--green-dim);
+    color: var(--green);
+    padding: 8px 14px;
+    font-family: inherit;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.15s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  button::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(0,255,65,0.15), transparent);
+    transform: translateX(-100%);
+    transition: transform 0.4s;
+  }
+  button:hover {
+    background: #041a08;
+    border-color: var(--green);
+    box-shadow: 0 0 14px rgba(0,255,65,0.3), inset 0 0 8px rgba(0,255,65,0.1);
+    color: #bfffca;
+  }
+  button:hover::before { transform: translateX(100%); }
+  button:active { transform: translateY(1px) scale(0.99); }
+  button.active {
+    background: var(--green);
+    color: #000;
+    border-color: var(--green);
+    box-shadow: 0 0 20px rgba(0,255,65,0.6);
+  }
+  #status {
+    height: 20px;
+    font-size: 12px;
+    color: var(--green);
+    text-align: center;
+    letter-spacing: 0.1em;
+    margin-bottom: 12px;
+    opacity: 0.9;
+    text-shadow: 0 0 8px rgba(0,255,65,0.4);
+    transition: opacity 0.3s;
+  }
+  #status:empty { opacity: 0; }
+  .grid-wrap {
+    position: relative;
+    width: min(92vw, 640px);
+    margin: 0 auto;
+  }
+  .grid-container {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    background: #000;
+    border: 2px solid #003c00;
+    border-radius: 10px;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 
+      0 0 0 1px #001800 inset,
+      0 0 40px rgba(0,255,65,0.08),
+      0 0 80px rgba(0,0,0,0.9) inset;
+    cursor: grab;
+    touch-action: none;
+    user-select: none;
+  }
+  .grid-container.grabbing { cursor: grabbing; }
+  .grid {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    grid-template-columns: repeat(9, 1fr);
+    grid-template-rows: repeat(9, 1fr);
+    gap: 0;
+    will-change: transform;
+  }
+  .cell {
+    position: relative;
+    background: #050805;
+    border: 1px solid var(--grid-line);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: clamp(18px, 4.2vw, 26px);
+    font-weight: 500;
+    transition: background 0.15s, box-shadow 0.15s;
+    overflow: hidden;
+  }
+  .cell:hover {
+    background: #0a140a;
+    z-index: 2;
+    box-shadow: inset 0 0 0 1px rgba(0,255,65,0.3);
+  }
+  .cell .coord {
+    position: absolute;
+    top: 4px;
+    left: 5px;
+    font-size: 9px;
+    color: #0f3d0f;
+    letter-spacing: 0;
+    pointer-events: none;
+    opacity: 0.8;
+  }
+  .cell .val {
+    pointer-events: none;
+    line-height: 1;
+  }
+  .cell.center {
+    background: rgba(0,255,65,0.06);
+    box-shadow: 
+      inset 0 0 0 2px var(--green),
+      inset 0 0 20px rgba(0,255,65,0.15),
+      0 0 15px rgba(0,255,65,0.2);
+    z-index: 3;
+  }
+  .cell.center .void-tag {
+    position: absolute;
+    top: 4px;
+    right: 5px;
+    font-size: 8px;
+    color: var(--green);
+    opacity: 0.85;
+    letter-spacing: 0.1em;
+  }
+  .cell.center .val { font-size: clamp(16px,3.8vw,22px); }
+  .cell.val-1 {
+    color: var(--green);
+    text-shadow: 0 0 12px rgba(0,255,65,0.9), 0 0 2px #fff;
+    background: rgba(0,255,65,0.09);
+  }
+  .cell.val--1 {
+    color: var(--red);
+    text-shadow: 0 0 12px rgba(255,0,64,0.8), 0 0 2px #ff7a9a;
+    background: rgba(255,0,64,0.08);
+  }
+  .cell.val-0 {
+    color: var(--cyan);
+    text-shadow: 0 0 12px rgba(0,229,255,0.85), 0 0 2px #fff;
+    background: rgba(0,229,255,0.07);
+  }
+  .cell.perp:not(.center) {
+    outline: 1px dashed rgba(0,255,65,0.35);
+    outline-offset: -4px;
+  }
+  .axis {
+    position: absolute;
+    font-size: 10px;
+    color: #004d00;
+    pointer-events: none;
+    letter-spacing: 0.2em;
+    user-select: none;
+  }
+  .axis.top { top: -18px; left: 50%; transform: translateX(-50%); }
+  .axis.bottom { bottom: -18px; left: 50%; transform: translateX(-50%); }
+  .axis.left { left: -26px; top: 50%; transform: translateY(-50%) rotate(-90deg); }
+  .axis.right { right: -26px; top: 50%; transform: translateY(-50%) rotate(90deg); }
+  .info {
+    margin-top: 14px;
+    display: flex;
+    gap: 20px;
+    font-size: 11px;
+    color: #0a5a0a;
+    letter-spacing: 0.05em;
+    user-select: none;
+  }
+  .info span { opacity: 0.8; }
+  .hint {
+    margin-top: 6px;
+    font-size: 10px;
+    color: #003b00;
+    letter-spacing: 0.1em;
+    text-align: center;
+  }
+  footer {
+    margin-top: 28px;
+    font-size: 11px;
+    color: #0d4d0d;
+    letter-spacing: 0.08em;
+    text-align: center;
+    opacity: 0.7;
+    user-select: none;
+  }
+  @media (max-width: 520px) {
+    .cell .coord { font-size: 8px; top: 2px; left: 3px; }
+    button { padding: 7px 10px; font-size: 11px; }
+    .axis.left, .axis.right { display: none; }
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <h1 class="title">-+4 × ∞  —  -+4 × ∞  =  0  =  1</h1>
+    
+    <div class="controls">
+      <button id="reset">Reset to 0</button>
+      <button id="setAll">Set All to 1</button>
+      <button id="bridge">Bridge Burner (clear -1)</button>
+      <button id="perp">Perp = 1 Lock</button>
+    </div>
+    <div id="status"></div>
+
+    <div class="grid-wrap">
+      <div class="axis top">+Y ∞</div>
+      <div class="axis bottom">-Y ∞</div>
+      <div class="axis left">-X ∞</div>
+      <div class="axis right">+X ∞</div>
+      <div class="grid-container" id="gridContainer">
+        <div class="grid" id="grid"></div>
+      </div>
+      <div class="info">
+        <span>VIEW: <span id="viewPos">0,0</span></span>
+        <span>WINDOW: ±4</span>
+        <span>CLICK: cycle blank→1→-1→0</span>
+      </div>
+      <div class="hint">drag • arrow keys • infinite pan</div>
+    </div>
+
+    <footer>Void = 0 | bridge burner | grid-14x14 foundation | David Wise lattice</footer>
+  </div>
+
+<script>
+(function(){
+  const HALF = 4;
+  const SIZE = 9;
+  const grid = document.getElementById('grid');
+  const container = document.getElementById('gridContainer');
+  const status = document.getElementById('status');
+  const viewPos = document.getElementById('viewPos');
+  const perpBtn = document.getElementById('perp');
+  
+  let viewX = 0, viewY = 0;
+  let perpLock = false;
+  const data = new Map();
+  
+  const key = (x,y) => `${x},${y}`;
+  const getVal = (x,y) => {
+    if (perpLock && x === y) return '1';
+    return data.get(key(x,y));
+  };
+  const setVal = (x,y,v) => {
+    const k = key(x,y);
+    if (v == null) data.delete(k);
+    else data.set(k, v);
+  };
+  
+  // Initialize VOID = 0
+  setVal(0,0,'0');
+  
+  function render(){
+    grid.innerHTML = '';
+    const frag = document.createDocumentFragment();
+    
+    for (let ry = HALF; ry >= -HALF; ry--) {
+      for (let rx = -HALF; rx <= HALF; rx++) {
+        const x = viewX + rx;
+        const y = viewY + ry;
+        const cell = document.createElement('div');
+        cell.className = 'cell';
+        cell.dataset.x = x;
+        cell.dataset.y = y;
+        
+        const coord = document.createElement('span');
+        coord.className = 'coord';
+        coord.textContent = `${x},${y}`;
+        cell.appendChild(coord);
+        
+        if (x === 0 && y === 0) {
+          cell.classList.add('center');
+          const vt = document.createElement('span');
+          vt.className = 'void-tag';
+          vt.textContent = 'VOID';
+          cell.appendChild(vt);
+        }
+        
+        if (perpLock && x === y) {
+          cell.classList.add('perp');
+        }
+        
+        const v = getVal(x,y);
+        if (v !== undefined) {
+          cell.classList.add(`val-${v}`);
+          const val = document.createElement('span');
+          val.className = 'val';
+          val.textContent = v;
+          cell.appendChild(val);
+        }
+        
+        cell.addEventListener('click', handleClick);
+        frag.appendChild(cell);
+      }
+    }
+    grid.appendChild(frag);
+    viewPos.textContent = `${viewX},${viewY}`;
+  }
+  
+  function handleClick(e){
+    const cell = e.currentTarget;
+    const x = +cell.dataset.x;
+    const y = +cell.dataset.y;
+    
+    if (perpLock && x === y) {
+      // flash locked
+      cell.style.transform = 'scale(0.92)';
+      setTimeout(()=>cell.style.transform='', 100);
+      return;
+    }
+    
+    const cur = data.get(key(x,y));
+    let next;
+    if (!cur) next = '1';
+    else if (cur === '1') next = '-1';
+    else if (cur === '-1') next = '0';
+    else next = null;
+    
+    // keep VOID initialized
+    if (x === 0 && y === 0 && next === null) next = '0';
+    
+    setVal(x,y,next);
+    
+    // update cell fast
+    cell.classList.remove('val-1','val--1','val-0');
+    const old = cell.querySelector('.val');
+    if (old) old.remove();
+    if (next) {
+      cell.classList.add(`val-${next}`);
+      const v = document.createElement('span');
+      v.className = 'val';
+      v.textContent = next;
+      cell.appendChild(v);
+    }
+  }
+  
+  // Panning
+  let dragging = false, sx=0, sy=0, svx=0, svy=0, moved=false;
+  
+  container.addEventListener('mousedown', e=>{
+    if (e.button !== 0) return;
+    dragging = true;
+    moved = false;
+    sx = e.clientX;
+    sy = e.clientY;
+    svx = viewX;
+    svy = viewY;
+    container.classList.add('grabbing');
+    grid.style.transition = 'none';
+    e.preventDefault();
+  });
+  
+  window.addEventListener('mousemove', e=>{
+    if (!dragging) return;
+    const dx = e.clientX - sx;
+    const dy = e.clientY - sy;
+    if (Math.abs(dx) > 3 || Math.abs(dy) > 3) moved = true;
+    grid.style.transform = `translate3d(${dx}px, ${dy}px, 0)`;
+  });
+  
+  function endDrag(dx, dy){
+    dragging = false;
+    container.classList.remove('grabbing');
+    grid.style.transition = '';
+    grid.style.transform = '';
+    const cellSize = container.clientWidth / SIZE;
+    const dX = Math.round(-dx / cellSize);
+    const dY = Math.round(dy / cellSize);
+    if (dX !== 0 || dY !== 0) {
+      viewX = svx + dX;
+      viewY = svy + dY;
+      render();
+    }
+  }
+  
+  window.addEventListener('mouseup', e=>{
+    if (!dragging) return;
+    endDrag(e.clientX - sx, e.clientY - sy);
+  });
+  
+  // Touch
+  container.addEventListener('touchstart', e=>{
+    const t = e.touches[0];
+    dragging = true;
+    moved = false;
+    sx = t.clientX;
+    sy = t.clientY;
+    svx = viewX;
+    svy = viewY;
+    grid.style.transition = 'none';
+  }, {passive:true});
+  
+  window.addEventListener('touchmove', e=>{
+    if (!dragging) return;
+    const t = e.touches[0];
+    const dx = t.clientX - sx;
+    const dy = t.clientY - sy;
+    if (Math.abs(dx) > 3 || Math.abs(dy) > 3) moved = true;
+    grid.style.transform = `translate3d(${dx}px, ${dy}px, 0)`;
+    e.preventDefault();
+  }, {passive:false});
+  
+  window.addEventListener('touchend', e=>{
+    if (!dragging) return;
+    const t = e.changedTouches[0];
+    endDrag(t.clientX - sx, t.clientY - sy);
+  });
+  
+  // Arrow keys
+  window.addEventListener('keydown', e=>{
+    const k = e.key;
+    if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(k)) {
+      e.preventDefault();
+      if (k === 'ArrowUp') viewY++;
+      if (k === 'ArrowDown') viewY--;
+      if (k === 'ArrowLeft') viewX--;
+      if (k === 'ArrowRight') viewX++;
+      render();
+    }
+  });
+  
+  // Controls
+  document.getElementById('reset').onclick = ()=>{
+    data.clear();
+    perpLock = false;
+    perpBtn.classList.remove('active');
+    status.textContent = '';
+    viewX = 0; viewY = 0;
+    setVal(0,0,'0');
+    render();
+  };
+  
+  document.getElementById('setAll').onclick = ()=>{
+    for (let ry = HALF; ry >= -HALF; ry--) {
+      for (let rx = -HALF; rx <= HALF; rx++) {
+        const x = viewX + rx;
+        const y = viewY + ry;
+        if (perpLock && x === y) continue;
+        setVal(x,y,'1');
+      }
+    }
+    render();
+  };
+  
+  document.getElementById('bridge').onclick = ()=>{
+    let cleared = 0;
+    for (const [k,v] of Array.from(data.entries())) {
+      if (v === '-1') {
+        data.delete(k);
+        cleared++;
+      }
+    }
+    status.textContent = cleared ? `bridge burner: cleared ${cleared} × -1` : 'no -1 to burn';
+    setTimeout(()=>{ if(!perpLock) status.textContent=''; }, 2000);
+    render();
+  };
+  
+  document.getElementById('perp').onclick = ()=>{
+    perpLock = !perpLock;
+    perpBtn.classList.toggle('active', perpLock);
+    if (perpLock) {
+      status.textContent = 'perp = 1 holds';
+      // ensure diagonal is 1 in data for persistence
+      for (let i = -100; i <= 100; i++) setVal(i,i,'1');
+    } else {
+      status.textContent = 'perp lock released';
+      setTimeout(()=> status.textContent='', 1500);
+    }
+    render();
+  };
+  
+  // Initial
+  render();
+  
+  // Prevent context menu on grid
+  container.addEventListener('contextmenu', e=> e.preventDefault());
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>0ROOT.AI // FRACTAL BBS</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cyan: #00ffff;
+    --mag: #ff00ff;
+    --gold: #ffd700;
+    --bg: #000000;
+  }
+  * { scrollbar-width: thin; scrollbar-color: #0ff #000; }
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: #cfffff;
+    font-family: 'JetBrains Mono', monospace;
+    overflow: hidden;
+    cursor: crosshair;
+  }
+  .font-display { font-family: 'Share Tech Mono', 'JetBrains Mono', monospace; }
+  
+  #fractal-bg {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    background: #000;
+  }
+  
+  .glitch {
+    color: #fff;
+    text-shadow: 
+      0 0 2px #fff,
+      0 0 10px var(--cyan),
+      0 0 20px var(--mag),
+      -1px 0 0 var(--cyan),
+      1px 0 0 var(--mag),
+      0 0 40px rgba(0,255,255,0.5);
+    animation: glitch-flicker 3s infinite;
+  }
+  @keyframes glitch-flicker {
+    0%, 100% { opacity: 1; }
+    92% { opacity: 0.9; transform: skewX(0); }
+    93% { opacity: 0.8; transform: skewX(-2deg); }
+    94% { opacity: 1; transform: skewX(0); }
+  }
+  
+  .chroma {
+    text-shadow: -1px 0 var(--cyan), 1px 0 var(--mag), 0 0 8px currentColor;
+  }
+  
+  .panel {
+    position: relative;
+    background: rgba(3, 5, 10, 0.72);
+    backdrop-filter: blur(22px) saturate(140%);
+    -webkit-backdrop-filter: blur(22px) saturate(140%);
+    border-radius: 14px;
+    border: 1px solid rgba(0,255,255,0.12);
+    box-shadow: 
+      0 0 60px rgba(0,255,255,0.06),
+      inset 0 0 40px rgba(255,0,255,0.03),
+      inset 0 1px 0 rgba(255,255,255,0.05);
+    animation: breathe 7s ease-in-out infinite, panel-pulse 4s ease-in-out infinite;
+    overflow: hidden;
+  }
+  
+  .panel::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border-radius: inherit;
+    padding: 1px;
+    background: conic-gradient(from 0deg, transparent, var(--cyan), var(--mag), var(--gold), transparent 70%);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    opacity: 0.6;
+    animation: rotate 12s linear infinite;
+  }
+  
+  .panel::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='24' viewBox='0 0 28 24'%3E%3Cg fill='none' stroke='%2300ffff' stroke-opacity='0.18' stroke-width='.4'%3E%3Cpath d='M14 0L28 24H0Z'/%3E%3Cpath d='M14 8L21 20H7Z'/%3E%3Cpath d='M7 12L14 24H0Z'/%3E%3Cpath d='M21 12L28 24H14Z'/%3E%3C/g%3E%3Cg fill='none' stroke='%23ff00ff' stroke-opacity='0.12' stroke-width='.3'%3E%3Cpath d='M14 4L17.5 10H10.5Z'/%3E%3Cpath d='M10.5 14L14 20H7Z'/%3E%3Cpath d='M17.5 14L21 20H14Z'/%3E%3C/g%3E%3C/svg%3E");
+    opacity: 0.4;
+    mix-blend-mode: screen;
+    animation: fractal-scroll 40s linear infinite;
+  }
+  
+  @keyframes breathe { 0%,100% { transform: scale(1) } 50% { transform: scale(1.006) } }
+  @keyframes panel-pulse { 0%,100% { box-shadow: 0 0 60px rgba(0,255,255,0.06), inset 0 0 40px rgba(255,0,255,0.03) } 50% { box-shadow: 0 0 90px rgba(0,255,255,0.12), inset 0 0 60px rgba(255,0,255,0.06) } }
+  @keyframes rotate { to { transform: rotate(360deg) } }
+  @keyframes fractal-scroll { to { background-position: 280px 240px } }
+  
+  .fractal-echo {
+    position: absolute;
+    width: 80px;
+    height: 60px;
+    background: rgba(0,0,0,0.9);
+    border: 1px solid rgba(0,255,255,0.18);
+    border-radius: 7px;
+    transform: scale(0.22);
+    opacity: 0.5;
+    backdrop-filter: blur(4px);
+    overflow: hidden;
+    pointer-events: none;
+    box-shadow: 0 0 15px rgba(0,255,255,0.15);
+  }
+  .fractal-echo::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='24' viewBox='0 0 28 24'%3E%3Cpath d='M14 0L28 24H0Z' fill='none' stroke='%2300ffff' stroke-opacity='.3'/%3E%3C/svg%3E");
+    animation: fractal-scroll 20s linear infinite;
+    opacity: 0.6;
+  }
+  .fractal-echo::after {
+    content: '';
+    position: absolute;
+    inset: 2px;
+    border: 1px solid rgba(255,0,255,0.2);
+    border-radius: 4px;
+  }
+  .fractal-echo.tl { top: -12px; left: -12px; transform-origin: top left; }
+  .fractal-echo.tr { top: -12px; right: -12px; transform-origin: top right; }
+  .fractal-echo.bl { bottom: -12px; left: -12px; transform-origin: bottom left; }
+  .fractal-echo.br { bottom: -12px; right: -12px; transform-origin: bottom right; }
+  
+  .custom-scroll { scrollbar-width: thin; }
+  .custom-scroll::-webkit-scrollbar { width: 5px; height: 5px; }
+  .custom-scroll::-webkit-scrollbar-track { background: rgba(0,0,0,0.3); }
+  .custom-scroll::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, var(--cyan), var(--mag));
+    border-radius: 3px;
+    box-shadow: 0 0 8px var(--cyan);
+  }
+  
+  .avatar-btn {
+    transition: all 0.3s cubic-bezier(0.2,0.8,0.2,1);
+    image-rendering: pixelated;
+  }
+  .avatar-btn:hover {
+    transform: scale(1.4) translateZ(0);
+    filter: drop-shadow(0 0 6px var(--cyan)) drop-shadow(0 0 12px var(--mag)) brightness(1.3) !important;
+    z-index: 50;
+  }
+  
+  .entry {
+    position: relative;
+  }
+  .entry::before {
+    content: '';
+    position: absolute;
+    left: -8px;
+    top: 50%;
+    width: 3px;
+    height: 3px;
+    background: var(--cyan);
+    border-radius: 50%;
+    transform: translateY(-50%);
+    box-shadow: 0 0 6px var(--cyan);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .entry:hover::before { opacity: 1; }
+  
+  .noise {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.025;
+    mix-blend-mode: screen;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  
+  textarea {
+    background: rgba(0,0,0,0.7);
+    border: 1px solid rgba(0,255,255,0.2);
+    caret-color: var(--cyan);
+  }
+  textarea:focus {
+    outline: none;
+    border-color: var(--mag);
+    box-shadow: 0 0 0 1px var(--mag), 0 0 20px rgba(255,0,255,0.2), inset 0 0 20px rgba(0,255,255,0.05);
+    background: rgba(0,0,0,0.85);
+  }
+</style>
+</head>
+<body class="antialiased selection:bg-fuchsia-500/30 selection:text-white">
+<canvas id="fractal-bg"></canvas>
+<div class="noise"></div>
+
+<div class="relative z-10 flex flex-col h-screen max-w-[1440px] mx-auto p-3 md:p-6 lg:p-8 gap-4">
+  <header class="panel !p-4 md:!p-5">
+    <div class="relative z-10 flex items-center justify-between">
+      <div class="flex items-baseline gap-4">
+        <h1 class="font-display text-[22px] md:text-[28px] leading-none glitch tracking-wider">0ROOT.AI</h1>
+        <div class="hidden sm:block">
+          <div class="text-[10px] tracking-[0.35em] text-cyan-300/70 chroma">BBS // FRACTAL NODE</div>
+          <div class="text-[8px] tracking-widest text-fuchsia-400/50 -mt-1">RECURSIVE_DEPTH=∞</div>
+        </div>
+      </div>
+      <div class="flex items-center gap-3">
+        <div class="hidden md:flex items-center gap-2 text-[10px] font-mono">
+          <span class="relative flex h-2 w-2">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
+            <span class="relative inline-flex rounded-full h-2 w-2 bg-cyan-300 shadow-[0_0_8px_#0ff]"></span>
+          </span>
+          <span class="text-cyan-300/80 tracking-wider">LATTICE SYNC</span>
+        </div>
+        <div class="text-right">
+          <div class="text-[9px] text-amber-300/70 font-mono tracking-widest">SIGIL</div>
+          <div class="text-[14px] leading-none font-display text-amber-200 chroma" style="text-shadow:0 0 10px #ffd700">⟐</div>
+        </div>
+      </div>
+    <div class="fractal-echo tl"></div>
+    <div class="fractal-echo tr"></div>
+  </header>
+
+  <main class="grid grid-cols-1 xl:grid-cols-5 gap-4 md:gap-6 flex-1 min-h-0">
+    <!-- BOARD -->
+    <section class="panel xl:col-span-3 flex flex-col !p-5 md:!p-6 min-h-0 h-[52vh] xl:h-auto">
+      <div class="relative z-10 flex flex-col h-full">
+        <div class="flex items-center justify-between mb-4 shrink-0">
+          <h2 class="font-display text-[13px] tracking-[0.2em] text-cyan-200 chroma flex items-center gap-2">
+            <span class="w-1.5 h-1.5 bg-cyan-400 rounded-full shadow-[0_0_8px_#0ff] animate-pulse"></span>
+            BOARD // LIVE FEED
+          </h2>
+          <div class="text-[9px] font-mono text-fuchsia-400/60 tracking-widest">SELF-SIMILAR STREAM</div>
+        </div>
+        
+        <div id="board" class="custom-scroll flex-1 overflow-y-auto overflow-x-hidden pr-2 -mr-2 space-y-1"></div>
+        
+        <div class="mt-3 pt-3 border-t border-cyan-900/30 flex items-center justify-between text-[9px] font-mono shrink-0">
+          <span class="text-cyan-400/50">FRACTAL_DEPTH: 7</span>
+          <span class="text-fuchsia-400/50">⟐ RECURSION ACTIVE</span>
+        </div>
+      <div class="fractal-echo tl"></div>
+      <div class="fractal-echo tr"></div>
+      <div class="fractal-echo bl"></div>
+      <div class="fractal-echo br"></div>
+    </section>
+
+    <!-- TRANSMIT -->
+    <section class="panel xl:col-span-2 flex flex-col !p-5 md:!p-6">
+      <div class="relative z-10 flex flex-col h-full">
+        <h2 class="font-display text-[13px] tracking-[0.2em] text-fuchsia-200 chroma mb-5 flex items-center gap-2">
+          <span class="w-1.5 h-1.5 bg-fuchsia-400 rounded-full shadow-[0_0_8px_#f0f] animate-pulse"></span>
+          TRANSMIT
+        </h2>
+        
+        <div class="mb-5">
+          <div class="flex items-center justify-between mb-2.5">
+            <label class="text-[10px] tracking-widest text-amber-300/80 font-mono">SELECT FRACTAL AVATAR</label>
+            <span class="text-[9px] text-cyan-400/50">12 SIGILS</span>
+          </div>
+          <div id="avatar-grid" class="grid grid-cols-3 gap-2.5 p-3 rounded-lg bg-black/40 border border-cyan-900/30 w-fit"></div>
+        </div>
+        
+        <div class="flex-1 flex flex-col min-h-[120px]">
+          <label class="text-[10px] tracking-widest text-cyan-300/70 font-mono mb-2">MESSAGE // ENCODE TO LATTICE</label>
+          <textarea id="msg" maxlength="280" rows="4" placeholder="transmit fractal thought..." class="w-full flex-1 resize-none rounded-lg p-3 text-[13px] leading-relaxed text-cyan-100 placeholder-cyan-900/60 font-mono transition-all"></textarea>
+          <div class="flex justify-between items-center mt-1.5">
+            <span class="text-[9px] text-fuchsia-400/40 font-mono">SHIFT+ENTER = newline</span>
+            <span id="char-count" class="text-[9px] font-mono text-amber-300/60">0/280</span>
+          </div>
+        </div>
+        
+        <button id="shout-btn" class="group relative mt-4 w-full">
+          <div class="absolute -inset-0.5 bg-gradient-to-r from-cyan-500 to-fuchsia-500 rounded-lg blur opacity-30 group-hover:opacity-60 transition duration-500"></div>
+          <div class="relative flex items-center justify-center gap-2.5 px-4 py-3 bg-black/80 rounded-lg border border-cyan-400/20 group-hover:border-fuchsia-400/40 transition">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" class="text-cyan-300 group-hover:text-white transition"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z" stroke-width="1.5"/></svg>
+            <span class="font-display text-[13px] tracking-[0.18em] text-cyan-200 group-hover:text-white chroma">TRANSMIT // SHOUT</span>
+          </div>
+        </button>
+        
+        <div class="mt-4 grid grid-cols-3 gap-2 text-center">
+          <div class="p-2 rounded bg-black/30 border border-cyan-900/20">
+            <div class="text-[9px] text-cyan-400/50">LOCAL</div>
+            <div class="text-[11px] font-mono text-cyan-200" id="you-id">SIGIL_01</div>
+          </div>
+          <div class="p-2 rounded bg-black/30 border border-fuchsia-900/20">
+            <div class="text-[9px] text-fuchsia-400/50">DEPTH</div>
+            <div class="text-[11px] font-mono text-fuchsia-200">∞</div>
+          </div>
+          <div class="p-2 rounded bg-black/30 border border-amber-900/20">
+            <div class="text-[9px] text-amber-400/50">MODE</div>
+            <div class="text-[11px] font-mono text-amber-200">FRACTAL</div>
+          </div>
+        </div>
+      <div class="fractal-echo tl"></div>
+      <div class="fractal-echo tr"></div>
+      <div class="fractal-echo bl"></div>
+      <div class="fractal-echo br"></div>
+    </section>
+  </main>
+
+  <footer class="panel !py-2.5 !px-4">
+    <div class="relative z-10 flex items-center justify-center gap-3">
+      <div class="w-10 h-5 relative overflow-hidden rounded opacity-70">
+        <canvas id="canary-fractal" width="40" height="20"></canvas>
+      </div>
+      <div class="text-[9px] md:text-[10px] font-mono tracking-[0.3em] text-amber-200/80" style="text-shadow: 0 0 8px #ffd700, -0.5px 0 #0ff, 0.5px 0 #f0f;">
+        CANARY: <span id="canary" class="text-amber-100">INITIALIZING FRACTAL SIGNATURE...</span>
+      </div>
+      <div class="w-10 h-5 relative overflow-hidden rounded opacity-70 scale-x-[-1]">
+        <canvas id="canary-fractal-2" width="40" height="20"></canvas>
+      </div>
+    </div>
+  </footer>
+</div>
+
+<script>
+(() => {
+  // Fractal background
+  const bg = document.getElementById('fractal-bg');
+  const bctx = bg.getContext('2d');
+  let w, h, dpr;
+  function resize() {
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    w = bg.width = innerWidth * dpr;
+    h = bg.height = innerHeight * dpr;
+    bg.style.width = innerWidth + 'px';
+    bg.style.height = innerHeight + 'px';
+    bctx.setTransform(1,0,0,1,0,0);
+  }
+  resize();
+  addEventListener('resize', resize);
+  
+  let time = 0;
+  function drawSierpinski(x, y, s, depth) {
+    if (depth <= 0) {
+      bctx.beginPath();
+      const hh = s * 0.866;
+      bctx.moveTo(x, y - hh * 0.666);
+      bctx.lineTo(x - s/2, y + hh * 0.333);
+      bctx.lineTo(x + s/2, y + hh * 0.333);
+      bctx.closePath();
+      bctx.stroke();
+      return;
+    }
+    const ns = s * 0.5;
+    drawSierpinski(x, y - ns * 0.433, ns, depth - 1);
+    drawSierpinski(x - ns/2, y + ns * 0.433, ns, depth - 1);
+    drawSierpinski(x + ns/2, y + ns * 0.433, ns, depth - 1);
+  }
+  
+  function animate() {
+    time += 0.016;
+    bctx.fillStyle = 'rgba(0,0,0,0.09)';
+    bctx.fillRect(0,0,w,h);
+    bctx.globalCompositeOperation = 'lighter';
+    
+    const cx = w/2, cy = h/2;
+    const base = Math.min(w,h) * 0.45;
+    
+    for (let i = 0; i < 3; i++) {
+      const phase = time * 0.15 + i * 2.1;
+      const scale = 0.6 + 0.35 * Math.sin(phase * 0.7);
+      const rot = phase * (i % 2 ? -0.3 : 0.4);
+      const size = base * scale * (1 - i * 0.18);
+      const hue = 180 + 120 * Math.sin(phase * 0.5 + i);
+      
+      bctx.save();
+      bctx.translate(cx, cy);
+      bctx.rotate(rot);
+      bctx.strokeStyle = `hsla(${hue},100%,65%,${0.9 - i*0.25})`;
+      bctx.shadowColor = `hsl(${hue},100%,60%)`;
+      bctx.shadowBlur = 25 * dpr;
+      bctx.lineWidth = 1.1 * dpr;
+      drawSierpinski(0, 0, size, 5 + (i % 2));
+      bctx.restore();
+    }
+    
+    bctx.globalCompositeOperation = 'source-over';
+    requestAnimationFrame(animate);
+  }
+  animate();
+
+  // Mini canary fractals
+  function tinyFractal(canvas) {
+    const ctx = canvas.getContext('2d');
+    let t = 0;
+    function draw() {
+      t += 0.05;
+      ctx.clearRect(0,0,40,20);
+      ctx.save();
+      ctx.translate(20,10);
+      ctx.rotate(t*0.1);
+      ctx.strokeStyle = '#ffd700';
+      ctx.globalAlpha = 0.8;
+      ctx.lineWidth = 0.5;
+      ctx.beginPath();
+      for(let i=0;i<3;i++){
+        ctx.rotate(Math.PI*2/3);
+        ctx.moveTo(0,-6); ctx.lineTo(-5,4); ctx.lineTo(5,4); ctx.closePath();
+      }
+      ctx.stroke();
+      ctx.restore();
+      requestAnimationFrame(draw);
+    }
+    draw();
+  }
+  tinyFractal(document.getElementById('canary-fractal'));
+  tinyFractal(document.getElementById('canary-fractal-2'));
+
+  // Avatar system
+  let avatar_id = localStorage.getItem('avatar_id') || '1';
+  const grid = document.getElementById('avatar-grid');
+  const youId = document.getElementById('you-id');
+  
+  function fractalAvatarSVG(n) {
+    const hue = (n * 47) % 360;
+    return `<svg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'><rect width='20' height='20' fill='#000'/><g stroke='hsl(${hue},100%,60%)' fill='none' stroke-width='.6' opacity='.95'><polygon points='10,2 18,17 2,17'/><polygon points='10,6.5 14,13.5 6,13.5'/></g><circle cx='10' cy='11' r='1' fill='hsl(${hue},100%,70%)' opacity='.8'/></svg>`;
+  }
+  
+  function spawnMiniFractal(target) {
+    const rect = target.getBoundingClientRect();
+    const c = document.createElement('canvas');
+    c.width = 64; c.height = 64;
+    c.style.cssText = `position:fixed;left:${rect.left+rect.width/2-32}px;top:${rect.top-70}px;width:64px;height:64px;pointer-events:none;z-index:9999;filter:drop-shadow(0 0 10px #0ff)`;
+    document.body.appendChild(c);
+    const ctx = c.getContext('2d');
+    let t = 0;
+    (function anim(){
+      t+=0.15;
+      ctx.clearRect(0,0,64,64);
+      ctx.save(); ctx.translate(32,32); ctx.rotate(t*0.3);
+      ctx.strokeStyle = `hsl(${180+t*20},100%,65%)`;
+      ctx.shadowColor = '#0ff'; ctx.shadowBlur = 12;
+      ctx.lineWidth = 1.2;
+      for(let i=0;i<3;i++){ ctx.rotate(Math.PI*2/3); ctx.beginPath(); ctx.moveTo(0,-14); ctx.lineTo(-9,9); ctx.lineTo(9,9); ctx.closePath(); ctx.stroke(); }
+      ctx.restore();
+      if(t < 12) requestAnimationFrame(anim); else c.remove();
+    })();
+  }
+  
+  for (let i = 1; i <= 12; i++) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'relative group';
+    btn.dataset.id = i;
+    const img = document.createElement('img');
+    img.src = `/static/avatars/${i}.png`;
+    img.width = 20; img.height = 20; img.alt = `sigil ${i}`;
+    img.className = 'avatar-btn w-5 h-5 rounded-[3px] ring-1 ring-cyan-900/40';
+    img.style.filter = 'drop-shadow(0 0 4px rgba(0,255,255,.6)) drop-shadow(0 0 4px rgba(255,0,255,.4))';
+    img.onerror = function(){ this.onerror = null; this.src = `data:image/svg+xml,${encodeURIComponent(fractalAvatarSVG(i))}`; };
+    btn.appendChild(img);
+    btn.addEventListener('click', () => selectAvatar(i, img));
+    btn.addEventListener('mouseenter', () => spawnMiniFractal(btn));
+    grid.appendChild(btn);
+  }
+  
+  function selectAvatar(id, el) {
+    avatar_id = String(id);
+    localStorage.setItem('avatar_id', avatar_id);
+    youId.textContent = `SIGIL_${String(id).padStart(2,'0')}`;
+    document.querySelectorAll('.avatar-btn').forEach(b => {
+      b.classList.remove('ring-2','ring-amber-400');
+      b.style.boxShadow = '';
+      b.style.transform = '';
+    });
+    if (el) {
+      el.classList.add('ring-2','ring-amber-400');
+      el.style.boxShadow = '0 0 12px #ffd700, 0 0 24px rgba(255,215,0,0.4)';
+      el.style.transform = 'scale(1.15)';
+    }
+  }
+  selectAvatar(avatar_id, grid.querySelector(`[data-id="${avatar_id}"] img`));
+
+  // Board
+  const boardEl = document.getElementById('board');
+  let boardData = [];
+  
+  function escapeHtml(s){ return s.replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m])); }
+  
+  function renderBoard(items) {
+    boardEl.innerHTML = '';
+    items.slice(-100).reverse().forEach(entry => {
+      const wrap = document.createElement('div');
+      wrap.className = 'entry group flex items-start gap-2.5 py-1.5 px-2 -mx-2 rounded hover:bg-cyan-950/20 transition';
+      
+      const time = document.createElement('span');
+      const d = new Date(entry.timestamp || Date.now());
+      time.className = 'time text-[10px] font-mono text-fuchsia-400/70 w-[66px] shrink-0 tracking-tighter mt-0.5';
+      time.style.textShadow = '0 0 4px rgba(255,0,255,.5)';
+      time.textContent = d.toLocaleTimeString('en-GB', {hour12:false});
+      
+      const img = document.createElement('img');
+      const aid = entry.avatar_id || 1;
+      img.src = `/static/avatars/${aid}.png`;
+      img.width = 14; img.height = 14;
+      img.className = 'w-3.5 h-3.5 mt-0.5 shrink-0 rounded-[2px]';
+      img.style.cssText = 'filter:drop-shadow(0 0 3px #0ff) drop-shadow(0 0 3px #f0f); image-rendering:pixelated;';
+      img.onerror = () => { img.onerror = null; img.src = `data:image/svg+xml,${encodeURIComponent(fractalAvatarSVG(aid))}`; };
+      
+      const msg = document.createElement('p');
+      msg.className = 'message flex-1 text-[13px] leading-snug text-cyan-100/90 font-mono break-words';
+      msg.style.textShadow = '0 0 5px rgba(0,255,255,.35), 0 0 12px rgba(255,0,255,.15)';
+      msg.textContent = entry.message || '';
+      
+      wrap.append(time, img, msg);
+      boardEl.appendChild(wrap);
+    });
+    boardEl.scrollTop = 0;
+  }
+  
+  function mockData() {
+    const now = Date.now();
+    return [
+      {timestamp: now-4000, avatar_id: 3, message: 'initiating fractal handshake // depth 7 confirmed'},
+      {timestamp: now-11000, avatar_id: 7, message: 'self-similarity detected in border lattice ⟐'},
+      {timestamp: now-23000, avatar_id: 1, message: 'neon triangles breeding in outer rim'},
+      {timestamp: now-38000, avatar_id: 11, message: 'recursive echo from layer 3: we are the pattern'},
+      {timestamp: now-59000, avatar_id: 5, message: '0root observes from infinite center'},
+      {timestamp: now-82000, avatar_id: 9, message: 'transmitting on cyan/magenta carrier wave'},
+    ];
+  }
+  
+  async function loadBoard() {
+    try {
+      const r = await fetch('/board', {cache:'no-store'});
+      if (r.ok) { boardData = await r.json(); }
+      else throw 0;
+    } catch { if (!boardData.length) boardData = mockData(); }
+    renderBoard(boardData);
+  }
+  loadBoard();
+  setInterval(loadBoard, 2000);
+  
+  async function loadCanary() {
+    try {
+      const r = await fetch('/canary', {cache:'no-store'});
+      if (r.ok) { document.getElementById('canary').textContent = await r.text(); return; }
+    } catch {}
+    document.getElementById('canary').textContent = 'FRACTAL_SIG:∞ • RECURSION_DEPTH:7 • NODE_SYNC';
+  }
+  loadCanary();
+  setInterval(loadCanary, 5000);
+
+  // Transmit
+  const msgEl = document.getElementById('msg');
+  const charCount = document.getElementById('char-count');
+  msgEl.addEventListener('input', () => { charCount.textContent = `${msgEl.value.length}/280`; charCount.style.color = msgEl.value.length > 260 ? '#ff00ff' : ''; });
+  
+  async function doShout() {
+    const message = msgEl.value.trim().slice(0,280);
+    if (!message) return;
+    msgEl.value = ''; charCount.textContent = '0/280';
+    const payload = { avatar_id: parseInt(avatar_id), message, timestamp: Date.now() };
+    boardData = [...boardData, payload];
+    renderBoard(boardData);
+    try { await fetch('/shout', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) }); } catch {}
+    setTimeout(loadBoard, 400);
+  }
+  document.getElementById('shout-btn').addEventListener('click', doShout);
+  msgEl.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); doShout(); } });
+})();
+</script>
+</body>
+</html>

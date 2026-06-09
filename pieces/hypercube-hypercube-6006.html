@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Hypercube · 6·0·0·6</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{--paper:#0a0a12;--cardsolid:#13131f;--ink:#ece8f5;--dim:#8a85a3;--glow:#6de0d0;--violet:#9b6cff;--blue:#6d8cff;--orange:#ffb347;--line:rgba(155,108,255,0.2);}
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0;color:var(--ink);background-color:var(--paper);background-image:radial-gradient(circle at 50% -10%, #1a1430 0%, #08080f 65%);background-attachment:fixed;font-family:"Newsreader",Georgia,serif;line-height:1.55;}
+  .wrap{max-width:1040px;margin:0 auto;padding:26px 20px 60px;}
+  ::selection{background:var(--violet);color:#0a0a12;}
+  .kick{font-family:"Space Mono",monospace;font-size:11px;letter-spacing:0.26em;text-transform:uppercase;color:var(--violet);}
+  h1{font-family:"Cinzel";font-weight:800;font-size:clamp(28px,5.4vw,50px);line-height:1;letter-spacing:0.01em;text-transform:uppercase;margin:8px 0 0;}
+  h1 em{font-style:normal;color:var(--glow);text-shadow:0 0 16px rgba(109,224,208,0.5);}
+  .stamp{display:inline-block;font-family:"Space Mono",monospace;font-size:10.5px;letter-spacing:0.1em;text-transform:uppercase;color:var(--orange);border:1px dashed var(--orange);padding:4px 11px;margin-top:12px;}
+  .dek{font-size:clamp(15px,2vw,17px);max-width:670px;margin:14px 0 0;color:#cfc9e0;}
+  .dek b{color:var(--glow);}
+  .panel{border:1px solid var(--line);background:var(--cardsolid);padding:16px;margin-top:20px;}
+  .svgbox{display:flex;justify-content:center;align-items:center;}
+  .legend{display:flex;flex-wrap:wrap;gap:14px;justify-content:center;margin-top:6px;font-family:"Space Mono",monospace;font-size:11px;color:var(--dim);}
+  .legend span{display:inline-flex;align-items:center;gap:6px;}
+  .sw{width:18px;height:3px;display:inline-block;border-radius:2px;}
+  .dotsw{width:9px;height:9px;border-radius:50%;display:inline-block;}
+  .controls{display:flex;flex-wrap:wrap;gap:9px;align-items:center;justify-content:center;margin-top:14px;}
+  .btn{font-family:"Space Mono",monospace;font-size:12.5px;font-weight:700;color:var(--ink);background:#1d1730;border:1px solid var(--line);padding:7px 12px;cursor:pointer;border-radius:3px;transition:all .12s ease;}
+  .btn:hover{background:var(--violet);color:#0a0a12;}
+  .btn.on{background:var(--glow);color:#0a0a12;}
+  .slab{font-family:"Space Mono",monospace;font-size:10.5px;letter-spacing:0.06em;text-transform:uppercase;color:var(--dim);}
+  .slider{accent-color:var(--orange);width:110px;vertical-align:middle;}
+  .cols{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px;}
+  @media (max-width:680px){.cols{grid-template-columns:1fr;}}
+  .mini{border:1px solid var(--line);background:var(--cardsolid);padding:14px 16px;}
+  .mini h3{font-family:"Cinzel";font-weight:700;font-size:14px;color:var(--violet);margin:0 0 8px;}
+  .mini p{font-size:13.5px;margin:0 0 8px;color:#c8c2da;}
+  .mini p:last-child{margin-bottom:0;}
+  .mini b{color:var(--glow);}
+  .foot{border-top:1px dashed var(--line);margin-top:22px;padding-top:14px;font-family:"Space Mono",monospace;font-size:11.5px;color:var(--dim);line-height:1.7;}
+  .foot b{color:var(--orange);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <span class="kick">running in parallel · 1 hypercube · 2 dots · 6·0·0·6</span>
+  <h1>The <em>Hypercube</em></h1>
+  <div class="stamp">a visualization — the tesseract is real 4D geometry; what you see is its shadow in 3D</div>
+  <div class="dek">A cube is to a square what a <b>tesseract</b> is to a cube — the 4-dimensional cube. We can't see four dimensions, so the cube-within-a-cube below is its <b>shadow</b>: the inner cube is the cell farthest out in the fourth direction, projected inward. Same move as the floor caught the triad — now one dimension higher.</div>
+
+  <div class="panel">
+    <div class="svgbox">
+      <svg id="scene" width="100%" viewBox="0 0 460 460" style="max-width:520px" aria-label="a rotating tesseract with two highlighted mirror vertices">
+        <g id="edges"></g>
+        <line id="diag" stroke="#9b6cff" stroke-width="1.4" stroke-dasharray="4 4" opacity="0.7"/>
+        <g id="verts"></g>
+        <circle id="dotA" r="7" fill="#9b6cff"/>
+        <circle id="haloA" r="13" fill="none" stroke="#9b6cff" stroke-width="0.8" stroke-dasharray="2 3" opacity="0.6"/>
+        <circle id="dotB" r="7" fill="#9b6cff"/>
+        <circle id="haloB" r="13" fill="none" stroke="#9b6cff" stroke-width="0.8" stroke-dasharray="2 3" opacity="0.6"/>
+        <text id="tagA" class="leg" font-family="Space Mono,monospace" font-size="10" fill="#b9aef0"></text>
+        <text id="tagB" class="leg" font-family="Space Mono,monospace" font-size="10" fill="#b9aef0"></text>
+      </svg>
+    </div>
+    <div class="legend">
+      <span><i class="sw" style="background:#6de0d0"></i> outer cell (near in w)</span>
+      <span><i class="sw" style="background:#3f5d8f"></i> inner cell — the shadow (far in w)</span>
+      <span><i class="dotsw" style="background:#9b6cff"></i> dot at (6,0,0,6)</span>
+      <span><i class="dotsw" style="background:#9b6cff"></i> its mirror</span>
+    </div>
+    <div class="controls">
+      <button class="btn on" id="playBtn">⏸ pause</button>
+      <button class="btn on" id="twistBtn">double-rotation: on</button>
+      <button class="btn on" id="dotsBtn">dots: on</button>
+      <span class="slab">spin</span><input type="range" min="0.2" max="2.2" step="0.1" value="1" class="slider" id="speed">
+      <span class="slab">4D depth</span><input type="range" min="1.7" max="4" step="0.1" value="2.4" class="slider" id="persp">
+    </div>
+  </div>
+
+  <div class="cols">
+    <div class="mini">
+      <h3>Why you only see its shadow</h3>
+      <p>A tesseract has <b>16 corners, 32 edges, 24 square faces, and 8 cube cells</b>. Every edge here is real; what isn't real is the flattening — four dimensions can't fit on a screen.</p>
+      <p>So the image is a <b>projection</b>: the bright outer cube and dim inner cube are two of the eight cells, the inner one pushed "inward" because it sits farther along the 4th axis. Slide <b>4D depth</b> and watch it turn inside-out as the shadow re-casts.</p>
+    </div>
+    <div class="mini">
+      <h3>6·0·0·6 — two dots, mirrored</h3>
+      <p>The two violet dots sit at <b>mirror-image corners</b> — the pattern (+,−,−,+) read off 6·0·0·6, and its exact opposite through the center — joined by the tesseract's long <b>diagonal</b>. A point and its reflection, the two-dots theme carried into 4D.</p>
+      <p>An honest nugget the <b>6</b> nods at: 4D rotation genuinely has <b>six independent planes</b> (xy, xz, xw, yz, yw, zw) — a cube only has three. That sixfold freedom is why a tesseract can tumble in ways a cube never could.</p>
+    </div>
+  </div>
+
+  <div class="foot">
+    <b>Honest footing.</b> The tesseract, its 32 edges, and the perspective projection are real geometry, drawn to scale — including the true fact that what we see is a 3D shadow of a 4D form. What's a chosen <b>motif</b> is 6·0·0·6: a label you assigned, mapped here to a mirrored pair of corners. The dots inherit no physics; they mark two corners and their connecting diagonal. Say the word if the numbers mean something else and I'll re-place them.
+  </div>
+</div>
+
+<script>
+// ---------- 4D ----------
+function rot4(p,i,j,a){const c=Math.cos(a),s=Math.sin(a);const q=p.slice();q[i]=c*p[i]-s*p[j];q[j]=s*p[i]+c*p[j];return q;}
+// vertices: 16 corners (±1)^4 ; bit0=x bit1=y bit2=z bit3=w
+const V=[];for(let k=0;k<16;k++){V.push([(k&1)?1:-1,(k&2)?1:-1,(k&4)?1:-1,(k&8)?1:-1]);}
+const E=[];for(let i=0;i<16;i++)for(let j=i+1;j<16;j++){let x=i^j;if(x&&(x&(x-1))===0)E.push([i,j]);} // Hamming distance 1 → 32 edges
+// the two mirror dots: (+,-,-,+) and its antipode
+const idxOf=v=>((v[0]>0?1:0)|(v[1]>0?2:0)|(v[2]>0?4:0)|(v[3]>0?8:0));
+const A_IDX=idxOf([1,-1,-1,1]); const B_IDX=idxOf([-1,1,1,-1]);
+
+// ---------- 3D view projection (up=+y) ----------
+const CX=230,CY=225,S2=72;
+function project3(p){let q=rotY(p,0.55);q=rotX(q,0.42);return[CX+q[0]*S2, CY-q[1]*S2];}
+function rotX(p,a){const c=Math.cos(a),s=Math.sin(a);return[p[0],c*p[1]-s*p[2],s*p[1]+c*p[2]];}
+function rotY(p,a){const c=Math.cos(a),s=Math.sin(a);return[c*p[0]+s*p[2],p[1],-s*p[0]+c*p[2]];}
+
+const $=id=>document.getElementById(id);
+const ST={t1:0,t2:0,speed:1,persp:2.4,twist:true,dots:true,playing:true};
+
+// project all 16 verts → {screen,w}
+function compute(){
+  const out=[];
+  for(const v of V){
+    let p=rot4(v,0,3,ST.t1);                 // xw plane
+    if(ST.twist)p=rot4(p,1,2,ST.t2);         // yz plane
+    const f=ST.persp/(ST.persp-p[3]);        // 4D→3D perspective
+    const p3=[p[0]*f,p[1]*f,p[2]*f];
+    out.push({s:project3(p3),w:p[3]});
+  }
+  return out;
+}
+function lerp(a,b,t){return a+(b-a)*t;}
+function wColor(w){ // w in ~[-1.4,1.4] → inner(dim blue) ↔ outer(glow cyan)
+  const t=Math.max(0,Math.min(1,(w+1.5)/3));
+  const r=Math.round(lerp(63,109,t)),g=Math.round(lerp(93,224,t)),b=Math.round(lerp(143,208,t));
+  return `rgb(${r},${g},${b})`;
+}
+
+let pulse=0;
+function render(){
+  const P=compute();
+  // edges
+  let e='';
+  for(const[i,j]of E){const wa=(P[i].w+P[j].w)/2;const t=Math.max(0,Math.min(1,(wa+1.5)/3));const op=lerp(0.16,0.95,t);const w=lerp(1.0,2.5,t);e+=`<line x1="${P[i].s[0].toFixed(1)}" y1="${P[i].s[1].toFixed(1)}" x2="${P[j].s[0].toFixed(1)}" y2="${P[j].s[1].toFixed(1)}" stroke="${wColor(wa)}" stroke-width="${w.toFixed(2)}" opacity="${op.toFixed(2)}" stroke-linecap="round"/>`;}
+  $('edges').innerHTML=e;
+  // vertices
+  let vv='';
+  for(let k=0;k<16;k++){if(k===A_IDX||k===B_IDX)continue;const t=Math.max(0,Math.min(1,(P[k].w+1.5)/3));vv+=`<circle cx="${P[k].s[0].toFixed(1)}" cy="${P[k].s[1].toFixed(1)}" r="${lerp(1.6,3.2,t).toFixed(1)}" fill="${wColor(P[k].w)}" opacity="${lerp(0.4,1,t).toFixed(2)}"/>`;}
+  $('verts').innerHTML=vv;
+  // mirror dots + diagonal
+  const a=P[A_IDX].s,b=P[B_IDX].s;
+  const show=ST.dots?'visible':'hidden';
+  ['dotA','haloA','dotB','haloB','diag','tagA','tagB'].forEach(id=>$(id).style.visibility=show);
+  $('diag').setAttribute('x1',a[0]);$('diag').setAttribute('y1',a[1]);$('diag').setAttribute('x2',b[0]);$('diag').setAttribute('y2',b[1]);
+  const r=7+Math.sin(pulse)*1.6;
+  $('dotA').setAttribute('cx',a[0]);$('dotA').setAttribute('cy',a[1]);$('dotA').setAttribute('r',r.toFixed(1));
+  $('haloA').setAttribute('cx',a[0]);$('haloA').setAttribute('cy',a[1]);
+  $('dotB').setAttribute('cx',b[0]);$('dotB').setAttribute('cy',b[1]);$('dotB').setAttribute('r',r.toFixed(1));
+  $('haloB').setAttribute('cx',b[0]);$('haloB').setAttribute('cy',b[1]);
+  $('tagA').setAttribute('x',a[0]+10);$('tagA').setAttribute('y',a[1]-8);$('tagA').textContent='6,0,0,6';
+  $('tagB').setAttribute('x',b[0]+10);$('tagB').setAttribute('y',b[1]-8);$('tagB').textContent='mirror';
+}
+
+const reduced=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+function frame(){
+  if(ST.playing){ST.t1+=0.011*ST.speed;ST.t2+=0.017*ST.speed;pulse+=0.06;}
+  render();
+  if(!reduced)requestAnimationFrame(frame);
+}
+$('playBtn').onclick=()=>{ST.playing=!ST.playing;$('playBtn').textContent=ST.playing?'⏸ pause':'▸ play';$('playBtn').classList.toggle('on',ST.playing);};
+$('twistBtn').onclick=()=>{ST.twist=!ST.twist;$('twistBtn').textContent='double-rotation: '+(ST.twist?'on':'off');$('twistBtn').classList.toggle('on',ST.twist);};
+$('dotsBtn').onclick=()=>{ST.dots=!ST.dots;$('dotsBtn').textContent='dots: '+(ST.dots?'on':'off');$('dotsBtn').classList.toggle('on',ST.dots);render();};
+$('speed').oninput=e=>{ST.speed=+e.target.value;};
+$('persp').oninput=e=>{ST.persp=+e.target.value;if(!ST.playing||reduced)render();};
+
+if(reduced){ST.t1=0.5;ST.t2=0.7;ST.playing=false;$('playBtn').textContent='▸ play';$('playBtn').classList.remove('on');render();}
+else{render();requestAnimationFrame(frame);}
+</script>
+</body>
+</html>

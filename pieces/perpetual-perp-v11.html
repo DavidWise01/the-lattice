@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Perpetual Memory Engine — Fractal Quantum Model</title>
+<style>
+:root{
+  --cyan:#00e5ff;
+  --magenta:#ff2bd6;
+  --bg:#02040a;
+  --glass:rgba(12,16,28,0.72);
+  --ink:#e6f1ff;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  background: var(--bg);
+  color:var(--ink);
+  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, "Helvetica Neue", Arial, sans-serif;
+  overflow-x:hidden;
+  background-image:
+    radial-gradient(1200px 800px at 70% -20%, rgba(0,229,255,0.12), transparent 60%),
+    radial-gradient(900px 600px at -10% 120%, rgba(255,43,214,0.10), transparent 60%),
+    linear-gradient(180deg, #02040a 0%, #050816 100%);
+}
+.app{max-width:1400px;margin:0 auto;padding:24px}
+header{text-align:center;margin-bottom:18px}
+h1{
+  font-size:clamp(20px,3.2vw,36px);
+  letter-spacing:0.14em;
+  font-weight:700;
+  background:linear-gradient(90deg,var(--cyan),#fff,var(--magenta));
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 0 18px rgba(0,229,255,0.25));
+}
+.life-death-bar{
+  margin-top:8px;
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  color:#9fb3c8;font-size:14px;letter-spacing:0.08em
+}
+.life-death-bar .bar{color:#fff;text-shadow:0 0 12px rgba(255,255,255,0.6)}
+
+main{display:grid;grid-template-columns:1.35fr 0.65fr;gap:24px;align-items:start}
+@media (max-width:1100px){main{grid-template-columns:1fr}}
+
+.glass{
+  background:var(--glass);
+  border:1px solid rgba(255,255,255,0.08);
+  border-radius:22px;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow:0 10px 40px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.05);
+}
+.canvas-wrap{position:relative;aspect-ratio:1/1;min-height:520px;padding:22px;overflow:hidden}
+canvas{width:100%;height:100%;display:block;border-radius:16px}
+
+.center-hud{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none}
+.hud-inner{display:flex;align-items:center;gap:18px;transform:translateY(-12px)}
+.life-label{color:var(--cyan);font-family:ui-monospace,monospace;font-size:14px;text-shadow:0 0 10px var(--cyan);opacity:0.95}
+.death-label{color:var(--magenta);font-family:ui-monospace,monospace;font-size:14px;text-shadow:0 0 10px var(--magenta);opacity:0.95}
+.core-11{
+  font-size:clamp(38px,5.2vw,62px);
+  font-weight:800;
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+  color:#fff;letter-spacing:0.05em;
+  text-shadow:0 0 22px rgba(255,255,255,0.85),0 0 42px var(--cyan),0 0 64px var(--magenta);
+  animation:pulse11 2.2s ease-in-out infinite;
+  will-change:transform,filter;
+}
+@keyframes pulse11{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.06);opacity:0.93}}
+
+.nestled-zero{
+  position:absolute;left:50%;top:62%;transform:translate(-50%,-50%);
+  width:30px;height:30px;border:2px solid rgba(0,229,255,0.95);border-radius:50%;
+  box-shadow:0 0 18px var(--cyan) inset,0 0 18px rgba(0,229,255,0.45);
+}
+.nestled-zero::after{
+  content:'';position:absolute;inset:0;margin:auto;width:8px;height:8px;background:var(--magenta);border-radius:50%;
+  box-shadow:0 0 10px var(--magenta),0 0 18px rgba(255,43,214,0.6);
+  animation:nestle 1.8s ease-in-out infinite;
+}
+@keyframes nestle{0%,100%{transform:scale(1)}50%{transform:scale(1.35)}}
+.nestled-zero.pulse{animation:zpop 0.35s ease}
+@keyframes zpop{0%{transform:translate(-50%,-50%) scale(1)}50%{transform:translate(-50%,-50%) scale(1.25)}100%{transform:translate(-50%,-50%) scale(1)}}
+
+.phase-flash{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;
+  font-family:ui-monospace,monospace;font-weight:800;
+  font-size:clamp(44px,9vw,118px);color:#fff;
+  text-shadow:0 0 30px var(--cyan),0 0 60px var(--magenta);
+  opacity:0;transition:opacity .18s ease;
+}
+.phase-flash.show{opacity:0.92}
+
+.controls{padding:22px;display:flex;flex-direction:column;gap:18px}
+.controls h3{font-size:13px;text-transform:uppercase;letter-spacing:0.14em;color:#9fb3c8}
+.control label{display:flex;justify-content:space-between;font-size:13px;color:#c7d2e0;margin-bottom:8px;font-family:ui-monospace,monospace}
+input[type=range]{width:100%;height:28px;-webkit-appearance:none;background:transparent;cursor:pointer}
+input[type=range]::-webkit-slider-runnable-track{height:6px;background:linear-gradient(90deg,var(--cyan),var(--magenta));border-radius:6px;filter:brightness(0.75)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;margin-top:-6px;background:#fff;border-radius:50%;box-shadow:0 0 10px rgba(0,229,255,0.8),0 0 20px rgba(255,43,214,0.45);border:2px solid #0a0f1e}
+input[type=range]::-moz-range-track{height:6px;background:linear-gradient(90deg,var(--cyan),var(--magenta));border-radius:6px}
+input[type=range]::-moz-range-thumb{width:18px;height:18px;background:#fff;border:none;border-radius:50%;box-shadow:0 0 10px rgba(0,229,255,0.8)}
+
+.toggles{display:grid;gap:10px}
+.toggle{display:flex;align-items:center;gap:10px;font-size:13px;color:#d1ddf0;padding:10px 12px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:12px;cursor:pointer;user-select:none}
+.toggle input{appearance:none;width:40px;height:22px;background:#0f1730;border-radius:20px;position:relative;outline:none;border:1px solid rgba(255,255,255,0.12);transition:.2s}
+.toggle input::after{content:'';position:absolute;top:2px;left:2px;width:16px;height:16px;background:#7a8aaa;border-radius:50%;transition:.2s;box-shadow:0 1px 2px rgba(0,0,0,0.5)}
+.toggle input:checked{background:linear-gradient(90deg,rgba(0,229,255,0.28),rgba(255,43,214,0.28));border-color:rgba(0,229,255,0.5)}
+.toggle input:checked::after{left:20px;background:#fff;box-shadow:0 0 10px var(--cyan)}
+
+.btn{margin-top:4px;padding:12px 16px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;font-size:13px;color:#031018;background:linear-gradient(90deg,var(--cyan),#9ef0ff);border:none;border-radius:12px;cursor:pointer;box-shadow:0 8px 24px rgba(0,229,255,0.25),inset 0 1px 0 rgba(255,255,255,0.6);transition:transform .08s,filter .2s}
+.btn:hover{filter:brightness(1.05)}
+.btn:active{transform:translateY(1px)}
+.btn.stop{background:linear-gradient(90deg,var(--magenta),#ffb3ec);box-shadow:0 8px 24px rgba(255,43,214,0.25),inset 0 1px 0 rgba(255,255,255,0.6);color:#1a0020}
+
+.metrics{margin-top:2px;display:grid;gap:10px;padding-top:14px;border-top:1px dashed rgba(255,255,255,0.09)}
+.metric{display:flex;justify-content:space-between;align-items:center;font-size:13px;padding:10px 12px;background:rgba(0,0,0,0.28);border:1px solid rgba(255,255,255,0.06);border-radius:12px;font-family:ui-monospace,monospace}
+.metric span{color:#fff;text-shadow:0 0 8px rgba(255,255,255,0.28)}
+.good{color:#7df9c8;text-shadow:0 0 10px rgba(125,249,200,0.5)}
+.warn{color:#ffd47a;text-shadow:0 0 10px rgba(255,212,122,0.5)}
+.bad{color:#ff7ab0;text-shadow:0 0 10px rgba(255,122,176,0.5)}
+.balance-meter{height:8px;background:#0a1225;border-radius:8px;overflow:hidden;border:1px solid rgba(255,255,255,0.08);position:relative}
+.balance-fill{position:absolute;left:0;top:0;bottom:0;width:50%;background:linear-gradient(90deg,var(--cyan),#fff,var(--magenta));box-shadow:0 0 16px rgba(255,255,255,0.28);transition:width .25s ease}
+
+.explain{margin-top:22px;padding:14px 16px;text-align:center;font-family:ui-monospace,monospace;font-size:12px;color:#9fb3c8;line-height:1.6;background:rgba(0,0,0,0.32);border:1px solid rgba(255,255,255,0.06);border-radius:14px}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>PERPETUAL MEMORY ENGINE</h1>
+    <div class="life-death-bar">life &lt; <span class="bar">=========11==========</span> &gt; death</div>
+  </header>
+
+  <main>
+    <div class="canvas-wrap glass">
+      <canvas id="engine"></canvas>
+      <div class="center-hud">
+        <div class="hud-inner">
+          <div class="life-label">life &lt;</div>
+          <div class="core-11" id="core11">11</div>
+          <div class="death-label">&gt; death</div>
+        </div>
+        <div class="nestled-zero" id="nestled" title="0 with nestled 1"></div>
+      </div>
+      <div class="phase-flash" id="phaseFlash">000</div>
+    </div>
+
+    <aside class="controls glass">
+      <h3>Engine Controls</h3>
+      <div class="control">
+        <label>Layers <span id="layersVal">30</span></label>
+        <input type="range" id="layers" min="8" max="60" value="30" step="1">
+      </div>
+      <div class="control">
+        <label>1/16 Light <span id="lightVal">8.0</span></label>
+        <input type="range" id="light" min="0" max="16" value="8" step="0.1">
+      </div>
+      <div class="control">
+        <label>1/16 Shadow <span id="shadowVal">8.0</span></label>
+        <input type="range" id="shadow" min="0" max="16" value="8" step="0.1">
+      </div>
+
+      <div class="toggles">
+        <label class="toggle"><input type="checkbox" id="phase" checked> Phase change cycling (1-0-1)</label>
+        <label class="toggle"><input type="checkbox" id="zeroEats" checked> "0 eats 0" self-referential loop</label>
+      </div>
+
+      <button class="btn stop" id="startStop">Stop</button>
+
+      <div class="metrics">
+        <div class="metric">Fidelity <span id="fidelity" class="good">99.7%</span></div>
+        <div class="metric">Energy Potential <span id="energy">0.500 - 0 - 0.500</span></div>
+        <div class="metric">ds Locked <span id="ds">0-9 ×3 = 30</span></div>
+        <div class="metric">Upper / Lower <span id="regs">64 / 64</span></div>
+        <div class="metric" style="flex-direction:column;align-items:stretch;gap:8px">
+          <div style="display:flex;justify-content:space-between;width:100%"><span>Life / Death Balance</span><span id="balPct">50%</span></div>
+          <div class="balance-meter"><div class="balance-fill" id="balanceFill"></div></div>
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <div class="explain">
+    1/16 light - 0 phase - 1/16 shadow = 32 per 1/2 quad ×2 = 64 upper ×2 lower = 128 total | 0-9 ×3 = 30 ds | 0 with nestled 1
+  </div>
+</div>
+
+<script>
+(() => {
+  const canvas = document.getElementById('engine');
+  const ctx = canvas.getContext('2d', { alpha: true });
+  const core11 = document.getElementById('core11');
+  const nestled = document.getElementById('nestled');
+  const phaseFlash = document.getElementById('phaseFlash');
+
+  const ui = {
+    layers: document.getElementById('layers'),
+    light: document.getElementById('light'),
+    shadow: document.getElementById('shadow'),
+    phase: document.getElementById('phase'),
+    zeroEats: document.getElementById('zeroEats'),
+    startStop: document.getElementById('startStop'),
+    layersVal: document.getElementById('layersVal'),
+    lightVal: document.getElementById('lightVal'),
+    shadowVal: document.getElementById('shadowVal'),
+    fidelity: document.getElementById('fidelity'),
+    energy: document.getElementById('energy'),
+    ds: document.getElementById('ds'),
+    regs: document.getElementById('regs'),
+    balanceFill: document.getElementById('balanceFill'),
+    balPct: document.getElementById('balPct')
+  };
+
+  let state = { layers:30, light:8, shadow:8, phaseChange:true, zeroEats:true, running:true };
+  let cores = Array.from({length:8}, (_,i)=>({i, angle: -Math.PI/2 + i*Math.PI*0.25, x:0, y:0 }));
+  let particles = [];
+  let sparks = [];
+  let tick = 0;
+  let lastTick = performance.now();
+  let time = 0;
+  let phaseAnim = 0;
+  let last = 0;
+  let dpr = 1;
+
+  function resize(){
+    const rect = canvas.parentElement.getBoundingClientRect();
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.floor((rect.width - 44) * dpr);
+    canvas.height = Math.floor((rect.width - 44) * dpr);
+    canvas.style.width = (rect.width - 44) + 'px';
+    canvas.style.height = (rect.width - 44) + 'px';
+  }
+  new ResizeObserver(resize).observe(canvas.parentElement);
+  resize();
+
+  function onTick(){
+    // nestled zero pulse
+    nestled.classList.remove('pulse'); void nestled.offsetWidth; nestled.classList.add('pulse');
+
+    // 1-0-1 phase change every 3 ticks
+    if(state.phaseChange && tick % 3 === 0){
+      phaseFlash.textContent = '000';
+      phaseFlash.classList.add('show');
+      setTimeout(()=>phaseFlash.classList.remove('show'), 380);
+      phaseAnim = 1.3;
+      if(state.zeroEats){
+        setTimeout(()=>{
+          phaseFlash.textContent = '0 eats 00';
+          phaseFlash.classList.add('show');
+          setTimeout(()=>phaseFlash.classList.remove('show'), 480);
+        }, 420);
+      }
+    }
+
+    // spawn energy flow particles
+    const dir = state.light >= state.shadow ? 1 : -1; // life clockwise, death counter
+    cores.forEach(c=>{
+      const s = state.phaseChange ? ((tick + c.i) % 3) : 1; // 0:cyan,1:white,2:off
+      if(s===0 && particles.length < 90){
+        const to = (c.i + dir + 8) % 8;
+        particles.push({from:c.i,to, p:0, speed: 0.015 + state.layers/3200 + Math.random()*0.006, hue: dir>0? 180:300 });
+      }
+    });
+
+    // conditional null→out flips when fidelity low
+    const fid = computeFidelity();
+    if(fid < 93){
+      for(let k=4;k<8;k++){ // shadow cores
+        if(Math.random()<0.6){
+          const a = cores[k].angle + (Math.random()-0.5)*0.3;
+          sparks.push({x:0,y:0, a, v:1.2+Math.random()*0.8, life:1});
+        }
+      }
+    }
+  }
+
+  function computeFidelity(){
+    const imbalance = Math.abs(state.light - state.shadow);
+    const layerStress = Math.abs(state.layers - 30)/30;
+    let f = 99.9 - imbalance*1.65 - layerStress*3.4;
+    if(!state.phaseChange) f -= 4.8;
+    if(state.zeroEats) f += 0.7;
+    f += Math.sin(time*0.9)*0.12;
+    return Math.max(82, Math.min(99.9, f));
+  }
+
+  function draw(){
+    const W = canvas.width, H = canvas.height;
+    const cx = W/2, cy = H/2;
+    const radius = Math.min(W,H)*0.33;
+
+    // fade trail
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.fillStyle = 'rgba(2,4,10,0.24)';
+    ctx.fillRect(0,0,W,H);
+
+    // subtle grid
+    ctx.save();
+    ctx.translate(cx,cy);
+    ctx.strokeStyle = 'rgba(255,255,255,0.03)';
+    ctx.lineWidth = 1*dpr;
+    for(let r=radius*0.3; r<=radius*1.25; r+=radius*0.22){
+      ctx.beginPath(); ctx.arc(0,0,r,0,Math.PI*2); ctx.stroke();
+    }
+    ctx.restore();
+
+    // base ring
+    ctx.save();
+    ctx.translate(cx,cy);
+    ctx.beginPath();
+    ctx.arc(0,0,radius,0,Math.PI*2);
+    const rg = ctx.createLinearGradient(-radius,0,radius,0);
+    rg.addColorStop(0,'rgba(0,229,255,0.0)');
+    rg.addColorStop(0.5,'rgba(255,255,255,0.08)');
+    rg.addColorStop(1,'rgba(255,43,214,0.0)');
+    ctx.strokeStyle = rg;
+    ctx.lineWidth = 3*dpr;
+    ctx.shadowBlur = 18*dpr; ctx.shadowColor = 'rgba(0,229,255,0.25)';
+    ctx.stroke();
+    ctx.shadowBlur=0;
+    ctx.restore();
+
+    // update core positions
+    cores.forEach(c=>{
+      c.x = cx + Math.cos(c.angle)*radius;
+      c.y = cy + Math.sin(c.angle)*radius;
+    });
+
+    // particles
+    ctx.globalCompositeOperation = 'lighter';
+    particles = particles.filter(p=>{
+      p.p += p.speed * (state.running?1:0);
+      const from = cores[p.from], to = cores[p.to];
+      let a0 = from.angle, a1 = to.angle;
+      const dir = state.light >= state.shadow ? 1 : -1;
+      if(dir>0 && a1 < a0) a1 += Math.PI*2;
+      if(dir<0 && a1 > a0) a1 -= Math.PI*2;
+      const a = a0 + (a1-a0)*p.p;
+      const x = cx + Math.cos(a)*radius;
+      const y = cy + Math.sin(a)*radius;
+
+      // tail
+      ctx.beginPath();
+      ctx.moveTo(x - Math.cos(a)*12*dpr, y - Math.sin(a)*12*dpr);
+      ctx.lineTo(x, y);
+      ctx.strokeStyle = `hsla(${p.hue},100%,60%,0.55)`;
+      ctx.lineWidth = 2*dpr; ctx.stroke();
+
+      // head
+      ctx.beginPath(); ctx.arc(x,y,3.2*dpr,0,Math.PI*2);
+      ctx.fillStyle = `hsla(${p.hue},100%,70%,0.95)`;
+      ctx.shadowBlur = 14*dpr; ctx.shadowColor = `hsl(${p.hue},100%,60%)`;
+      ctx.fill(); ctx.shadowBlur=0;
+
+      return p.p < 1;
+    });
+
+    // sparks for null→out
+    ctx.globalCompositeOperation = 'screen';
+    sparks = sparks.filter(s=>{
+      s.life -= 0.018;
+      const core = cores[4 + Math.floor(Math.random()*4)] || cores[5];
+      const baseX = core.x, baseY = core.y;
+      s.x = baseX + Math.cos(s.a)*(1-s.life)*70*dpr;
+      s.y = baseY + Math.sin(s.a)*(1-s.life)*70*dpr;
+      ctx.beginPath(); ctx.arc(s.x,s.y,2.2*dpr,0,Math.PI*2);
+      ctx.fillStyle = `rgba(255,43,214,${Math.max(0,s.life)})`;
+      ctx.shadowBlur=10*dpr; ctx.shadowColor='#ff2bd6'; ctx.fill(); ctx.shadowBlur=0;
+      return s.life>0;
+    });
+
+    // cores
+    ctx.globalCompositeOperation = 'source-over';
+    cores.forEach(c=>{
+      const stateIdx = state.phaseChange ? ((tick + c.i) % 3) : 1;
+      const col = stateIdx===0 ? '#00e5ff' : stateIdx===1 ? '#ffffff' : '#3a405e';
+      const glow = stateIdx===0 ? 0.95 : stateIdx===1 ? 0.7 : 0.25;
+
+      ctx.save(); ctx.translate(c.x,c.y);
+
+      // outer halo
+      ctx.shadowBlur = 28*dpr*glow; ctx.shadowColor = stateIdx===0 ? '#00e5ff' : stateIdx===1 ? '#ffffff' : '#ff2bd6';
+      ctx.beginPath(); ctx.arc(0,0,26*dpr,0,Math.PI*2); ctx.fillStyle='rgba(255,255,255,0.02)'; ctx.fill(); ctx.shadowBlur=0;
+
+      // body
+      ctx.beginPath(); ctx.arc(0,0,22*dpr,0,Math.PI*2); ctx.fillStyle='#0a1022'; ctx.fill();
+      ctx.lineWidth = 2*dpr; ctx.strokeStyle='rgba(255,255,255,0.10)'; ctx.stroke();
+
+      // upper register (top)
+      ctx.beginPath(); ctx.moveTo(-18*dpr,0); ctx.arc(0,0,18*dpr,Math.PI,0,false); ctx.closePath();
+      const upA = 0.28 + (state.light/16)*0.52;
+      ctx.fillStyle = `rgba(0,229,255,${upA})`; ctx.fill();
+
+      // lower register (bottom)
+      ctx.beginPath(); ctx.moveTo(18*dpr,0); ctx.arc(0,0,18*dpr,0,Math.PI,false); ctx.closePath();
+      const lowA = 0.28 + (state.shadow/16)*0.52;
+      ctx.fillStyle = `rgba(255,43,214,${lowA})`; ctx.fill();
+
+      // state dot
+      ctx.beginPath(); ctx.arc(0,0,7*dpr,0,Math.PI*2); ctx.fillStyle=col; ctx.shadowBlur=14*dpr; ctx.shadowColor=col; ctx.fill(); ctx.shadowBlur=0;
+
+      // labels
+      ctx.fillStyle='rgba(200,220,255,0.9)'; ctx.font=`${12*dpr}px ui-monospace, monospace`; ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillText(String(c.i+1), 0, -34*dpr);
+      ctx.font=`${9.5*dpr}px ui-monospace, monospace`;
+      ctx.fillStyle='rgba(0,229,255,0.9)'; ctx.fillText('64', 0, -8*dpr);
+      ctx.fillStyle='rgba(255,43,214,0.9)'; ctx.fillText('64', 0, 8*dpr);
+
+      ctx.restore();
+    });
+
+    // central phase visuals
+    if(phaseAnim>0){
+      ctx.save(); ctx.translate(cx,cy); ctx.globalCompositeOperation='lighter';
+      const t = 1 - Math.max(0, phaseAnim-0.3)/1.0;
+      ctx.beginPath(); ctx.arc(0,0, (40+ t*26)*dpr,0,Math.PI*2);
+      ctx.strokeStyle = `rgba(0,229,255,${0.35*t})`; ctx.lineWidth=2*dpr; ctx.stroke();
+      ctx.beginPath(); ctx.arc(0,0, (60+ t*18)*dpr,0,Math.PI*2);
+      ctx.strokeStyle = `rgba(255,43,214,${0.25*t})`; ctx.stroke();
+      ctx.restore();
+    }
+  }
+
+  function updateMetrics(){
+    const fid = computeFidelity();
+    ui.fidelity.textContent = fid.toFixed(1) + '%';
+    ui.fidelity.className = fid>96 ? 'good' : fid>90 ? 'warn' : 'bad';
+
+    const lightN = (state.light/16).toFixed(3);
+    const shadowN = (state.shadow/16).toFixed(3);
+    ui.energy.textContent = `${lightN} - 0 - ${shadowN}`;
+
+    ui.ds.textContent = `0-9 ×3 = 30`;
+
+    const upper = Math.round(64 + (state.light - 8)*0.9);
+    const lower = Math.round(64 + (state.shadow - 8)*0.9);
+    ui.regs.textContent = `${upper} / ${lower}`;
+
+    const bal = Math.max(0, Math.min(100, 50 + (state.light - state.shadow)*3.125));
+    ui.balanceFill.style.width = bal.toFixed(0)+'%';
+    ui.balPct.textContent = bal.toFixed(0)+'%';
+
+    // central 11 brighter when balanced
+    const imbalance = Math.abs(state.light - state.shadow);
+    const intensity = (fid/100) * (1 - imbalance/18);
+    core11.style.textShadow = `0 0 ${18+intensity*18}px rgba(255,255,255,0.9), 0 0 ${36+intensity*28}px #00e5ff, 0 0 ${56+intensity*22}px #ff2bd6`;
+    core11.style.opacity = 0.85 + intensity*0.15;
+  }
+
+  function animate(now){
+    if(!last) last = now;
+    const dt = Math.min(0.033, (now-last)/1000); last = now;
+    if(state.running) time += dt;
+    if(state.running && now - lastTick > 480){ lastTick = now; tick++; onTick(); }
+    if(phaseAnim>0) phaseAnim -= dt;
+    draw();
+    updateMetrics();
+    requestAnimationFrame(animate);
+  }
+
+  // controls
+  function syncUI(){
+    ui.layersVal.textContent = state.layers;
+    ui.lightVal.textContent = state.light.toFixed(1);
+    ui.shadowVal.textContent = state.shadow.toFixed(1);
+  }
+  ui.layers.addEventListener('input', e=>{ state.layers = +e.target.value; syncUI(); });
+  ui.light.addEventListener('input', e=>{ state.light = +e.target.value; syncUI(); });
+  ui.shadow.addEventListener('input', e=>{ state.shadow = +e.target.value; syncUI(); });
+  ui.phase.addEventListener('change', e=>{ state.phaseChange = e.target.checked; });
+  ui.zeroEats.addEventListener('change', e=>{ state.zeroEats = e.target.checked; });
+  ui.startStop.addEventListener('click', ()=>{
+    state.running = !state.running;
+    ui.startStop.textContent = state.running ? 'Stop' : 'Start';
+    ui.startStop.classList.toggle('stop', state.running);
+  });
+
+  syncUI();
+  requestAnimationFrame(animate());
+
+  // initial tick kick
+  setTimeout(onTick, 300);
+})();
+</script>
+</body>
+</html>

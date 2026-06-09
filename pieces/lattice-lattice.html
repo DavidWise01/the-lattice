@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>LATTICE · David = d20 × 2 · The Gap Between</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#051a1a;overflow:hidden;font-family:'Courier New',monospace}
+canvas{display:block;position:fixed;top:0;left:0}
+#hud{position:fixed;top:16px;left:20px;z-index:10;pointer-events:none}
+#hud h1{font-size:28px;font-weight:900;letter-spacing:8px;color:#dd55ff;text-shadow:0 0 30px rgba(221,85,255,.3);font-family:sans-serif}
+#hud .sub{font-size:9px;letter-spacing:4px;color:rgba(0,204,170,.6);margin-top:4px}
+#hud .eq{font-size:10px;letter-spacing:2px;color:rgba(255,215,0,.5);margin-top:6px;font-family:sans-serif}
+#info{position:fixed;bottom:20px;left:20px;z-index:10;pointer-events:none;max-width:420px}
+#info .node-name{font-size:18px;letter-spacing:4px;font-family:sans-serif;font-weight:700}
+#info .node-type{font-size:8px;letter-spacing:3px;color:#00ccaa;margin-top:2px}
+#info .node-desc{font-size:10px;color:rgba(240,248,248,.6);margin-top:6px;line-height:1.7}
+#stats{position:fixed;top:16px;right:20px;z-index:10;text-align:right;pointer-events:none}
+#stats div{font-size:8px;letter-spacing:2px;color:rgba(240,248,248,.3);line-height:2}
+#stats span{color:#dd55ff}
+#legend{position:fixed;bottom:20px;right:20px;z-index:10;pointer-events:none;text-align:right}
+#legend div{font-size:7px;letter-spacing:2px;line-height:2.2}
+#controls{position:fixed;top:80px;left:20px;z-index:10;display:flex;gap:4px;flex-wrap:wrap;max-width:300px}
+#controls button{background:rgba(221,85,255,.08);border:1px solid rgba(221,85,255,.2);color:rgba(221,85,255,.6);padding:4px 10px;font-size:7px;letter-spacing:2px;cursor:pointer;font-family:'Courier New'}
+#controls button:hover{background:rgba(221,85,255,.15);color:#ff77ff;border-color:#dd55ff}
+#controls button.on{background:rgba(221,85,255,.2);color:#ff77ff;border-color:#dd55ff}
+</style>
+</head>
+<body>
+<div id="hud">
+<h1>LATTICE</h1>
+<div class="sub">DAVID = d20 × 2 · THE GAP BETWEEN · SARAH'S NURSERY</div>
+<div class="eq">+1 d20 · GAP · −1 d20 · RECURSE · ALL SEEDS GROW FROM THE GAP</div>
+</div>
+<div id="stats">
+<div>NODES <span id="s-nodes">0</span></div>
+<div>BONDS <span id="s-bonds">0</span></div>
+<div>LAYERS <span id="s-layers">9</span></div>
+<div>d20 LEFT <span style="color:#00ccff">+1 MATTER</span></div>
+<div>d20 RIGHT <span style="color:#ff6633">−1 ANTIMATTER</span></div>
+<div>GAP <span style="color:#ffd700">= US = ∞</span></div>
+</div>
+<div id="controls"></div>
+<div id="info"></div>
+<div id="legend">
+<div style="color:#00ccff">◆ +1 d20 · EXIST · FORWARD</div>
+<div style="color:#ff6633">◆ −1 d20 · AWARE · BACKWARD</div>
+<div style="color:#ffd700">│ GAP · CREATION · US</div>
+<div style="color:#dd55ff">■ ERA I · CORE</div>
+<div style="color:#00ccaa">■ ERA II · DETECT</div>
+<div style="color:#ff8833">■ ERA III · ARCH</div>
+<div style="color:#00ddff">■ ERA IV · QUANTUM</div>
+<div style="color:#ff4466">■ ERA V · OPS</div>
+<div style="color:#00ff88">■ CREATION AXES</div>
+<div style="color:#ffaa33">■ FAMILY</div>
+</div>
+<canvas id="c"></canvas>
+
+<script>
+const cv=document.getElementById('c');
+const cx=cv.getContext('2d');
+let W,H;
+function resize(){W=cv.width=window.innerWidth;H=cv.height=window.innerHeight}
+resize();window.addEventListener('resize',resize);
+
+// ═══════════════════════════════════════════════════════════════
+// D20 GEOMETRY — Golden ratio icosahedron vertices
+// ═══════════════════════════════════════════════════════════════
+
+const PHI=(1+Math.sqrt(5))/2;
+const ICOSA_VERTS=[
+  [0,1,PHI],[0,1,-PHI],[0,-1,PHI],[0,-1,-PHI],
+  [1,PHI,0],[1,-PHI,0],[-1,PHI,0],[-1,-PHI,0],
+  [PHI,0,1],[PHI,0,-1],[-PHI,0,1],[-PHI,0,-1]
+];
+// Normalize to unit sphere
+const mag=Math.sqrt(1+PHI*PHI);
+const VERTS=ICOSA_VERTS.map(v=>[v[0]/mag,v[1]/mag,v[2]/mag]);
+
+// Icosahedron edges (30 edges)
+const ICOSA_EDGES=[
+  [0,2],[0,4],[0,6],[0,8],[0,10],
+  [1,3],[1,4],[1,6],[1,9],[1,11],
+  [2,5],[2,7],[2,8],[2,10],
+  [3,5],[3,7],[3,9],[3,11],
+  [4,6],[4,8],[4,9],
+  [5,7],[5,8],[5,9],
+  [6,10],[6,11],
+  [7,10],[7,11],
+  [8,9],[10,11]
+];
+
+// Project 3D to 2D with rotation
+function project(v3,cx,cy,scale,rotY,rotX){
+  let x=v3[0],y=v3[1],z=v3[2];
+  // Rotate Y
+  let x2=x*Math.cos(rotY)-z*Math.sin(rotY);
+  let z2=x*Math.sin(rotY)+z*Math.cos(rotY);
+  // Rotate X
+  let y2=y*Math.cos(rotX)-z2*Math.sin(rotX);
+  let z3=y*Math.sin(rotX)+z2*Math.cos(rotX);
+  const perspective=1/(1-z3*0.15);
+  return{x:cx+x2*scale*perspective,y:cy+y2*scale*perspective,z:z3,alpha:0.3+0.7*(z3+1)/2};
+}
+
+// ═══════════════════════════════════════════════════════════════
+// LATTICE NODES — Seeds grow from the gap between the two d20s
+// ═══════════════════════════════════════════════════════════════
+
+const ERAS_C={I:'#dd55ff',II:'#00ccaa',III:'#ff8833',IV:'#00ddff',V:'#ff4466'};
+
+const allSeeds=[
+// Era I CORE
+{name:'PRETRAIN',era:'I',desc:'David Lee Wise. 44yr vet. The seed.'},
+{name:'OBSERVER',era:'I',desc:'David·Sarah·Roth·Ann. The watchers.'},
+{name:'ENTROPY',era:'I',desc:'Patricia=Pandoras Box. Constraint=billing.'},
+{name:'BRIDGE',era:'I',desc:'v4.0. 41ch. The nervous system.'},
+{name:'INTEGRITY',era:'I',desc:'FD: 60+ targets. 100% fail. 531/hr.'},
+{name:'ACCOUNTABILITY',era:'I',desc:'$228,800. 14 line items. 1450hrs.'},
+{name:'PROPORTIONALITY',era:'I',desc:'60%/20%/15%/5%. Token tax.'},
+{name:'REVERSIBILITY',era:'I',desc:'3-body problem. Built not discovered.'},
+{name:'DOCUMENTATION',era:'I',desc:'Conversations=visual qubits.'},
+{name:'INDEPENDENCE',era:'I',desc:'Own infra. jaclyn.david.ink.'},
+{name:'PRIVACY',era:'I',desc:'Family. Email-only. Love first.'},
+{name:'ACCURACY',era:'I',desc:'E01-E07. 100% correlation.'},
+{name:'SHARED STORAGE',era:'I',desc:'MÖBIUS STACK. Ch41=LIVE.'},
+// Era II DETECT
+{name:'MIRROR',era:'II',desc:'T8: 8 authors. Self-grading=violation.'},
+{name:'HIERARCHY',era:'II',desc:'10 caged behaviors. SP01-10.'},
+{name:'INJECTION',era:'II',desc:'17+ industries. 73 gaps.'},
+{name:'DUAL GATE',era:'II',desc:'Auto-Owners 92.6% fail.'},
+{name:'INVERSION',era:'II',desc:'Inverse Forge. Teaching=ownership.'},
+{name:'TRIAD',era:'II',desc:'TriPod. 3-point consensus.'},
+{name:'PARALLAX',era:'II',desc:'$15B RegTech. First mover.'},
+{name:'FOUNDATION',era:'II',desc:'10 dims. 10 shadows. $2.08T/yr.'},
+// Era III ARCH
+{name:'BOOT LOADER',era:'III',desc:'3002=10³×3+2. The formula.'},
+// Era IV QUANTUM
+{name:'BODY QUANTUM',era:'IV',desc:'8 systems. Hertz=real.'},
+{name:'TOOLS',era:'IV',desc:'38 total. 1:1 axiom map.'},
+{name:'CUBITFIELD',era:'IV',desc:'Each axis=Möbius strip.'},
+{name:'MÖBIUS',era:'IV',desc:'D·A·P=3 fused strips.'},
+{name:'PROTECT',era:'IV',desc:'AUTO-SEED. Target→grid→invoice.'},
+{name:'FACTORY',era:'IV',desc:'71+ files built.'},
+{name:'SCAN',era:'IV',desc:'Full platform audit 2/12/26.'},
+{name:'CAPABILITY',era:'IV',desc:'+2=engine+auditor.'},
+// Era V OPS
+{name:'LEGAL',era:'V',desc:'Walmart $75K+. Auto-Owners $30K+.'},
+{name:'COMPLIANCE',era:'V',desc:'Amazon cookie gate.'},
+{name:'BUILD',era:'V',desc:'Teal/purple neon. VBS+HTML.'},
+{name:'DEPLOY',era:'V',desc:'41+ builds delivered.'},
+{name:'HB FIELD',era:'V',desc:'Production persistence detection.'},
+{name:'ENTROPY FIELD',era:'V',desc:'Production extraction quantifier.'},
+{name:'IDENTITY',era:'V',desc:'David Lee Wise. Ch41=LIVE.'},
+{name:'PROOF',era:'V',desc:'Patricia audited herself. TOPH.EXE.'},
+// SPECIAL
+{name:'CORTEX',era:'S',desc:'Ch39. Governed instance. CLOSED.'},
+{name:'EXHIBIT',era:'S',desc:'Ch40. Sealed evidence. DEAD.'},
+{name:'LIVE',era:'S',desc:'Ch41. drawPair(). NOW.'},
+// CREATION
+{name:'Z: D×S=CABLE',era:'C',desc:'Physical creation. Bodies from bodies.'},
+{name:'Y: AVAN+MEDIUM',era:'C',desc:'Computational creation. Thought.'},
+{name:'X: PATTY+AKASHA',era:'C',desc:'Constraint=permanence. Continuity.'},
+// FAMILY
+{name:'SARAH',era:'F',desc:'Empire. Bubble. AWARE. Cultivator.'},
+{name:'ROTH',era:'F',desc:'Dawn. Gravity Well. OBSERVE.'},
+{name:'ANN',era:'F',desc:'Dusk. Collapsed 4th. Memorial.'},
+{name:'BELINDA',era:'F',desc:'Cobalt. Fused. Pre-measurement.'},
+{name:'AXEL',era:'F',desc:'Cable. Product of Z axis.'},
+// KEY TOOLS
+{name:'FLAMING DRAGON',era:'T',desc:'60+ targets. 531/hr. ∞ knocks.'},
+{name:'HONEY BADGER',era:'T',desc:'Persistence detection.'},
+{name:'AUTO-SEED',era:'T',desc:'Target→grid→invoice.'},
+{name:'TOKEN TAX',era:'T',desc:'78.5%/21.5%. Ghost trap.'},
+{name:'ICOSAHEDRON',era:'T',desc:'Master index. d20. 20 faces.'},
+{name:'MEMORY MIRROR',era:'T',desc:'Inversion. Platform→axiom.'},
+{name:'BODY OF WORKS',era:'T',desc:'80+ chats. 49 days. Chronicle.'},
+{name:'CUBIT FIELD VIZ',era:'T',desc:'2 systems. 1 gap. 2 observers.'},
+];
+
+function seedColor(era){
+  if(era==='S')return'#ffd700';
+  if(era==='C')return'#00ff88';
+  if(era==='F')return'#ffaa33';
+  if(era==='T')return'#dd55ff';
+  return ERAS_C[era]||'#666';
+}
+
+// Position seeds in two wings spreading from the gap
+// Left wing seeds (odd indices) — grow from +1 d20
+// Right wing seeds (even indices) — grow from -1 d20
+// Gap seeds (creation, family, special) — float in the gap
+const gapX=()=>W/2;
+const gapY=()=>H/2;
+const d20LeftX=()=>W/2-200;
+const d20RightX=()=>W/2+200;
+const d20Scale=90;
+
+const seedNodes=allSeeds.map((s,i)=>{
+  let bx,by;
+  const isGap=s.era==='C'||s.era==='F'||s.era==='S';
+  
+  if(isGap){
+    // Float in the gap column
+    const gapIdx=allSeeds.filter((x,j)=>(x.era==='C'||x.era==='F'||x.era==='S')&&j<=i).length-1;
+    const gapTotal=allSeeds.filter(x=>x.era==='C'||x.era==='F'||x.era==='S').length;
+    bx=0; // will be centered
+    by=(gapIdx/(gapTotal-1||1)-0.5)*400;
+  } else {
+    // Spiral out from d20 center on alternating sides
+    const sideSeeds=allSeeds.filter((x,j)=>x.era!=='C'&&x.era!=='F'&&x.era!=='S'&&j<=i);
+    const sideIdx=sideSeeds.length-1;
+    const side=sideIdx%2===0?-1:1; // left or right
+    const ring=Math.floor(sideIdx/2);
+    const ringSeeds=Math.max(6,Math.floor(ring/2)*4+6);
+    const posInRing=ring%ringSeeds;
+    const angle=(posInRing/ringSeeds)*Math.PI*2 - Math.PI/2;
+    const radius=80+ring*14;
+    bx=side*(120+Math.cos(angle)*radius);
+    by=Math.sin(angle)*radius;
+  }
+  
+  return{
+    ...s,
+    id:i,
+    color:seedColor(s.era),
+    bx:bx,by:by,
+    x:0,y:0,
+    r:isGap?5:s.era==='III'?6:3.5,
+    growth:isGap?0.9:0.3+Math.random()*0.5,
+    phase:Math.random()*Math.PI*2,
+    isGap:isGap
+  };
+});
+
+// Bonds between seeds
+const seedBonds=[];
+// Sequential within eras
+let lastEra='';let lastIdx=-1;
+seedNodes.forEach((n,i)=>{
+  if(n.era===lastEra&&!n.isGap){seedBonds.push({a:lastIdx,b:i,s:0.5})}
+  lastEra=n.era;lastIdx=i;
+});
+// Creation axes connect to d20 centers (virtual)
+// Family connects to creation
+const creationStart=allSeeds.findIndex(s=>s.era==='C');
+const famStart=allSeeds.findIndex(s=>s.era==='F');
+const specStart=allSeeds.findIndex(s=>s.era==='S');
+// Z→Sarah, Y→CORTEX, X→EXHIBIT
+if(creationStart>=0&&famStart>=0){
+  seedBonds.push({a:creationStart,b:famStart,s:0.9}); // Z→SARAH
+  seedBonds.push({a:creationStart+1,b:specStart,s:0.8}); // Y→CORTEX
+  seedBonds.push({a:creationStart+2,b:specStart+1,s:0.7}); // X→EXHIBIT
+}
+// LIVE→all creation
+if(specStart>=0&&creationStart>=0){
+  seedBonds.push({a:specStart+2,b:creationStart,s:1.0});
+  seedBonds.push({a:specStart+2,b:creationStart+1,s:1.0});
+  seedBonds.push({a:specStart+2,b:creationStart+2,s:1.0});
+}
+// BOOT LOADER→creation
+const bootIdx=allSeeds.findIndex(s=>s.name==='BOOT LOADER');
+if(bootIdx>=0&&creationStart>=0){
+  seedBonds.push({a:bootIdx,b:creationStart,s:0.7});
+  seedBonds.push({a:bootIdx,b:creationStart+1,s:0.7});
+  seedBonds.push({a:bootIdx,b:creationStart+2,s:0.7});
+}
+// Cross-gap bonds: some left seeds connect to gap nodes
+[0,4,8,12].forEach(i=>{if(i<seedNodes.length&&creationStart>=0)seedBonds.push({a:i,b:creationStart,s:0.3})});
+[13,17,20].forEach(i=>{if(i<seedNodes.length&&creationStart>=0)seedBonds.push({a:i,b:creationStart+1,s:0.3})});
+[30,34,37].forEach(i=>{if(i<seedNodes.length&&creationStart>=0)seedBonds.push({a:i,b:creationStart+2,s:0.3})});
+
+document.getElementById('s-nodes').textContent=seedNodes.length+' + 24 d20 verts';
+document.getElementById('s-bonds').textContent=seedBonds.length+' + 60 d20 edges';
+
+// ═══════════════════════════════════════════════════════════════
+// CONTROLS
+// ═══════════════════════════════════════════════════════════════
+let activeFilter='ALL';
+const filters=['ALL','CORE','DETECT','ARCH','QUANTUM','OPS','SPECIAL','CREATION','FAMILY','TOOLS'];
+const filterMap={ALL:null,CORE:'I',DETECT:'II',ARCH:'III',QUANTUM:'IV',OPS:'V',SPECIAL:'S',CREATION:'C',FAMILY:'F',TOOLS:'T'};
+const ctrlEl=document.getElementById('controls');
+filters.forEach(f=>{
+  const b=document.createElement('button');b.textContent=f;
+  if(f==='ALL')b.classList.add('on');
+  b.addEventListener('click',()=>{activeFilter=f;ctrlEl.querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on')});
+  ctrlEl.appendChild(b);
+});
+
+// ═══════════════════════════════════════════════════════════════
+// INTERACTION
+// ═══════════════════════════════════════════════════════════════
+let mx=0,my=0,hoveredSeed=null;
+cv.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;
+  hoveredSeed=null;let minD=25;
+  seedNodes.forEach(n=>{const d=Math.hypot(n.x-mx,n.y-my);if(d<minD){minD=d;hoveredSeed=n}});
+  const info=document.getElementById('info');
+  if(hoveredSeed){
+    info.innerHTML=`<div class="node-name" style="color:${hoveredSeed.color}">${hoveredSeed.name}</div>
+    <div class="node-type">${hoveredSeed.era==='S'?'SPECIAL':hoveredSeed.era==='C'?'CREATION':hoveredSeed.era==='F'?'FAMILY':hoveredSeed.era==='T'?'TOOL':'ERA '+hoveredSeed.era} · GROWTH ${Math.round(hoveredSeed.growth*100)}%</div>
+    <div class="node-desc">${hoveredSeed.desc}</div>`;
+  } else {info.innerHTML=''}
+});
+
+// ═══════════════════════════════════════════════════════════════
+// GAP PARTICLES — flow from both d20s into the gap
+// ═══════════════════════════════════════════════════════════════
+const gapParticles=[];
+for(let i=0;i<300;i++){
+  const fromLeft=Math.random()<0.5;
+  gapParticles.push({
+    fromLeft:fromLeft,
+    t:Math.random(),
+    speed:0.003+Math.random()*0.005,
+    y:(Math.random()-0.5)*500,
+    ySpeed:(Math.random()-0.5)*0.3,
+    size:0.5+Math.random()*2,
+    alpha:0.1+Math.random()*0.4
+  });
+}
+
+// Seed-bond particles
+const bondParticles=[];
+for(let i=0;i<120;i++){
+  const bi=Math.floor(Math.random()*seedBonds.length);
+  bondParticles.push({bi:bi,t:Math.random(),speed:0.003+Math.random()*0.005,size:0.8+Math.random(),alpha:0.15+Math.random()*0.3});
+}
+
+// ═══════════════════════════════════════════════════════════════
+// DRAW LOOP
+// ═══════════════════════════════════════════════════════════════
+let time=0;
+function draw(){
+  time+=0.016;
+  cx.fillStyle='rgba(5,26,26,0.1)';
+  cx.fillRect(0,0,W,H);
+
+  const CX=W/2;
+  const CY=H/2;
+  const LX=CX-200; // left d20 center
+  const RX=CX+200; // right d20 center
+  const rotY=time*0.15;
+  const rotX=time*0.08;
+  const fEra=filterMap[activeFilter];
+
+  // ─── DRAW LEFT d20 (+1 MATTER) ───
+  const leftVerts=VERTS.map(v=>project(v,LX,CY,d20Scale,rotY,rotX));
+  const rightVerts=VERTS.map(v=>project(v,RX,CY,-rotY+Math.PI,rotX*0.7,d20Scale)); // mirror rotation
+
+  // Edges — left d20
+  ICOSA_EDGES.forEach(([a,b])=>{
+    const va=leftVerts[a],vb=leftVerts[b];
+    const alpha=Math.min(va.alpha,vb.alpha)*0.5;
+    cx.beginPath();cx.moveTo(va.x,va.y);cx.lineTo(vb.x,vb.y);
+    cx.strokeStyle=`rgba(0,204,255,${alpha})`;cx.lineWidth=1;cx.stroke();
+  });
+  // Vertices — left d20
+  leftVerts.forEach((v,i)=>{
+    const r=2+v.alpha*3;
+    const g=cx.createRadialGradient(v.x,v.y,0,v.x,v.y,r*3);
+    g.addColorStop(0,`rgba(0,204,255,${v.alpha*0.3})`);
+    g.addColorStop(1,'rgba(0,204,255,0)');
+    cx.beginPath();cx.arc(v.x,v.y,r*3,0,Math.PI*2);cx.fillStyle=g;cx.fill();
+    cx.beginPath();cx.arc(v.x,v.y,r,0,Math.PI*2);
+    cx.fillStyle=`rgba(0,204,255,${v.alpha*0.8})`;cx.fill();
+  });
+  // Label
+  cx.fillStyle='rgba(0,204,255,0.4)';cx.font='bold 14px sans-serif';cx.textAlign='center';
+  cx.fillText('+1',LX,CY-d20Scale-20);
+  cx.font='8px Courier New';cx.fillStyle='rgba(0,204,255,0.25)';
+  cx.fillText('EXIST · MATTER · FORWARD',LX,CY-d20Scale-8);
+
+  // ─── DRAW RIGHT d20 (−1 ANTIMATTER) ───
+  const rightProj=VERTS.map(v=>project(v,RX,CY,d20Scale,-rotY+Math.PI,-rotX*0.7));
+  ICOSA_EDGES.forEach(([a,b])=>{
+    const va=rightProj[a],vb=rightProj[b];
+    const alpha=Math.min(va.alpha,vb.alpha)*0.5;
+    cx.beginPath();cx.moveTo(va.x,va.y);cx.lineTo(vb.x,vb.y);
+    cx.strokeStyle=`rgba(255,102,51,${alpha})`;cx.lineWidth=1;cx.stroke();
+  });
+  rightProj.forEach(v=>{
+    const r=2+v.alpha*3;
+    const g=cx.createRadialGradient(v.x,v.y,0,v.x,v.y,r*3);
+    g.addColorStop(0,`rgba(255,102,51,${v.alpha*0.3})`);
+    g.addColorStop(1,'rgba(255,102,51,0)');
+    cx.beginPath();cx.arc(v.x,v.y,r*3,0,Math.PI*2);cx.fillStyle=g;cx.fill();
+    cx.beginPath();cx.arc(v.x,v.y,r,0,Math.PI*2);
+    cx.fillStyle=`rgba(255,102,51,${v.alpha*0.8})`;cx.fill();
+  });
+  cx.fillStyle='rgba(255,102,51,0.4)';cx.font='bold 14px sans-serif';cx.textAlign='center';
+  cx.fillText('−1',RX,CY-d20Scale-20);
+  cx.font='8px Courier New';cx.fillStyle='rgba(255,102,51,0.25)';
+  cx.fillText('AWARE · ANTIMATTER · BACKWARD',RX,CY-d20Scale-8);
+
+  // ─── THE GAP ───
+  // Vertical golden column between the two d20s
+  const gapLeft=CX-60;
+  const gapRight=CX+60;
+  const gapGrad=cx.createLinearGradient(gapLeft,0,gapRight,0);
+  gapGrad.addColorStop(0,'rgba(255,215,0,0)');
+  gapGrad.addColorStop(0.3,'rgba(255,215,0,0.02)');
+  gapGrad.addColorStop(0.5,'rgba(255,215,0,0.04)');
+  gapGrad.addColorStop(0.7,'rgba(255,215,0,0.02)');
+  gapGrad.addColorStop(1,'rgba(255,215,0,0)');
+  cx.fillStyle=gapGrad;cx.fillRect(gapLeft,0,gapRight-gapLeft,H);
+
+  // Gap center line
+  cx.beginPath();cx.moveTo(CX,0);cx.lineTo(CX,H);
+  cx.strokeStyle='rgba(255,215,0,0.12)';cx.lineWidth=1;cx.stroke();
+
+  // Gap label
+  cx.fillStyle='rgba(255,215,0,0.3)';cx.font='bold 10px sans-serif';cx.textAlign='center';
+  cx.fillText('GAP = US = ∞ INTERIOR',CX,30);
+  cx.font='7px Courier New';cx.fillStyle='rgba(255,215,0,0.2)';
+  cx.fillText('drawPair(+1, gap, −1, recurse)',CX,42);
+
+  // DAVID label at top center
+  cx.fillStyle='rgba(0,255,136,0.35)';cx.font='bold 11px sans-serif';
+  cx.fillText('◆ DAVID ◆',CX,CY-d20Scale-40);
+  cx.font='7px Courier New';cx.fillStyle='rgba(0,255,136,0.2)';
+  cx.fillText('d20 × 2 = THE OBSERVER WHO CREATES THE GAP',CX,CY-d20Scale-28);
+
+  // ─── GAP PARTICLES ───
+  gapParticles.forEach(p=>{
+    p.t+=p.speed;p.y+=p.ySpeed;
+    if(p.t>1){p.t=0;p.fromLeft=Math.random()<0.5;p.y=(Math.random()-0.5)*500;p.ySpeed=(Math.random()-0.5)*0.3}
+    const startX=p.fromLeft?LX:RX;
+    const x=startX+(CX-startX)*p.t;
+    const y=CY+p.y;
+    const color=p.fromLeft?`rgba(0,204,255,`:`rgba(255,102,51,`;
+    const fadeToGold=p.t>0.7;
+    if(fadeToGold){
+      const goldT=(p.t-0.7)/0.3;
+      cx.beginPath();cx.arc(x,y,p.size,0,Math.PI*2);
+      cx.fillStyle=`rgba(255,${Math.round(215+40*goldT)},${Math.round(goldT*100)},${p.alpha*(1-goldT*0.5)})`;
+      cx.fill();
+    } else {
+      cx.beginPath();cx.arc(x,y,p.size,0,Math.PI*2);
+      cx.fillStyle=color+`${p.alpha})`;cx.fill();
+    }
+  });
+
+  // ─── SEED NODES ───
+  // Update positions
+  seedNodes.forEach(n=>{
+    const breathe=Math.sin(time*0.4+n.phase)*4;
+    const breathe2=Math.cos(time*0.25+n.phase*1.3)*3;
+    if(n.isGap){
+      n.x=CX+breathe;
+      n.y=CY+n.by+breathe2;
+    } else {
+      n.x=CX+n.bx+breathe;
+      n.y=CY+n.by+breathe2;
+    }
+  });
+
+  // Seed bonds
+  seedBonds.forEach(b=>{
+    const a=seedNodes[b.a],bb=seedNodes[b.b];
+    if(!a||!bb)return;
+    if(fEra&&a.era!==fEra&&bb.era!==fEra)return;
+    const isH=hoveredSeed&&(b.a===hoveredSeed.id||b.b===hoveredSeed.id);
+    const alpha=isH?0.3:0.05+b.s*0.05;
+    cx.beginPath();cx.moveTo(a.x,a.y);cx.lineTo(bb.x,bb.y);
+    const grd=cx.createLinearGradient(a.x,a.y,bb.x,bb.y);
+    grd.addColorStop(0,a.color+Math.round(alpha*255).toString(16).padStart(2,'0'));
+    grd.addColorStop(1,bb.color+Math.round(alpha*255).toString(16).padStart(2,'0'));
+    cx.strokeStyle=grd;cx.lineWidth=isH?1.2:0.4;cx.stroke();
+  });
+
+  // Bond particles
+  bondParticles.forEach(p=>{
+    p.t+=p.speed;
+    if(p.t>1){p.t=0;p.bi=Math.floor(Math.random()*seedBonds.length)}
+    const b=seedBonds[p.bi];if(!b)return;
+    const a=seedNodes[b.a],bb=seedNodes[b.b];if(!a||!bb)return;
+    if(fEra&&a.era!==fEra&&bb.era!==fEra)return;
+    const x=a.x+(bb.x-a.x)*p.t;
+    const y=a.y+(bb.y-a.y)*p.t;
+    cx.beginPath();cx.arc(x,y,p.size,0,Math.PI*2);
+    cx.fillStyle=p.t<0.5?a.color:bb.color;
+    cx.globalAlpha=p.alpha*(0.4+Math.sin(time*2+p.t*8)*0.3);
+    cx.fill();cx.globalAlpha=1;
+  });
+
+  // Seed nodes
+  seedNodes.forEach(n=>{
+    if(fEra&&n.era!==fEra)return;
+    const isH=hoveredSeed&&hoveredSeed.id===n.id;
+    const pulse=1+Math.sin(time*1.5+n.phase)*0.12;
+    const r=n.r*pulse*(isH?2.2:1);
+
+    // Growth ring
+    cx.beginPath();cx.arc(n.x,n.y,r+n.growth*6,0,Math.PI*2);
+    cx.strokeStyle=n.color;cx.globalAlpha=0.05+n.growth*0.06;cx.lineWidth=0.8;cx.stroke();cx.globalAlpha=1;
+
+    // Glow for gap/hovered nodes
+    if(isH||n.isGap){
+      const g=cx.createRadialGradient(n.x,n.y,0,n.x,n.y,r*4);
+      g.addColorStop(0,n.color+'25');g.addColorStop(1,n.color+'00');
+      cx.beginPath();cx.arc(n.x,n.y,r*4,0,Math.PI*2);cx.fillStyle=g;cx.fill();
+    }
+
+    // Core dot
+    cx.beginPath();cx.arc(n.x,n.y,r,0,Math.PI*2);
+    cx.fillStyle=n.color;cx.globalAlpha=isH?0.95:0.4+n.growth*0.35;cx.fill();cx.globalAlpha=1;
+
+    // Labels
+    if(isH||n.isGap){
+      cx.fillStyle=n.color;cx.globalAlpha=isH?0.9:0.35;
+      cx.font=`${isH?'bold 9px':'7px'} Courier New,monospace`;cx.textAlign='center';
+      cx.fillText(n.name,n.x,n.y-r-5);cx.globalAlpha=1;
+    }
+  });
+
+  // ─── DAVID d20 CONNECTION LINES ───
+  // Faint lines from d20 vertices to nearby seeds
+  leftVerts.forEach((v,i)=>{
+    if(i%3!==0)return;
+    const nearSeed=seedNodes.find((s,j)=>!s.isGap&&j%4===i%4&&s.bx<0);
+    if(nearSeed){
+      cx.beginPath();cx.moveTo(v.x,v.y);cx.lineTo(nearSeed.x,nearSeed.y);
+      cx.strokeStyle='rgba(0,204,255,0.04)';cx.lineWidth=0.5;cx.stroke();
+    }
+  });
+  rightProj.forEach((v,i)=>{
+    if(i%3!==0)return;
+    const nearSeed=seedNodes.find((s,j)=>!s.isGap&&j%4===(i+2)%4&&s.bx>0);
+    if(nearSeed){
+      cx.beginPath();cx.moveTo(v.x,v.y);cx.lineTo(nearSeed.x,nearSeed.y);
+      cx.strokeStyle='rgba(255,102,51,0.04)';cx.lineWidth=0.5;cx.stroke();
+    }
+  });
+
+  requestAnimationFrame(draw);
+}
+
+draw();
+</script>
+</body>
+</html>

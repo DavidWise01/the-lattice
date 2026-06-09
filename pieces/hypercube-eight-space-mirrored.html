@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>8-Space, Honestly · two mirrored tesseracts</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{--paper:#0a0a12;--cardsolid:#13131f;--ink:#ece8f5;--dim:#8a85a3;--glow:#6de0d0;--blue:#6d8cff;--green:#9be86a;--orange:#ffb347;--rose:#ff5d8f;--lilac:#c08cff;--violet:#9b6cff;--line:rgba(155,108,255,0.2);}
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0;color:var(--ink);background-color:var(--paper);background-image:radial-gradient(circle at 50% -10%, #1a1430 0%, #08080f 65%);background-attachment:fixed;font-family:"Newsreader",Georgia,serif;line-height:1.55;}
+  .wrap{max-width:1040px;margin:0 auto;padding:26px 20px 60px;}
+  ::selection{background:var(--violet);color:#0a0a12;}
+  .kick{font-family:"Space Mono",monospace;font-size:11px;letter-spacing:0.24em;text-transform:uppercase;color:var(--violet);}
+  h1{font-family:"Cinzel";font-weight:800;font-size:clamp(26px,5vw,46px);line-height:1.02;letter-spacing:0.01em;text-transform:uppercase;margin:8px 0 0;}
+  h1 em{font-style:normal;color:var(--glow);text-shadow:0 0 16px rgba(109,224,208,0.5);}
+  .stamp{display:inline-block;font-family:"Space Mono",monospace;font-size:10.5px;letter-spacing:0.09em;text-transform:uppercase;color:var(--orange);border:1px dashed var(--orange);padding:4px 11px;margin-top:12px;}
+  .dek{font-size:clamp(15px,2vw,17px);max-width:690px;margin:14px 0 0;color:#cfc9e0;}
+  .dek b{color:var(--glow);}
+  .controls{display:flex;flex-wrap:wrap;gap:9px;align-items:center;margin-top:16px;}
+  .btn{font-family:"Space Mono",monospace;font-size:12.5px;font-weight:700;color:var(--ink);background:#1d1730;border:1px solid var(--line);padding:7px 12px;cursor:pointer;border-radius:3px;transition:all .12s ease;}
+  .btn:hover{background:var(--violet);color:#0a0a12;} .btn.on{background:var(--glow);color:#0a0a12;}
+  .slab{font-family:"Space Mono",monospace;font-size:10.5px;letter-spacing:0.06em;text-transform:uppercase;color:var(--dim);}
+  .slider{accent-color:var(--orange);width:120px;vertical-align:middle;}
+  .panel{border:1px solid var(--line);background:var(--cardsolid);padding:15px 16px;margin-top:14px;}
+  .panel h2{font-family:"Cinzel";font-weight:700;font-size:13px;letter-spacing:0.06em;text-transform:uppercase;color:var(--glow);margin:0 0 4px;}
+  .panel .sub{font-family:"Space Mono",monospace;font-size:10.5px;color:var(--dim);margin-bottom:6px;}
+  .svgbox{display:flex;justify-content:center;align-items:center;}
+  .splitlbl{display:flex;justify-content:space-around;font-family:"Space Mono",monospace;font-size:11px;color:var(--dim);margin-top:2px;}
+  .splitlbl b{color:var(--glow);} .splitlbl .m{color:var(--lilac);}
+  /* ladder */
+  .ladder{display:flex;align-items:center;flex-wrap:wrap;gap:4px;margin-top:6px;}
+  .rung{border:1px solid var(--line);background:#120c1e;border-radius:5px;padding:8px 11px;text-align:center;flex:1;min-width:74px;}
+  .rung .sym{font-family:"Cinzel";font-weight:800;font-size:20px;color:var(--glow);}
+  .rung .dim{font-family:"Space Mono",monospace;font-size:10px;color:#aab6c8;margin-top:1px;}
+  .rung .lose{font-family:"Space Mono",monospace;font-size:8.5px;color:var(--orange);margin-top:3px;line-height:1.3;}
+  .rung.fade{opacity:0.42;border-style:dashed;}
+  .rung.fade .sym{color:var(--dim);}
+  .step{font-family:"Space Mono",monospace;font-size:9px;color:var(--violet);text-align:center;flex:0 0 auto;width:46px;line-height:1.3;}
+  /* scorecard */
+  .score{list-style:none;padding:0;margin:0;}
+  .score li{display:flex;gap:10px;padding:9px 0;border-bottom:1px solid var(--line);font-size:13.5px;color:#c8c2da;}
+  .score li:last-child{border-bottom:none;}
+  .score .mk{font-family:"Space Mono",monospace;font-weight:700;font-size:15px;flex:0 0 auto;width:18px;text-align:center;}
+  .score .yes{color:var(--glow);} .score .no{color:var(--rose);}
+  .score b{color:var(--ink);} .score .g{color:var(--glow);} .score .o{color:var(--orange);}
+  .verdict{font-family:"Space Mono",monospace;font-size:12.5px;color:var(--violet);margin-top:12px;line-height:1.7;border-top:1px dashed var(--line);padding-top:10px;}
+  .verdict b{color:var(--glow);}
+  .cols{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px;}
+  @media (max-width:680px){.cols{grid-template-columns:1fr;}}
+  .mini{border:1px solid var(--line);background:var(--cardsolid);padding:14px 16px;}
+  .mini h3{font-family:"Cinzel";font-weight:700;font-size:14px;color:var(--violet);margin:0 0 8px;}
+  .mini p{font-size:13.5px;margin:0 0 8px;color:#c8c2da;} .mini p:last-child{margin-bottom:0;} .mini b{color:var(--glow);}
+  .foot{border-top:1px dashed var(--line);margin-top:22px;padding-top:14px;font-family:"Space Mono",monospace;font-size:11.5px;color:var(--dim);line-height:1.7;}
+  .foot b{color:var(--orange);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <span class="kick">8-space, honestly · two mirrored tesseracts · how close you were</span>
+  <h1>The 4D Thing, <em>Doubled &amp; Mirrored</em></h1>
+  <div class="stamp">your headline was wrong — the deep structure you reached for is real</div>
+  <div class="dek">Eight-space doesn't have "twice the planes." But it <b>does</b> split cleanly into two four-dimensional blocks — <b>ℝ⁸ = ℝ⁴ ⊕ ℝ⁴</b> — and one can be the mirror of the other. Here are those two tesseract-worlds, counter-rotating, one reflected. Then the scorecard on exactly how close your instinct landed.</div>
+
+  <div class="controls">
+    <button class="btn on" id="playBtn">⏸ motion</button>
+    <button class="btn on" id="mirrorBtn">mirror: on</button>
+    <button class="btn on" id="invBtn">inverse spin: on</button>
+    <span class="slab">spin</span><input type="range" min="0.2" max="2.2" step="0.1" value="1" class="slider" id="speed">
+  </div>
+
+  <div class="panel">
+    <h2>ℝ⁸ = ℝ⁴ ⊕ ℝ⁴ — two 4-blocks of 8-space</h2>
+    <div class="sub">two independent 4D rotors (SO(4)×SO(4) ⊂ SO(8)) · right one mirrored &amp; inverse</div>
+    <div class="svgbox">
+      <svg id="scene" width="100%" viewBox="0 0 460 360" style="max-width:560px" aria-label="two mirror-image tesseracts counter-rotating">
+        <line x1="230" y1="40" x2="230" y2="320" stroke="#2a3550" stroke-width="1" stroke-dasharray="3 5"/>
+        <g id="edgesL"></g><g id="vertsL"></g><circle id="cL" r="5" fill="#9b6cff"/>
+        <g id="edgesR"></g><g id="vertsR"></g><circle id="cR" r="5" fill="#9b6cff"/>
+      </svg>
+    </div>
+    <div class="splitlbl"><span>block A · <b>first 4 coords</b></span><span class="m">block B · mirror (conjugate)</span></div>
+  </div>
+
+  <div class="panel">
+    <h2>How 8-space is actually built — the doubling ladder</h2>
+    <div class="sub">Cayley–Dickson: each step doubles the last, using a conjugation (a mirror)</div>
+    <div class="ladder">
+      <div class="rung"><div class="sym">ℝ</div><div class="dim">dim 1</div><div class="lose">real</div></div>
+      <div class="step">×2<br>+conj</div>
+      <div class="rung"><div class="sym">ℂ</div><div class="dim">dim 2</div><div class="lose">complex</div></div>
+      <div class="step">×2<br>+conj</div>
+      <div class="rung"><div class="sym">ℍ</div><div class="dim">dim 4</div><div class="lose">−commute</div></div>
+      <div class="step">×2<br>+conj</div>
+      <div class="rung" style="border-color:var(--glow);"><div class="sym" style="color:var(--orange)">𝕆</div><div class="dim">dim 8</div><div class="lose">−associate</div></div>
+      <div class="step">×2<br>+conj</div>
+      <div class="rung fade"><div class="sym">𝕊</div><div class="dim">dim 16</div><div class="lose">mirror breaks: zero divisors</div></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <h2>How close you were</h2>
+    <div class="sub">your guess: "8-space = the 4D thing, inversed / mirrored, ×2"</div>
+    <ul class="score">
+      <li><span class="mk yes">✓</span><span><b>Simultaneous spins double.</b> The most planes that can turn at once is ⌊n/2⌋ — <span class="g">4D: 2</span>, <span class="g">8D: 4</span>. Exactly twice. (3D is 1 — that's why the NASA chair always has a fixed axis.)</span></li>
+      <li><span class="mk yes">✓</span><span><b>Two mirrored 4-blocks.</b> ℝ⁸ = ℝ⁴ ⊕ ℝ⁴, and <span class="g">SO(4)×SO(4) ⊂ SO(8)</span> — two tesseract-rotors, one free to be the mirror of the other. That's the picture above.</span></li>
+      <li><span class="mk yes">✓</span><span><b>Built by doubling with a mirror.</b> The 8D <span class="g">octonions are the 4D quaternions doubled with a conjugation</span> (Cayley–Dickson). This is almost word-for-word your phrasing.</span></li>
+      <li><span class="mk no">✗</span><span><b>The plane count doesn't double.</b> Total rotation planes = C(n,2): <span class="o">4D has 6, 8D has 28</span> — not 12. The ladder is 3, 6, 10, 15, 21, 28.</span></li>
+    </ul>
+    <div class="verdict">verdict: <b>wrong on the headline, right on the bones.</b> "Twice the planes" misses (28, not 12) — but "the 4D thing, doubled and mirrored" is <b>literally how mathematicians build 8-space</b> from 4-space. You reached for Cayley–Dickson without the name. lol — closer than most.</div>
+  </div>
+
+  <div class="cols">
+    <div class="mini">
+      <h3>Why 8 is the sweet spot</h3>
+      <p>Each doubling costs a property: complex → quaternions loses <b>commuting</b> (a·b ≠ b·a), quaternions → octonions loses <b>associativity</b>.</p>
+      <p>At <b>8</b> you still have a division algebra — the last one. Double again to 16 (<b>sedenions</b>) and the mirror finally breaks: you get "zero divisors," nonzero things that multiply to zero. That's why 8D is special — octonions, E₈, triality all live there.</p>
+    </div>
+    <div class="mini">
+      <h3>Why not a full 8-cube?</h3>
+      <p>A true 8-cube has <b>256 vertices and 1024 edges</b> — projected to a screen it's genuine steel wool, unreadable. I can build it if you want the hairball.</p>
+      <p>The <b>4 ⊕ 4 mirror pair</b> above is the honest, legible way to show 8-space's structure — it's a real subspace decomposition, not a cartoon. It shows the doubling without the mess.</p>
+    </div>
+  </div>
+
+  <div class="foot">
+    <b>Honest footing.</b> The 4 ⊕ 4 split (SO(4)×SO(4) ⊂ SO(8)) and the Cayley–Dickson doubling (ℝ→ℂ→ℍ→𝕆→𝕊) are real, standard mathematics. The two tesseracts depict that block structure faithfully; the visual mirror/inversion echoes the <b>conjugation</b> that the doubling actually uses — an honest illustration, not a literal claim that one block is the spatial reflection of the other. This is the 4-block view of 8-space, not a full 8-cube.
+  </div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const ST={speed:1,playing:true,mirror:true,inv:true};
+function rotX(p,a){const c=Math.cos(a),s=Math.sin(a);return[p[0],c*p[1]-s*p[2],s*p[1]+c*p[2]];}
+function rotY(p,a){const c=Math.cos(a),s=Math.sin(a);return[c*p[0]+s*p[2],p[1],-s*p[0]+c*p[2]];}
+function rot4(p,i,j,a){const c=Math.cos(a),s=Math.sin(a);const q=p.slice();q[i]=c*p[i]-s*p[j];q[j]=s*p[i]+c*p[j];return q;}
+const V=[];for(let k=0;k<16;k++)V.push([(k&1)?1:-1,(k&2)?1:-1,(k&4)?1:-1,(k&8)?1:-1]);
+const E=[];for(let i=0;i<16;i++)for(let j=i+1;j<16;j++){let x=i^j;if(x&&(x&(x-1))===0)E.push([i,j]);}
+const RS=44,PERSP=2.7,CY=180;
+function lerp(a,b,t){return a+(b-a)*t;}
+function wColor(w){const t=Math.max(0,Math.min(1,(w+1.5)/3));return `rgb(${Math.round(lerp(60,120,t))},${Math.round(lerp(78,150,t))},${Math.round(lerp(120,165,t))})`;}
+// project one tesseract at center cx, with rotation angle set, optional mirror
+function projVerts(ang, cx, mirror){
+  return V.map(v=>{
+    let p=rot4(v,0,3,ang.a);p=rot4(p,2,3,ang.b);p=rot4(p,0,1,ang.c);
+    const f=PERSP/(PERSP-p[3]);let q=rotY([p[0]*f,p[1]*f,p[2]*f],0.6);q=rotX(q,0.45);
+    let sx=cx+q[0]*RS, sy=CY-q[1]*RS;
+    if(mirror)sx=cx-q[0]*RS;
+    return{s:[sx,sy],w:p[3]};
+  });
+}
+function drawTess(prefix, ang, cx, mirror){
+  const P=projVerts(ang,cx,mirror);
+  let e='';for(const[i,j]of E){const wa=(P[i].w+P[j].w)/2;const t=Math.max(0,Math.min(1,(wa+1.5)/3));e+=`<line x1="${P[i].s[0].toFixed(1)}" y1="${P[i].s[1].toFixed(1)}" x2="${P[j].s[0].toFixed(1)}" y2="${P[j].s[1].toFixed(1)}" stroke="${wColor(wa)}" stroke-width="${lerp(0.8,1.6,t).toFixed(2)}" opacity="${lerp(0.18,0.8,t).toFixed(2)}" stroke-linecap="round"/>`;}
+  $('edges'+prefix).innerHTML=e;
+  let vv='';for(let k=0;k<16;k++){const t=Math.max(0,Math.min(1,(P[k].w+1.5)/3));vv+=`<circle cx="${P[k].s[0].toFixed(1)}" cy="${P[k].s[1].toFixed(1)}" r="${lerp(1.5,2.6,t).toFixed(1)}" fill="${wColor(P[k].w)}" opacity="${lerp(0.45,1,t).toFixed(2)}"/>`;}
+  $('verts'+prefix).innerHTML=vv;
+  const c=projVerts({a:0,b:0,c:0},cx,mirror); // center is origin
+  $(prefix==='L'?'cL':'cR').setAttribute('cx',cx);$(prefix==='L'?'cL':'cR').setAttribute('cy',CY);
+}
+const angA={a:0,b:0,c:0};
+const reduced=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+function frame(){
+  if(ST.playing){angA.a+=0.011*ST.speed;angA.b+=0.008*ST.speed;angA.c+=0.006*ST.speed;}
+  const angB=ST.inv?{a:-angA.a,b:-angA.b,c:-angA.c}:{a:angA.a,b:angA.b,c:angA.c};
+  drawTess('L',angA,130,false);
+  drawTess('R',angB,330,ST.mirror);
+  if(!reduced)requestAnimationFrame(frame);
+}
+$('playBtn').onclick=()=>{ST.playing=!ST.playing;$('playBtn').textContent=ST.playing?'⏸ motion':'▸ motion';$('playBtn').classList.toggle('on',ST.playing);};
+$('mirrorBtn').onclick=()=>{ST.mirror=!ST.mirror;$('mirrorBtn').textContent='mirror: '+(ST.mirror?'on':'off');$('mirrorBtn').classList.toggle('on',ST.mirror);if(!ST.playing)frame();};
+$('invBtn').onclick=()=>{ST.inv=!ST.inv;$('invBtn').textContent='inverse spin: '+(ST.inv?'on':'off');$('invBtn').classList.toggle('on',ST.inv);if(!ST.playing)frame();};
+$('speed').oninput=e=>{ST.speed=+e.target.value;};
+if(reduced){angA.a=0.6;angA.b=0.4;angA.c=0.2;ST.playing=false;$('playBtn').textContent='▸ motion';$('playBtn').classList.remove('on');frame();}
+else{requestAnimationFrame(frame);}
+</script>
+</body>
+</html>

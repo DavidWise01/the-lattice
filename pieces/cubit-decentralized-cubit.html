@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Decentralized Personal Tuning</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root { color-scheme: dark; }
+  body { font-family: 'IBM Plex Mono', ui-monospace, monospace; background: radial-gradient(1200px 800px at 50% -10%, #04210f 0%, #000 40%, #000 100%); }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes flow { from { left: -6rem; } to { left: 100%; } }
+  @keyframes pulse2 { 0%,40%{ opacity:1; box-shadow:0 0 10px currentColor } 41%,100%{ opacity:.25; box-shadow:0 0 0px currentColor } }
+  @keyframes pulse3 { 0%,60%{ opacity:1; box-shadow:0 0 10px currentColor } 61%,100%{ opacity:.25; box-shadow:0 0 0px currentColor } }
+  @keyframes gate { 0%,100%{ opacity:.5; transform:scale(1) } 50%{ opacity:1; transform:scale(1.2) } }
+  .torus-ring { filter: drop-shadow(0 0 30px #0a5); }
+  .tritrit { position: relative; }
+  .tritrit::after { content: attr(data-label); position: absolute; bottom:-18px; left:50%; transform:translateX(-50%); font-size:9px; letter-spacing:0.1em; color:#4ade80; opacity:.65; }
+  .crt::before { content:""; position:fixed; inset:0; background: repeating-linear-gradient(transparent 0 2px, rgba(0,255,100,.03) 2px 3px); pointer-events:none; z-index:50; }
+  input[type=range] { -webkit-appearance:none; height:4px; background:#052e16; border-radius:2px; }
+  input[type=range]::-webkit-slider-thumb { -webkit-appearance:none; width:14px; height:14px; border-radius:50%; background:#22c55e; box-shadow:0 0 8px #22c55e; cursor:pointer; border:1px solid #000; }
+</style>
+</head>
+<body class="text-green-400 min-h-screen flex flex-col crt selection:bg-green-500/20">
+  <header class="border-b border-green-900/30 bg-black/60 backdrop-blur sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+        <h1 class="text-[13px] sm:text-sm tracking-[0.25em] text-green-300">DECENTRALIZED PERSONAL TUNING</h1>
+      </div>
+      <div class="text-[10px] tracking-widest text-green-700/70 hidden sm:block">TRITRIT // ANSIBLE</div>
+    </div>
+  </header>
+
+  <main class="flex-1 w-full max-w-7xl mx-auto px-4 py-6 lg:py-10">
+    <div class="grid grid-cols-1 lg:grid-cols-[1.1fr_auto_1fr] gap-8 lg:gap-4 items-center">
+      <!-- LEFT: CENTRAL MODEL -->
+      <section class="flex flex-col items-center">
+        <h2 class="text-xs tracking-[0.35em] text-green-500/80 mb-4">CENTRAL MODEL</h2>
+        <div class="relative w-[280px] h-[280px] sm:w-[340px] sm:h-[340px]">
+          <div class="absolute inset-0 rounded-full bg-green-500/5 blur-[80px]"></div>
+          <!-- fractal inside -->
+          <canvas id="fractal" width="280" height="280" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[210px] h-[210px] sm:w-[250px] sm:h-[250px] rounded-full"></canvas>
+          <!-- toroidal ring -->
+          <div class="absolute inset-0 rounded-full torus-ring" style="background: conic-gradient(from 0deg, #001a00, #16a34a, #022c02, #16a34a, #001a00); padding:14px; -webkit-mask:radial-gradient(farthest-side, transparent calc(100% - 14px), #000 calc(100% - 13px)); mask:radial-gradient(farthest-side, transparent calc(100% - 14px), #000 calc(100% - 13px)); animation: spin 28s linear infinite;"></div>
+          <div class="absolute inset-0 rounded-full" style="border:14px solid rgba(34,197,94,.08); filter:blur(2px);"></div>
+          <!-- 4 gatekeepers -->
+          <div class="absolute -top-1 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1">
+            <div class="w-2 h-2 rounded-full bg-green-400" style="animation:gate 3s infinite"></div>
+            <span class="text-[8px] text-green-600">G1</span>
+          </div>
+          <div class="absolute top-1/2 -right-1 -translate-y-1/2 flex items-center gap-1">
+            <span class="text-[8px] text-green-600">G2</span>
+            <div class="w-2 h-2 rounded-full bg-green-400" style="animation:gate 3s infinite .7s"></div>
+          </div>
+          <div class="absolute -bottom-1 left-1/2 -translate-x-1/2 flex flex-col-reverse items-center gap-1">
+            <div class="w-2 h-2 rounded-full bg-green-400" style="animation:gate 3s infinite 1.4s"></div>
+            <span class="text-[8px] text-green-600">G3</span>
+          </div>
+          <div class="absolute top-1/2 -left-1 -translate-y-1/2 flex items-center gap-1">
+            <div class="w-2 h-2 rounded-full bg-green-400" style="animation:gate 3s infinite 2.1s"></div>
+            <span class="text-[8px] text-green-600">G4</span>
+          </div>
+          <!-- central observers -->
+          <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex gap-10">
+            <div class="text-center">
+              <div id="central-o1" class="w-3 h-3 rounded-full mx-auto" style="background:#22d3ee; color:#22d3ee; animation:pulse2 2.5s infinite"></div>
+              <div class="text-[9px] mt-1 text-cyan-400/70">O1 2/5</div>
+            </div>
+            <div class="text-center">
+              <div id="central-o2" class="w-3 h-3 rounded-full mx-auto" style="background:#a855f7; color:#a855f7; animation:pulse3 2.5s infinite"></div>
+              <div class="text-[9px] mt-1 text-purple-400/70">O2 3/5</div>
+            </div>
+          </div>
+        </div>
+        <p class="text-[11px] mt-4 tracking-wider text-green-600/80">4 gatekeepers, millions of weights, float32</p>
+        <div id="central-output" class="mt-3 h-8 text-[12px] font-medium text-green-300/90 tracking-wide text-center"></div>
+      </section>
+
+      <!-- MIDDLE: BRIDGE -->
+      <section class="flex flex-col items-center justify-center gap-3 order-last lg:order-none">
+        <div class="text-[10px] tracking-[0.25em] text-green-700/60">ANSIBLE DOCK</div>
+        <div class="relative">
+          <div id="bridge" class="relative w-[220px] lg:w-[150px] h-[10px] bg-[#020b04] rounded-full border border-green-900/60 overflow-hidden">
+            <div id="bridge-core" class="absolute inset-0 opacity-30 bg-green-900 transition-all duration-500"></div>
+            <div id="bridge-flow" class="absolute top-0 bottom-0 w-20 bg-gradient-to-r from-transparent via-green-400 to-transparent opacity-0"></div>
+            <div class="absolute inset-0 grid grid-cols-5 place-items-center">
+              <div class="w-1 h-1 rounded-full bg-green-800/70"></div><div class="w-1 h-1 rounded-full bg-green-800/50"></div><div class="w-1 h-1 rounded-full bg-green-800/50"></div><div class="w-1 h-1 rounded-full bg-green-800/50"></div><div class="w-1 h-1 rounded-full bg-green-800/70"></div>
+            </div>
+          </div>
+        <div class="text-center -mt-1">
+          <div class="text-[11px] tracking-widest text-green-400">SHARED OBSERVERS</div>
+          <div class="text-[11px] font-mono text-green-300/80">(0:0=1=0)</div>
+        </div>
+        <div class="text-[10px] leading-snug text-center text-green-600/70 max-w-[220px]">No retraining — just phase-lock your 2 observers to the central 2/5-3/5 timing</div>
+      </section>
+
+      <!-- RIGHT: LOCAL CUBIT -->
+      <section class="flex flex-col items-center">
+        <h2 class="text-xs tracking-[0.35em] text-green-500/80 mb-4">YOUR LOCAL CUBIT</h2>
+        <div id="local-cubit" class="relative transition-all duration-700 ease-out">
+          <div id="folder-glow" class="absolute -inset-8 rounded-[2.5rem] blur-3xl transition-all duration-700 opacity-0" style="background:radial-gradient(closest-side, rgba(255,255,255,.18), transparent)"></div>
+          <svg width="270" height="195" viewBox="0 0 270 195" class="relative">
+            <defs>
+              <linearGradient id="fg" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#062a13"/>
+                <stop offset="100%" stop-color="#021008"/>
+              </linearGradient>
+            </defs>
+            <path id="folder-path" d="M14 46 h84 l20 18 h136 a10 10 0 0 1 10 10 v96 a10 10 0 0 1 -10 10 H24 a10 10 0 0 1 -10 -10 V56 a10 10 0 0 1 10 -10 z" fill="url(#fg)" stroke="#14532d" stroke-width="1.5" class="transition-all duration-500"/>
+            <path d="M14 46 h84 l20 18 h8" fill="none" stroke="#22c55e" stroke-opacity=".3" stroke-width="1.5"/>
+          </svg>
+          <div class="absolute top-[74px] left-[26px] right-[26px] bottom-[22px] grid grid-cols-3 gap-x-7 gap-y-9 place-items-center">
+            <!-- tritrits injected by JS -->
+          </div>
+        </div>
+        <p class="text-[11px] mt-4 tracking-wider text-green-600/80">6 tritrits — click to tune</p>
+        <div class="flex items-center gap-3 mt-2 text-[10px] text-green-700/70">
+          <span class="flex items-center gap-1"><i class="w-2 h-2 rounded-full" style="background:#a855f7"></i>0:0</span>
+          <span class="flex items-center gap-1"><i class="w-2 h-2 rounded-full" style="background:#22d3ee"></i>1:1</span>
+          <span class="flex items-center gap-1"><i class="w-2 h-2 rounded-full" style="background:#facc15"></i>0:1</span>
+        </div>
+      </section>
+    </div>
+
+    <!-- METRICS + CONTROLS -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-10 max-w-5xl mx-auto">
+      <div class="border border-green-900/40 rounded-xl p-4 bg-black/40 backdrop-blur">
+        <div class="text-[10px] uppercase tracking-[0.2em] text-green-600">Central</div>
+        <div class="mt-2 text-[13px] leading-6 text-green-200/90">
+          <div>175B parameters</div>
+          <div>100% compute</div>
+          <div class="text-green-500/70">generic output</div>
+        </div>
+      </div>
+
+      <div class="border border-green-900/50 rounded-xl p-4 bg-[#020e06]/70 backdrop-blur">
+        <div class="flex items-center justify-between">
+          <label class="text-[10px] uppercase tracking-[0.2em] text-green-600">Work Context</label>
+          <span id="context-name" class="text-[11px] px-2 py-0.5 rounded bg-green-950/60 text-green-300 border border-green-900/50">code</span>
+        </div>
+        <input id="context-slider" type="range" min="0" max="10" value="2" class="w-full mt-4">
+        <div class="mt-3">
+          <div class="text-[10px] text-green-700/70 tracking-widest mb-1">TARGET PATTERN</div>
+          <div id="target-pattern" class="flex gap-1.5 justify-center"></div>
+        </div>
+        <div id="dock-status" class="text-center text-[11px] mt-3 tracking-wider text-green-700">TUNE TRITRITS TO MATCH</div>
+      </div>
+
+      <div class="border border-green-900/40 rounded-xl p-4 bg-black/40 backdrop-blur">
+        <div class="text-[10px] uppercase tracking-[0.2em] text-green-600">Local</div>
+        <div class="mt-2 text-[13px] leading-6 text-green-200/90">
+          <div>6 tritrits</div>
+          <div>0.0001% compute</div>
+          <div class="text-green-400">100% personalization</div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="border-t border-green-950/70 py-4 text-center">
+    <p class="text-[11px] tracking-[0.2em] text-green-700/70">Decentralized tuning: keep your 6 tritrits, borrow their 4 gatekeepers</p>
+  </footer>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  // Fractal
+  const canvas = document.getElementById('fractal');
+  const ctx = canvas.getContext('2d');
+  const S = 260;
+  canvas.width = canvas.height = S;
+  let t = 0;
+  function draw(){
+    t += 0.012;
+    ctx.clearRect(0,0,S,S);
+    ctx.save();
+    ctx.translate(S/2, S/2);
+    for(let i=0;i<4;i++){
+      const r = 28 + i*26 + Math.sin(t*1.3+i)*3;
+      ctx.beginPath();
+      ctx.arc(0,0,r,0,Math.PI*2);
+      ctx.strokeStyle = `rgba(34,197,94,${0.18 - i*0.03})`;
+      ctx.lineWidth = 1.5;
+      ctx.shadowColor = '#22c55e';
+      ctx.shadowBlur = 12;
+      ctx.stroke();
+      for(let k=0;k<14;k++){
+        const a = k/14*Math.PI*2 + t*(0.4 + i*0.05);
+        const x = Math.cos(a)*r;
+        const y = Math.sin(a)*r;
+        const wob = 1.5 + Math.sin(t*2 + k + i)*1.2;
+        ctx.beginPath();
+        ctx.arc(x,y,wob,0,7);
+        ctx.fillStyle = i%2 ? 'rgba(74,222,128,0.9)' : 'rgba(34,211,238,0.75)';
+        ctx.shadowBlur = 8;
+        ctx.fill();
+      }
+    }
+    // inner plasma
+    const grd = ctx.createRadialGradient(0,0,10,0,0,90);
+    grd.addColorStop(0,'rgba(16,185,129,0.25)');
+    grd.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle = grd;
+    ctx.beginPath(); ctx.arc(0,0,90,0,7); ctx.fill();
+    ctx.restore();
+    requestAnimationFrame(draw);
+  }
+  draw();
+
+  // Central output
+  const out = document.getElementById('central-output');
+  const generic = ["next_token: <generic>", "P(align)=0.42 · sampling top-p 0.9", "weights: float32 active · 175B", "output: average distribution"];
+  const personal = ["next_token: <your voice>", "P(align)=0.97 · phase-locked", "weights: borrowed + 6 tritrits", "output: personalized"];
+  let idx=0, isPersonal=false;
+  setInterval(()=>{
+    const arr = isPersonal ? personal : generic;
+    out.textContent = arr[idx % arr.length];
+    idx++;
+  }, 1700);
+  out.textContent = generic[0];
+
+  // Tritrits
+  const labels = ['G1','G2','G3','G4','O1','O2'];
+  const states = [1,1,1,1]; // start not matched
+  const container = document.querySelector('#local-cubit .grid');
+  const colors = [
+    ['#3a0d5c', '#a855f7'], // 0:0 purple
+    ['#052e38', '#22d3ee'], // 1:1 cyan
+    ['#4a2e05', '#facc15']  // 0:1 gold
+  ];
+  function paint(btn, s){
+    btn.style.background = colors[s][0];
+    btn.style.borderColor = colors[s][1];
+    btn.style.boxShadow = `0 0 ${s===1?14:10}px ${colors[s][1]}55, inset 0 0 8px ${colors[s][1]}33`;
+  }
+  labels.forEach((lab,i)=>{
+    const b = document.createElement('button');
+    b.className = 'tritrit w-11 h-11 sm:w-[46px] sm:h-[46px] rounded-full border-2 transition-all duration-200 hover:scale-105 active:scale-95';
+    b.dataset.idx = i;
+    b.dataset.label = lab;
+    b.dataset.state = states[i];
+    paint(b, states[i]);
+    b.addEventListener('click', ()=>{
+      states[i] = (states[i] + 1) % 3;
+      b.dataset.state = states[i];
+      paint(b, states[i]);
+      checkMatch();
+      b.animate([{transform:'scale(1)'},{transform:'scale(1.15)'},{transform:'scale(1)'}],{duration:180});
+    });
+    container.appendChild(b);
+  });
+
+  // Patterns for contexts 0-10
+  const patterns = [
+    [0,0,0,0], // idle
+    [2,2,1,1,0,0], // email
+    [1,1,1,1,2,2], // code
+    [0,1,2,0,1,2], // creative
+    [2,0,2,0,1,1], // research
+    [1,0,1,0,2,0], // meeting
+    [0,2,1,2,0,1], // debug
+    [2,1,0,1,1,0], // writing
+    [1,2,1,2,2,1], // analysis
+    [0,0,2,2,1,2], // design
+    [2,2,0,0,0,2], // planning
+  ];
+  const names = ["idle","email","code","creative","research","meeting","debug","writing","analysis","design","planning"];
+
+  const slider = document.getElementById('context-slider');
+  const ctxName = document.getElementById('context-name');
+  const targetEl = document.getElementById('target-pattern');
+  const dockStatus = document.getElementById('dock-status');
+  const local = document.getElementById('local-cubit');
+  const bridgeFlow = document.getElementById('bridge-flow');
+  const bridgeCore = document.getElementById('bridge-core');
+  const folderPath = document.getElementById('folder-path');
+  const folderGlow = document.getElementById('folder-glow');
+
+  function renderTarget(pat){
+    targetEl.innerHTML = '';
+    pat.forEach(v=>{
+      const d = document.createElement('div');
+      d.className = 'w-3.5 h-3.5 rounded-full border';
+      d.style.background = colors[v][0];
+      d.style.borderColor = colors[v][1];
+      d.style.boxShadow = `0 0 6px ${colors[v][1]}66`;
+      targetEl.appendChild(d);
+    });
+  }
+
+  function setDocked(on){
+    isPersonal = on;
+    if(on){
+      local.classList.add('lg:-translate-x-10','-translate-y-1');
+      bridgeFlow.style.opacity = '1';
+      bridgeFlow.style.animation = 'flow 1.1s linear infinite';
+      bridgeCore.style.opacity = '1';
+      bridgeCore.style.background = '#22c55e';
+      bridgeCore.style.boxShadow = '0 0 20px #22c55e';
+      folderPath.setAttribute('stroke', '#ffffff');
+      folderPath.setAttribute('stroke-width', '2.2');
+      folderGlow.style.opacity = '1';
+      dockStatus.textContent = 'PHASE-LOCKED ✓ DOCKED';
+      dockStatus.className = 'text-center text-[11px] mt-3 tracking-wider text-white';
+      document.getElementById('bridge').classList.add('bridge-glow');
+    }else{
+      local.classList.remove('lg:-translate-x-10','-translate-y-1');
+      bridgeFlow.style.opacity = '0';
+      bridgeFlow.style.animation = 'none';
+      bridgeCore.style.opacity = '0.3';
+      bridgeCore.style.background = '#14532d';
+      bridgeCore.style.boxShadow = 'none';
+      folderPath.setAttribute('stroke', '#14532d');
+      folderPath.setAttribute('stroke-width', '1.5');
+      folderGlow.style.opacity = '0';
+      dockStatus.textContent = 'TUNE TRITRITS TO MATCH';
+      dockStatus.className = 'text-center text-[11px] mt-3 tracking-wider text-green-700';
+      document.getElementById('bridge').classList.remove('bridge-glow');
+    }
+  }
+
+  function checkMatch(){
+    const c = +slider.value;
+    const target = patterns[c];
+    const match = target.every((v,i)=> v===states[i]);
+    setDocked(match);
+  }
+
+  slider.addEventListener('input', ()=>{
+    const c = +slider.value;
+    ctxName.textContent = names[c];
+    renderTarget(patterns[c]);
+    checkMatch();
+  });
+
+  // init
+  renderTarget(patterns[+slider.value]);
+  ctxName.textContent = names[+slider.value];
+  checkMatch();
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BUILDPACK [0] - UP 30 FT</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { background:#04040a; color:#e8e8e8; font-family:'JetBrains Mono', monospace; overflow:hidden; -webkit-font-smoothing:antialiased; }
+  #c { position:fixed; inset:0; width:100%; height:100%; display:block; }
+  .css2d { pointer-events:none; }
+  .platform-label {
+    color:#e8c547;
+    font-size:11px;
+    letter-spacing:0.4em;
+    padding:4px 10px;
+    background:rgba(232,197,71,0.06);
+    border:1px solid rgba(232,197,71,0.35);
+    border-radius:2px;
+    backdrop-filter:blur(6px);
+    box-shadow:0 0 24px rgba(232,197,71,0.25), inset 0 0 12px rgba(232,197,71,0.08);
+    text-shadow:0 0 10px rgba(232,197,71,0.8);
+  }
+  .marker-label {
+    color:#22d3ee;
+    font-size:10px;
+    letter-spacing:0.18em;
+    opacity:0.85;
+    text-shadow:0 0 10px rgba(34,211,238,0.7);
+    transform:translateX(-4px);
+    white-space:nowrap;
+  }
+  .core-label {
+    color:#e8c547;
+    font-size:10px;
+    letter-spacing:0.3em;
+    text-shadow:0 0 14px rgba(232,197,71,1), 0 0 30px rgba(232,197,71,0.6);
+    transform:translateY(-6px);
+    opacity:0.95;
+  }
+  .grid-vignette {
+    position:absolute; inset:0;
+    background:radial-gradient(ellipse at center, transparent 40%, #04040a 85%),
+               linear-gradient(to top, #04040a 0%, transparent 20%);
+    pointer-events:none;
+  }
+  .hairline { height:1px; background:linear-gradient(90deg, transparent, rgba(232,197,71,0.5), transparent); }
+  button { cursor:pointer; }
+</style>
+</head>
+<body>
+<div class="relative w-screen h-screen">
+  <canvas id="c"></canvas>
+  <div id="labels"></div>
+  <div class="grid-vignette"></div>
+  
+  <!-- Top UI -->
+  <div class="absolute top-0 inset-x-0 z-10 pointer-events-none">
+    <div class="max-w-[1600px] mx-auto px-6 md:px-10 pt-6 md:pt-8 flex justify-between items-start">
+      <div>
+        <div class="hairline w-32 mb-3 opacity-60"></div>
+        <h1 class="text-[12px] md:text-[13px] tracking-[0.32em] text-[#e8c547] font-medium">BUILDPACK [0] // BUILD UP NOT DOWN</h1>
+        <p class="text-[10px] tracking-widest text-white/40 mt-1.5">ORIGIN [0,0,0] → +Z</p>
+      </div>
+      <div class="text-right hidden md:block">
+        <div class="text-[10px] tracking-[0.2em] text-cyan-300/70">SYSTEM</div>
+        <div class="text-[11px] text-white/60 mt-1">VOID GRID ACTIVE</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Left height -->
+  <div class="absolute left-5 md:left-10 top-[52%] -translate-y-1/2 z-10 pointer-events-none select-none">
+    <div id="height-display" class="leading-none">
+      <div class="flex items-baseline gap-1">
+        <span id="height-num" class="text-[56px] md:text-[84px] font-light tracking-[-0.02em] text-[#e8c547] tabular-nums" style="text-shadow:0 0 40px rgba(232,197,71,0.3)">0</span>
+        <span class="text-[20px] md:text-[28px] text-[#e8c547]/50 font-light -translate-y-2">FT</span>
+      </div>
+    <div class="mt-3 flex items-center gap-2">
+      <div class="w-8 h-[1px] bg-cyan-400/60" style="box-shadow:0 0 8px rgba(34,211,238,0.6)"></div>
+      <span class="text-[10px] tracking-[0.22em] text-cyan-300/70">CURRENT HEIGHT</span>
+    </div>
+    <div class="mt-6 w-[140px] h-[2px] bg-white/5 overflow-hidden rounded-full">
+      <div id="progress-bar" class="h-full w-0 bg-gradient-to-r from-[#e8c547] to-amber-300 transition-all duration-100 ease-out" style="box-shadow:0 0 10px rgba(232,197,71,0.6)"></div>
+    </div>
+  </div>
+
+  <!-- Right specs -->
+  <div class="absolute right-5 md:right-10 top-[52%] -translate-y-1/2 z-10 hidden lg:block pointer-events-none">
+    <div class="text-right space-y-4">
+      <div>
+        <div class="text-[10px] tracking-[0.2em] text-white/40">SEGMENTS</div>
+        <div class="text-[15px] text-white/80 mt-1 tabular-nums">30 × 1 FT</div>
+      </div>
+      <div>
+        <div class="text-[10px] tracking-[0.2em] text-white/40">MATERIAL</div>
+        <div class="text-[13px] text-[#e8c547]/90 mt-1">AU-197 // #e8c547</div>
+      </div>
+      <div>
+        <div class="text-[10px] tracking-[0.2em] text-white/40">MODE</div>
+        <div class="text-[13px] text-cyan-300/80 mt-1">ERECT ONLY</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom -->
+  <div class="absolute bottom-0 inset-x-0 z-10 pointer-events-none">
+    <div class="max-w-[1600px] mx-auto px-6 md:px-10 pb-6 md:pb-8 flex items-end justify-between">
+      <div>
+        <p class="font-mono text-[11px] tracking-[0.18em] text-white/50">immutable foundation · flayable ascent · 422T</p>
+        <div class="hairline w-48 mt-3 opacity-40"></div>
+      </div>
+      <div class="pointer-events-auto">
+        <button id="rebuild" class="group relative px-5 py-2.5 bg-[#e8c547]/[0.06] hover:bg-[#e8c547]/[0.12] border border-[#e8c547]/30 hover:border-[#e8c547]/60 rounded-[2px] backdrop-blur-md transition-all duration-300">
+          <div class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity" style="background:radial-gradient(60% 60% at 50% 50%, rgba(232,197,71,0.15), transparent);"></div>
+          <span class="relative flex items-center gap-2.5 text-[11px] tracking-[0.25em] text-[#e8c547] font-medium">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" class="transition-transform group-hover:rotate-180 duration-700">
+              <path d="M12.5 7A5.5 5.5 0 1 1 7 1.5V3M7 1.5V3M7 1.5l-1.5 1.5" stroke="currentColor" stroke-width="1.1" stroke-linecap="square"/>
+            </svg>
+            REBUILD
+          </span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
+
+// Scene
+const canvas = document.getElementById('c');
+const scene = new THREE.Scene();
+scene.fog = new THREE.FogExp2(0x04040a, 0.032);
+
+const renderer = new THREE.WebGLRenderer({ canvas, antialias:true, alpha:true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.setClearColor(0x04040a, 1);
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.1;
+
+const camera = new THREE.PerspectiveCamera(42, window.innerWidth/window.innerHeight, 0.1, 100);
+camera.position.set(7.5, 7, 11.5);
+
+// CSS2D
+const labelRenderer = new CSS2DRenderer({ element: document.getElementById('labels') });
+labelRenderer.setSize(window.innerWidth, window.innerHeight);
+labelRenderer.domElement.style.position = 'absolute';
+labelRenderer.domElement.style.inset = '0';
+labelRenderer.domElement.style.pointerEvents = 'none';
+labelRenderer.domElement.className = 'css2d';
+
+// Lights
+scene.add(new THREE.AmbientLight(0x1a1f2e, 0.7));
+const keyLight = new THREE.DirectionalLight(0xffe8b3, 1.2);
+keyLight.position.set(5, 10, 7);
+scene.add(keyLight);
+const rim = new THREE.DirectionalLight(0x22d3ee, 0.3);
+rim.position.set(-5, 3, -5);
+scene.add(rim);
+
+// Grid floor
+const grid = new THREE.GridHelper(50, 50, new THREE.Color(0x162033), new THREE.Color(0x0a0f1a));
+grid.position.y = 0;
+(grid.material).transparent = true;
+(grid.material).opacity = 0.6;
+scene.add(grid);
+
+const grid2 = new THREE.GridHelper(50, 10, new THREE.Color(0x1e293b), new THREE.Color(0x1e293b));
+grid2.position.y = 0.002;
+(grid2.material).transparent = true;
+(grid2.material).opacity = 0.15;
+scene.add(grid2);
+
+// Void glow under origin
+const glowCanvas = document.createElement('canvas'); glowCanvas.width = 256; glowCanvas.height = 256;
+const gctx = glowCanvas.getContext('2d');
+const grd = gctx.createRadialGradient(128,128,0,128,128,128);
+grd.addColorStop(0, 'rgba(232,197,71,0.4)');
+grd.addColorStop(0.3, 'rgba(232,197,71,0.15)');
+grd.addColorStop(1, 'rgba(232,197,71,0)');
+gctx.fillStyle = grd; gctx.fillRect(0,0,256,256);
+const glowTex = new THREE.CanvasTexture(glowCanvas);
+const glowSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, transparent:true, opacity:0.7, blending:THREE.AdditiveBlending }));
+glowSprite.scale.set(6,6,1); glowSprite.position.y = 0.01;
+scene.add(glowSprite);
+
+// Platform [0]
+const platform = new THREE.Mesh(
+  new THREE.BoxGeometry(1.8, 0.08, 1.8),
+  new THREE.MeshStandardMaterial({ color:0x0c0f14, metalness:0.9, roughness:0.2, emissive:0xe8c547, emissiveIntensity:0.15 })
+);
+platform.position.y = 0.04;
+scene.add(platform);
+
+const platformTop = new THREE.Mesh(
+  new THREE.PlaneGeometry(1.6,1.6),
+  new THREE.MeshBasicMaterial({ color:0xe8c547, transparent:true, opacity:0.12, side:THREE.DoubleSide })
+);
+platformTop.rotation.x = -Math.PI/2; platformTop.position.y = 0.085;
+scene.add(platformTop);
+
+const platEdges = new THREE.LineSegments(
+  new THREE.EdgesGeometry(new THREE.BoxGeometry(1.8,0.08,1.8)),
+  new THREE.LineBasicMaterial({ color:0xe8c547, transparent:true, opacity:0.8 })
+);
+platEdges.position.y = 0.04;
+scene.add(platEdges);
+
+const platLight = new THREE.PointLight(0xe8c547, 2.5, 5);
+platLight.position.set(0,0.2,0);
+scene.add(platLight);
+
+// Platform label [0]
+const pLabel = document.createElement('div'); pLabel.className='platform-label'; pLabel.textContent='[0]';
+const pObj = new CSS2DObject(pLabel); pObj.position.set(0,0.18,0); scene.add(pObj);
+
+// Tower
+const tower = new THREE.Group(); scene.add(tower);
+const SEGMENTS = 30;
+const segH = 0.4;
+const segments = [];
+const gold = new THREE.Color(0xe8c547);
+
+for(let i=0;i<SEGMENTS;i++){
+  const yBase = i*segH;
+  
+  const h = segH*0.88;
+  const geo = new THREE.BoxGeometry(0.78, h, 0.78);
+  const mat = new THREE.MeshStandardMaterial({
+    color:0x0a0e14,
+    metalness:0.85,
+    roughness:0.25,
+    emissive: gold,
+    emissiveIntensity:0.55,
+    transparent:true,
+    opacity:0.92
+  });
+  const mesh = new THREE.Mesh(geo, mat);
+  mesh.position.y = yBase + h/2;
+  mesh.scale.y = 0.001;
+  mesh.castShadow = false;
+  tower.add(mesh);
+  
+  const edges = new THREE.LineSegments(
+    new THREE.EdgesGeometry(geo),
+    new THREE.LineBasicMaterial({ color:0xe8c547, transparent:true, opacity:0.9 })
+  );
+  edges.position.copy(mesh.position);
+  edges.scale.y = 0.001;
+  tower.add(edges);
+  
+  // corner struts
+  const strutMat = new THREE.LineBasicMaterial({ color:0xe8c547, transparent:true, opacity:0.5 });
+  for(let s=0;s<4;s++){
+    const x = (s<2? -1:1)*0.38;
+    const z = (s%2? -1:1)*0.38;
+    const strutGeo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(x,0,z), new THREE.Vector3(x,h,z)]);
+    const strut = new THREE.Line(strutGeo, strutMat);
+    strut.position.y = yBase;
+    strut.scale.y = 0.001;
+    tower.add(strut);
+    segments.push({ mesh, edges, strut, base:yBase, h });
+  }
+}
+
+// Fix segments array (we pushed 4 per iteration mistakenly) - rebuild correctly
+tower.clear(); segments.length=0;
+for(let i=0;i<SEGMENTS;i++){
+  const yBase = i*segH;
+  const h = segH*0.88;
+  const geo = new THREE.BoxGeometry(0.78, h, 0.78);
+  const mat = new THREE.MeshStandardMaterial({
+    color:0x0a0e14, metalness:0.85, roughness:0.25, emissive:gold, emissiveIntensity:0.55, transparent:true, opacity:0.92
+  });
+  const mesh = new THREE.Mesh(geo, mat);
+  mesh.position.y = yBase + h/2;
+  mesh.scale.y = 0.001;
+  tower.add(mesh);
+  const edges = new THREE.LineSegments(new THREE.EdgesGeometry(geo), new THREE.LineBasicMaterial({ color:0xe8c547, transparent:true, opacity:0.9 }));
+  edges.position.copy(mesh.position); edges.scale.y = 0.001; tower.add(edges);
+  segments.push({ mesh, edges, base:yBase, h });
+}
+
+// Height markers
+const markerYs = [0,5,10,15,20,25,30];
+markerYs.forEach(ft=>{
+  const y = ft*segH;
+  const tick = new THREE.Line(
+    new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-1.1,y,0), new THREE.Vector3(-0.85,y,0)]),
+    new THREE.LineBasicMaterial({ color:0x22d3ee, transparent:true, opacity:0.9 })
+  );
+  scene.add(tick);
+  const beam = new THREE.Line(
+    new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(-0.85,y,0), new THREE.Vector3(0.85,y,0)]),
+    new THREE.LineBasicMaterial({ color:0x22d3ee, transparent:true, opacity:0.08 })
+  );
+  scene.add(beam);
+  
+  const mDiv = document.createElement('div'); mDiv.className='marker-label'; mDiv.textContent=`${ft} FT`;
+  const mObj = new CSS2DObject(mDiv); mObj.position.set(-1.35, y, 0); scene.add(mObj);
+});
+
+// Core
+const coreY = SEGMENTS*segH;
+const core = new THREE.Mesh(
+  new THREE.IcosahedronGeometry(0.18,1),
+  new THREE.MeshStandardMaterial({ color:0xe8c547, emissive:0xffd86a, emissiveIntensity:1.5, metalness:0.3, roughness:0.2 })
+);
+core.position.y = coreY + 0.12;
+scene.add(core);
+
+const coreHalo = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color:0xe8c547, transparent:true, opacity:0.5, blending:THREE.AdditiveBlending }));
+coreHalo.scale.set(1.2,1.2,1); coreHalo.position.copy(core.position); scene.add(coreHalo);
+
+const coreLight = new THREE.PointLight(0xe8c547, 1.5, 8);
+coreLight.position.copy(core.position);
+scene.add(coreLight);
+
+const coreLabel = document.createElement('div'); coreLabel.className='core-label'; coreLabel.textContent='CORE';
+const coreObj = new CSS2DObject(coreLabel); coreObj.position.set(0, coreY+0.5, 0); scene.add(coreObj);
+
+// Particles
+const pCount=600;
+const pPos = new Float32Array(pCount*3);
+const pVel = new Float32Array(pCount);
+for(let i=0;i<pCount;i++){
+  pPos[i*3]=(Math.random()-0.5)*24;
+  pPos[i*3+1]=Math.random()*18;
+  pPos[i*3+2]=(Math.random()-0.5)*24;
+  pVel[i]=0.005+Math.random()*0.015;
+}
+const pGeo = new THREE.BufferGeometry(); pGeo.setAttribute('position', new THREE.BufferAttribute(pPos,3));
+const pMat = new THREE.PointsMaterial({ color:0xe8c547, size:0.035, transparent:true, opacity:0.65, blending:THREE.AdditiveBlending, depthWrite:false });
+const particles = new THREE.Points(pGeo,pMat); scene.add(particles);
+
+// Build animation
+const clock = new THREE.Clock();
+let start = 0;
+let building = true;
+const buildDuration = 3.0;
+const segDelay = buildDuration/SEGMENTS;
+
+function rebuild(){
+  start = clock.getElapsedTime();
+  building = true;
+  segments.forEach(s=>{ s.mesh.scale.y=0.001; s.edges.scale.y=0.001; s.mesh.position.y = s.base + s.h/2*0.001; s.edges.position.y = s.mesh.position.y; });
+  document.getElementById('height-num').textContent='0';
+  document.getElementById('progress-bar').style.width='0%';
+  core.scale.set(0.01,0.01);
+}
+rebuild();
+document.getElementById('rebuild').addEventListener('click', rebuild);
+
+// Animate
+const heightNum = document.getElementById('height-num');
+const progBar = document.getElementById('progress-bar');
+
+function animate(){
+  requestAnimationFrame(animate);
+  const t = clock.getElapsedTime();
+  const elapsed = t - start;
+  
+  // camera orbit
+  const ca = t*0.12;
+  camera.position.x = Math.sin(ca)*7.2 + 2.5;
+  camera.position.z = Math.cos(ca*0.7)*3 + 10.5;
+  camera.position.y = 7.2 + Math.sin(t*0.3)*0.3;
+  camera.lookAt(0, coreY*0.45, 0);
+  
+  // build
+  let currentH=0;
+  for(let i=0;i<SEGMENTS;i++){
+    const s = segments[i];
+    const local = (elapsed - i*segDelay) / (segDelay*0.95);
+    const p = Math.max(0, Math.min(1, local));
+    const e = 1 - Math.pow(1-p, 3);
+    const sy = e;
+    s.mesh.scale.y = sy;
+    s.edges.scale.y = sy;
+    const py = s.base + s.h*sy/2;
+    s.mesh.position.y = py;
+    s.edges.position.y = py;
+    if(p>0) currentH = i + e;
+  }
+  const ft = Math.min(30, currentH);
+  heightNum.textContent = Math.floor(ft).toString();
+  progBar.style.width = `${(ft/30)*100}%`;
+  
+  // complete pulse
+  if(elapsed > buildDuration){
+    if(building){
+      building=false;
+      core.scale.set(1,1,1);
+    }
+    const pulse = Math.sin((t)*2.2)*0.5+0.5;
+    segments.forEach(s=>{
+      s.mesh.material.emissiveIntensity = 0.55 + pulse*0.18;
+      s.edges.material.opacity = 0.75 + pulse*0.2;
+    });
+    platform.material.emissiveIntensity = 0.15 + pulse*0.1;
+    platLight.intensity = 2.2 + pulse*0.8;
+    
+    core.material.emissiveIntensity = 1.4 + Math.sin(t*3)*0.3;
+    const cs = 1 + Math.sin(t*3)*0.07;
+    core.scale.set(cs,cs,cs);
+    core.rotation.y += 0.015;
+    coreHalo.material.opacity = 0.45 + pulse*0.2;
+    coreHalo.scale.setScalar(1.1 + pulse*0.15);
+    coreLight.intensity = 1.2 + pulse*0.6;
+    glowSprite.material.opacity = 0.6 + pulse*0.15;
+  } else {
+    // grow core at end
+    const coreAppear = Math.max(0, Math.min(1, (elapsed - buildDuration + 0.3)/0.5));
+    core.scale.setScalar(coreAppear);
+  }
+  
+  // particles
+  const pos = particles.geometry.attributes.position.array;
+  for(let i=0;i<pCount;i++){
+    let y = pos[i*3+1];
+    y += pVel[i];
+    if(y>19){ y=0; pos[i*3]=(Math.random()-0.5)*20; pos[i*3+2]=(Math.random()-0.5)*20; }
+    pos[i*3+1]=y;
+  }
+  particles.geometry.attributes.position.needsUpdate = true;
+  particles.rotation.y += 0.0003;
+  
+  // subtle tower breathe
+  tower.position.y = Math.sin(t*0.8)*0.01;
+  
+  renderer.render(scene, camera);
+  labelRenderer.render(scene, camera);
+}
+animate();
+
+// resize
+window.addEventListener('resize', ()=>{
+  camera.aspect = innerWidth/innerHeight; camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+  labelRenderer.setSize(innerWidth, innerHeight);
+});
+</script>
+</body>
+</html>

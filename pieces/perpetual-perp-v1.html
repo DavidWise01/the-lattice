@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Light & Void Coin — 0 = 1</title>
+<style>
+  :root { --coin-size: 280px; }
+  @media (max-width: 640px) { :root { --coin-size: 240px; } }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background: #222;
+    color: #d6d6d6;
+    font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial;
+    -webkit-font-smoothing: antialiased;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100dvh;
+    overflow-x: hidden;
+  }
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(ellipse at center, transparent 35%, rgba(0,0,0,0.45) 100%);
+    pointer-events: none;
+    z-index: 0;
+  }
+  .scene {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 1100px;
+    height: 62vh;
+    min-height: 440px;
+    display: grid;
+    place-items: center;
+    perspective: 1600px;
+    perspective-origin: 50% 38%;
+    touch-action: none;
+    user-select: none;
+    cursor: grab;
+  }
+  .scene:active { cursor: grabbing; }
+  .coin-wrapper {
+    position: relative;
+    transform-style: preserve-3d;
+    transform: translateZ(0);
+  }
+  .coin {
+    width: var(--coin-size);
+    height: var(--coin-size);
+    position: relative;
+    transform-style: preserve-3d;
+    will-change: transform;
+  }
+  .face {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    overflow: hidden;
+    display: grid;
+    place-items: center;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    transform-style: preserve-3d;
+  }
+  .light {
+    transform: translateZ(11px);
+    background: #ffffff;
+    color: #000;
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,0.08), inset 0 0 30px rgba(0,0,0,0.04);
+  }
+  .void {
+    transform: translateZ(-11px) rotateY(180deg);
+    background: #000000;
+    color: #fff;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.12), inset 0 0 30px rgba(255,255,255,0.05);
+  }
+  .light::before {
+    content: '';
+    position: absolute;
+    inset: -35%;
+    background: radial-gradient(closest-side, rgba(255,215,120,0.38), rgba(255,195,70,0.22) 38%, rgba(255,180,40,0.12) 55%, transparent 70%);
+    filter: blur(18px);
+    animation: glow 7s ease-in-out infinite;
+    pointer-events: none;
+  }
+  @keyframes glow {
+    0%,100% { opacity: .9; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.06); }
+  }
+  .void::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 50% 50%, rgba(255,255,255,0.06), transparent 60%);
+    mix-blend-mode: screen;
+    pointer-events: none;
+  }
+  .ring-text {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+    pointer-events: none;
+  }
+  .ring-text text {
+    font-size: 12px;
+    letter-spacing: 3.2px;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+  .light .ring-text text { fill: #111; opacity: .85; }
+  .void .ring-text text { fill: #f0f0f0; opacity: .9; }
+  .center-zero {
+    position: relative;
+    font-family: "Cormorant Garamond", Georgia, "Times New Roman", serif;
+    font-size: clamp(92px, 28vw, 132px);
+    font-weight: 200;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    transform: translateZ(1px);
+  }
+  .light .center-zero {
+    color: #050505;
+    text-shadow: 0 0 24px rgba(255,200,80,0.25);
+  }
+  .void .center-zero {
+    color: #fafafa;
+    text-shadow: 0 0 22px rgba(255,255,255,0.15);
+  }
+  .edge-container {
+    position: absolute;
+    inset: 0;
+    transform-style: preserve-3d;
+    pointer-events: none;
+  }
+  .segment {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    background: #b7b7b7;
+    border-top: 1px solid rgba(255,255,255,0.55);
+    border-bottom: 1px solid rgba(0,0,0,0.45);
+    box-shadow: inset 0 0 1px rgba(0,0,0,0.2);
+  }
+  .shadow {
+    position: absolute;
+    left: 50%;
+    top: calc(100% + 38px);
+    width: calc(var(--coin-size) * 0.9);
+    height: calc(var(--coin-size) * 0.32);
+    margin-left: calc(var(--coin-size) * -0.45);
+    background: radial-gradient(ellipse, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.28) 42%, transparent 72%);
+    filter: blur(14px);
+    transform: translateZ(-40px);
+    opacity: .5;
+    pointer-events: none;
+    transition: opacity .3s;
+  }
+  .info {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    margin-top: -8px;
+    padding: 0 20px;
+  }
+  .equation {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: clamp(18px, 3.8vw, 26px);
+    color: #eaeaea;
+    letter-spacing: 0.02em;
+    font-weight: 300;
+    margin-bottom: 10px;
+    text-shadow: 0 1px 0 rgba(0,0,0,0.5);
+  }
+  .subtitle {
+    color: #9b9b9b;
+    font-size: 15px;
+    letter-spacing: 0.2px;
+  }
+  .controls {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+    margin: 28px 16px 44px;
+  }
+  .controls button {
+    appearance: none;
+    border: 1px solid #3a3a3a;
+    background: #292929;
+    color: #ddd;
+    padding: 10px 16px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: .2px;
+    cursor: pointer;
+    transition: transform .15s ease, background .2s, border-color .2s, box-shadow .2s;
+    box-shadow: 0 1px 0 rgba(255,255,255,0.03) inset, 0 6px 18px rgba(0,0,0,0.25);
+  }
+  .controls button:hover {
+    background: #323232;
+    border-color: #4a4a4a;
+    transform: translateY(-1px);
+  }
+  .controls button:active { transform: translateY(0) scale(.98); }
+  .controls button.primary {
+    background: linear-gradient(180deg, #3a331d, #262012);
+    border-color: #5c4f26;
+    color: #f3e0a6;
+    box-shadow: 0 0 0 1px rgba(212,175,55,0.15) inset, 0 8px 24px rgba(212,175,55,0.08), 0 0 24px rgba(212,175,55,0.12);
+  }
+  .controls button.primary:hover {
+    background: linear-gradient(180deg, #453c23, #2e2715);
+    box-shadow: 0 0 0 1px rgba(212,175,55,0.22) inset, 0 10px 28px rgba(212,175,55,0.14), 0 0 32px rgba(212,175,55,0.18);
+  }
+  .hint {
+    position: absolute;
+    bottom: 18px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 12px;
+    color: #7a7a7a;
+    letter-spacing: .3px;
+    pointer-events: none;
+  }
+  @media (max-width: 480px) {
+    .scene { min-height: 380px; height: 56vh; }
+    .controls { gap: 8px; }
+    .controls button { padding: 9px 13px; font-size: 13px; border-radius: 10px; }
+  }
+</style>
+</head>
+<body>
+  <div class="scene" id="scene" aria-label="Interactive 3D coin">
+    <div class="coin-wrapper">
+      <div class="coin" id="coin">
+        <div class="face light" aria-hidden="false">
+          <svg class="ring-text" viewBox="0 0 300 300">
+            <defs>
+              <path id="lightPath" d="M150,150 m-116,0 a116,116 0 1,1 232,0 a116,116 0 1,1 -232,0"/>
+            </defs>
+            <text>
+              <textPath href="#lightPath" startOffset="0%">LIGHT RESTORED — PURITY • LIGHT RESTORED — PURITY • </textPath>
+            </text>
+          </svg>
+          <div class="center-zero">0</div>
+        </div>
+        <div class="face void" aria-hidden="true">
+          <svg class="ring-text" viewBox="0 0 300 300">
+            <defs>
+              <path id="voidPath" d="M150,150 m-116,0 a116,116 0 1,1 232,0 a116,116 0 1,1 -232,0"/>
+            </defs>
+            <text>
+              <textPath href="#voidPath" startOffset="0%">VOID = 0 — PURE FOUNDATION • VOID = 0 — PURE FOUNDATION • </textPath>
+            </text>
+          </svg>
+          <div class="center-zero">0</div>
+        </div>
+        <div class="edge-container" id="edge"></div>
+      </div>
+      <div class="shadow" id="shadow"></div>
+    </div>
+    <div class="hint">drag to spin • click to nudge</div>
+  </div>
+
+  <div class="info">
+    <div class="equation">-+4 × ∞ — -+4 × ∞ = 0 = 1</div>
+    <div class="subtitle">Pure light and pure void on the same coin. Stand up and spin.</div>
+  </div>
+
+  <div class="controls">
+    <button id="stand">Stand Up</button>
+    <button id="spin" class="primary">Spin</button>
+    <button id="stop">Stop</button>
+    <button id="light">Flip to Light</button>
+    <button id="void">Flip to Void</button>
+  </div>
+
+<script>
+(() => {
+  const coin = document.getElementById('coin');
+  const scene = document.getElementById('scene');
+  const edge = document.getElementById('edge');
+  const shadow = document.getElementById('shadow');
+
+  let rotX = 78, rotY = -24;
+  let targetX = 89, targetY = 0;
+  let spinning = true;
+  let spinSpeed = 0.42;
+  let isDragging = false;
+  let lastX = 0, lastY = 0;
+  let velY = 0;
+
+  function buildEdge() {
+    edge.innerHTML = '';
+    const size = coin.offsetWidth;
+    const radius = size / 2;
+    const segments = Math.max(64, Math.min(100, Math.floor(size * 0.32)));
+    const circ = Math.PI * size;
+    const segW = Math.ceil(circ / segments) + 2;
+    const segH = Math.max(18, Math.round(size * 0.076));
+
+    const c = document.createElement('canvas');
+    c.width = 2048; c.height = 128;
+    const ctx = c.getContext('2d');
+    const grad = ctx.createLinearGradient(0,0,0,128);
+    grad.addColorStop(0, '#7d7d7d');
+    grad.addColorStop(0.12, '#e8e8e8');
+    grad.addColorStop(0.25, '#bcbc');
+    grad.addColorStop(0.5, '#ffffff');
+    grad.addColorStop(0.75, '#b8b8b8');
+    grad.addColorStop(0.88, '#dedede');
+    grad.addColorStop(1, '#707070');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0,0,c.width,c.height);
+    ctx.fillStyle = '#1c1c1c';
+    ctx.font = '600 34px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace';
+    ctx.textBaseline = 'middle';
+    const txt = ' 3002 | 2/13/26 | perp=1 • ';
+    let x = 0;
+    const tw = ctx.measureText(txt).width;
+    while (x < c.width + tw) { ctx.fillText(txt, x, 66); x += tw; }
+    ctx.strokeStyle = 'rgba(0,0,0,0.18)';
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(0,3); ctx.lineTo(c.width,3); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0,125); ctx.lineTo(c.width,125); ctx.stroke();
+    ctx.fillStyle = 'rgba(255,255,255,0.25)';
+    ctx.fillRect(0, 22, c.width, 3);
+
+    const dataURL = c.toDataURL();
+
+    for (let i = 0; i < segments; i++) {
+      const seg = document.createElement('div');
+      seg.className = 'segment';
+      const angle = (i / segments) * 360;
+      seg.style.width = segW + 'px';
+      seg.style.height = segH + 'px';
+      seg.style.marginTop = -segH/2 + 'px';
+      seg.style.marginLeft = -segW/2 + 'px';
+      seg.style.transform = `rotateY(${angle}deg) translateZ(${radius}px)`;
+      seg.style.backgroundImage = `url(${dataURL})`;
+      seg.style.backgroundSize = `${circ}px 100%`;
+      seg.style.backgroundPosition = `${-i * (circ / segments)}px 50%`;
+      edge.appendChild(seg);
+    }
+    const z = segH / 2 + 0.3;
+    document.querySelector('.face.light').style.transform = `translateZ(${z}px)`;
+    document.querySelector('.face.void').style.transform = `translateZ(${-z}px) rotateY(180deg)`;
+  }
+
+  function animate() {
+    if (spinning && !isDragging) {
+      targetY += spinSpeed;
+    }
+    rotY += (targetY - rotY) * 0.12;
+    rotX += (targetX - rotX) * 0.085;
+    coin.style.transform = `rotateX(${rotX}deg) rotateY(${rotY}deg)`;
+
+    const stand = Math.min(1, Math.max(0, (rotX - 8) / 82));
+    shadow.style.opacity = String(0.18 + stand * 0.42);
+    shadow.style.transform = `scale(${0.62 + stand * 0.58}, ${0.24 + stand * 0.28}) translateZ(-1px)`;
+
+    requestAnimationFrame(animate);
+  }
+
+  scene.addEventListener('pointerdown', (e) => {
+    isDragging = true;
+    spinning = false;
+    lastX = e.clientX;
+    lastY = e.clientY;
+  });
+  window.addEventListener('pointermove', (e) => {
+    if (!isDragging) return;
+    const dx = e.clientX - lastX;
+    const dy = e.clientY - lastY;
+    lastX = e.clientX; lastY = e.clientY;
+    targetY += dx * 0.55;
+    targetX = Math.max(12, Math.min(168, targetX - dy * 0.28));
+    velY = dx * 0.55;
+  });
+  function endDrag() {
+    if (!isDragging) return;
+    isDragging = false;
+    spinning = true;
+    const v = Math.abs(velY);
+    spinSpeed = Math.max(0.25, Math.min(3.2, v * 0.085)) * Math.sign(velY || 1);
+    targetX = 86 + Math.random() * 5;
+  }
+  window.addEventListener('pointerup', endDrag);
+  window.addEventListener('pointercancel', endDrag);
+  scene.addEventListener('click', (e) => {
+    if (e.detail === 0) return;
+    if (!isDragging) {
+      spinSpeed += (Math.random() > 0.5 ? 0.35 : -0.25);
+      spinSpeed = Math.max(-3, Math.min(3, spinSpeed));
+      spinning = true;
+    }
+  });
+
+  document.getElementById('stand').onclick = () => { spinning = true; spinSpeed = 0.42; targetX = 90; };
+  document.getElementById('spin').onclick = () => { spinning = true; spinSpeed = 2.15; targetX = 88; };
+  document.getElementById('stop').onclick = () => { spinning = false; spinSpeed = 0; };
+  document.getElementById('light').onclick = () => { spinning = false; targetX = 10; targetY = Math.round(rotY / 360) * 360; };
+  document.getElementById('void').onclick = () => { spinning = false; targetX = 10; targetY = Math.round(rotY / 360) * 360 + 180; };
+
+  buildEdge();
+  animate();
+  setTimeout(() => { targetX = 89.5; targetY = 30; }, 400);
+
+  let resizeT;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeT);
+    resizeT = setTimeout(buildEdge, 120);
+  });
+
+  window.addEventListener('keydown', (e) => {
+    if (e.code === 'Space') { e.preventDefault(); document.getElementById('spin').click(); }
+    if (e.key.toLowerCase() === 's') document.getElementById('stop').click();
+    if (e.key.toLowerCase() === 'l') document.getElementById('light').click();
+    if (e.key.toLowerCase() === 'v') document.getElementById('void').click();
+  });
+})();
+</script>
+</body>
+</html>

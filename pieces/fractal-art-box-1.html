@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>ALPHA40::BOX // COMMONS EDITION</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#000000">
+<style>
+:root{--g:#00ff41;--m:#ff0088;--b:#00e5ff;--bg:#030305;--amber:#ffb000}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;background:#000;color:var(--g);font-family:'Courier New',Courier,monospace;
+  line-height:1.4;overflow-x:hidden;text-shadow:0 0 2px rgba(0,255,65,.7);
+  background-image:radial-gradient(ellipse at center,#0a0a12 0%,#000 70%);
+}
+.crt{position:relative;min-height:100%;padding:12px 12px 60px}
+.scanlines{pointer-events:none;position:fixed;inset:0;z-index:999;background:
+  repeating-linear-gradient(0deg,rgba(0,0,0,.18) 0 2px,transparent 2px 4px),
+  repeating-linear-gradient(90deg,rgba(0,255,65,.03) 0 1px,transparent 1px 3px);
+  mix-blend-mode:screen;animation:flicker .17s infinite;opacity:.6}
+@keyframes flicker{0%{opacity:.92}50%{opacity:1}100%{opacity:.94}}
+body::after{content:"";pointer-events:none;position:fixed;inset:0;background:radial-gradient(ellipse at center,transparent 60%,rgba(0,0,0,.85) 100%);z-index:998}
+
+header .toprow{display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap}
+h1.glitch{
+  margin:.2rem 0;font-size:clamp(18px,3.2vw,32px);letter-spacing:.05em;color:var(--m);
+  text-shadow:0 0 6px var(--m),0 0 18px var(--m),0 0 32px #ff00aa55;position:relative;
+}
+.pulse{animation:pulse 2.1s infinite}
+@keyframes pulse{0%,100%{filter:brightness(1)}50%{filter:brightness(1.35)}}
+.glitch::before,.glitch::after{content:attr(data-text);position:absolute;left:0;top:0;width:100%;overflow:hidden;clip:rect(0,0,0,0)}
+.glitch:hover::before{left:-1.5px;text-shadow:2px 0 var(--b);animation:g1 .3s infinite}
+.glitch:hover::after{left:1.5px;text-shadow:-2px 0 var(--m);animation:g2 .3s infinite}
+@keyframes g1{0%{clip:rect(0,9999px,12px,0)}50%{clip:rect(12px,9999px,22px,0)}100%{clip:rect(2px,9999px,16px,0)}}
+@keyframes g2{0%{clip:rect(18px,9999px,26px,0)}50%{clip:rect(4px,9999px,10px,0)}100%{clip:rect(14px,9999px,30px,0)}}
+
+.mirrorToggle{font-size:.8rem;color:var(--b);user-select:none}
+.mirrorToggle input{accent-color:var(--b)}
+
+.privacy{
+  background:var(--m);color:#000;text-align:center;padding:.35rem .5rem;font-weight:700;
+  box-shadow:0 0 18px var(--m),inset 0 0 12px #00000055;margin:.5rem 0 .8rem;border:1px solid #000;
+  text-shadow:none;letter-spacing:.04em
+}
+nav{display:flex;gap:.5rem;flex-wrap:wrap;margin:.5rem 0 1rem}
+.btn{
+  background:#000;border:1px solid var(--g);color:var(--g);padding:.5rem .8rem;cursor:pointer;
+  text-transform:uppercase;font-weight:700;letter-spacing:.06em;position:relative;
+  box-shadow:inset 0 0 12px #002200,0 0 10px rgba(0,255,65,.25);transition:.12s;font-family:inherit
+}
+.btn:hover{background:var(--g);color:#000;box-shadow:0 0 14px var(--g),0 0 28px var(--g);transform:skew(-3deg)}
+.btn:active{transform:skew(-3deg) scale(.97)}
+.btn-magenta{border-color:var(--m);color:var(--m);box-shadow:inset 0 0 12px #330022,0 0 10px rgba(255,0,136,.25)}
+.btn-magenta:hover{background:var(--m);color:#000;box-shadow:0 0 14px var(--m)}
+.btn-blue{border-color:var(--b);color:var(--b);box-shadow:inset 0 0 12px #002233,0 0 10px rgba(0,229,255,.25)}
+.btn-blue:hover{background:var(--b);color:#000;box-shadow:0 0 14px var(--b)}
+.btn.small{padding:.15rem .45rem;font-size:.75rem}
+.btn.active{outline:2px solid var(--amber);color:var(--amber);border-color:var(--amber)}
+
+.panel{
+  border:1px solid var(--g);background:linear-gradient(180deg,rgba(0,255,65,.06),rgba(0,0,0,.2));
+  padding:1rem;margin:1rem 0;box-shadow:0 0 18px rgba(0,255,65,.18),inset 0 0 14px rgba(0,255,65,.06)
+}
+h2{margin:.1rem 0 .8rem;color:var(--b);text-shadow:0 0 8px var(--b);font-size:1.1rem;letter-spacing:.08em}
+label{display:block;margin:.6rem 0 .2rem;color:var(--amber);font-size:.8rem;letter-spacing:.06em}
+input,textarea,select{
+  width:100%;background:#020204;color:var(--g);border:1px solid #0f2f0f;padding:.5rem;
+  font-family:inherit;outline:none;box-shadow:inset 0 0 10px #001100
+}
+textarea{resize:vertical;min-height:70px}
+input:focus,textarea:focus,select:focus{border-color:var(--b);box-shadow:0 0 10px rgba(0,229,255,.3)}
+
+.tetherGrid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+@media(max-width:860px){.tetherGrid{grid-template-columns:1fr}}
+.p2pChat{margin-top:1rem;display:grid;grid-template-columns:1fr auto;gap:.5rem}
+.log{grid-column:1/-1;height:130px;overflow:auto;background:#000;border:1px solid #133; padding:.5rem;font-size:.82rem;box-shadow:inset 0 0 12px #001a1a}
+
+.builderGrid{display:grid;grid-template-columns:1.1fr .9fr;gap:1rem}
+@media(max-width:980px){.builderGrid{grid-template-columns:1fr}}
+.pool{max-height:52vh;overflow:auto;border:1px solid #0a3a0a;background:#000000aa}
+.cardrow{display:flex;justify-content:space-between;align-items:center;padding:.28rem .45rem;border-bottom:1px dotted #083308;font-size:.92rem}
+.cardrow:hover{background:rgba(0,255,65,.08)}
+.cardrow em{opacity:.6;font-size:.8em;margin-left:.4rem}
+.decklist{min-height:220px;border:1px solid var(--m);padding:.5rem;background:#0a0005aa;max-height:52vh;overflow:auto}
+#deckStats{margin-bottom:.5rem;color:var(--amber)}
+
+.tomeGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:.55rem;max-height:60vh;overflow:auto;padding-right:.3rem}
+.tomeCard{border:1px solid var(--b);padding:.5rem .6rem;background:rgba(0,229,255,.06);box-shadow:0 0 10px rgba(0,229,255,.12)}
+.tomeCard b{color:#fff}
+.tomeCard .cost{float:right;color:var(--amber)}
+.tomeCard i{color:#8df}
+
+.hand{display:flex;flex-wrap:wrap;gap:.55rem;margin-top:.8rem}
+.hand .card{border:1px solid var(--g);padding:.55rem .6rem;min-width:110px;text-align:center;background:#001a00;box-shadow:0 0 12px rgba(0,255,65,.25);animation:pop .2s ease}
+@keyframes pop{from{transform:scale(.8);opacity:0}to{transform:scale(1);opacity:1}}
+
+.loglist{max-height:50vh;overflow:auto;border:1px solid #222;padding:.5rem;background:#000}
+.logentry{padding:.3rem 0;border-bottom:1px dashed #132;color:#9f9}
+
+footer{position:fixed;bottom:0;left:0;right:0;padding:.4rem .6rem;text-align:center;background:#000;border-top:1px solid var(--m);color:var(--m);font-size:.8rem;letter-spacing:.08em;z-index:10;box-shadow:0 -0 14px rgba(255,0,136,.3)}
+
+#cam{position:fixed;inset:0;background:#000;display:none;place-items:center;z-index:9999}
+#cam.show{display:grid}
+#cam div{font-size:clamp(28px,8vw,82px);color:var(--b);text-align:center;line-height:1.1;text-shadow:0 0 12px var(--b),0 0 32px var(--m),0 0 60px var(--m);animation:camflash .18s infinite}
+@keyframes camflash{0%,100%{opacity:1;filter:hue-rotate(0)}50%{opacity:.65;filter:hue-rotate(60deg)}}
+
+html.inverted body{transform:scaleX(-1)}
+html.inverted .scanlines{transform:scaleX(-1)}
+
+/* scrollbars */
+*{scrollbar-width:thin;scrollbar-color:var(--m) #000}
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-track{background:#000}
+::-webkit-scrollbar-thumb{background:#ff008855;border:1px solid var(--m)}
+</style>
+</head>
+<body>
+<div class="crt">
+  <div class="scanlines"></div>
+  <header>
+    <div class="toprow">
+      <h1 class="glitch pulse" data-text="ALPHA40::BOX // 1=0=1 // COMMONS">ALPHA40::BOX // 1=0=1 // COMMONS</h1>
+      <label class="mirrorToggle"><input type="checkbox" id="mirror"> SHADOW GAMES INVERTED</label>
+    </div>
+    <div class="privacy">⚠ YOUR DATA NEVER LEAVES THIS BOX — localStorage ONLY — NO CLOUD // PRIVACY FIRST</div>
+    <nav>
+      <button class="btn navbtn" data-view="tether">8-POINT TETHER</button>
+      <button class="btn navbtn" data-view="builder">DECKBUILDER</button>
+      <button class="btn navbtn" data-view="tome">TOME</button>
+      <button class="btn navbtn" data-view="arena">ARENA</button>
+      <button class="btn navbtn" data-view="log">LINEAGE LOG</button>
+    </nav>
+  </header>
+
+  <main>
+    <section id="view-tether" class="view panel">
+      <h2>8-POINT TETHER // WEBRTC P2P</h2>
+      <p>INNER OBSERVER: <b id="innerStatus" style="color:var(--amber)">IDLE</b> // OUTER TX:<span id="tx">0</span> RX:<span id="rx">0</span></p>
+      <div class="tetherGrid">
+        <div>
+          <button id="host" class="btn btn-magenta">HOST BOX</button>
+          <div id="hostBox" hidden>
+            <div style="margin:.5rem 0">ROOM: <b id="roomCode" style="color:var(--b)"></b></div>
+            <label>OFFER — COPY TO VISITOR</label>
+            <textarea id="offerOut" rows="5" readonly></textarea>
+            <label>PASTE VISITOR ANSWER</label>
+            <textarea id="answerIn" rows="5"></textarea>
+            <button id="setAnswer" class="btn">LINK // COMPLETE HANDSHAKE</button>
+          </div>
+        <div>
+          <button id="visit" class="btn btn-blue">VISIT BOX</button>
+          <div id="visitBox" hidden>
+            <label>PASTE HOST OFFER</label>
+            <textarea id="offerIn" rows="5"></textarea>
+            <button id="makeAnswer" class="btn">GENERATE ANSWER</button>
+            <label>ANSWER — COPY TO HOST</label>
+            <textarea id="answerOut" rows="5" readonly></textarea>
+          </div>
+        </div>
+      </div>
+      <div class="p2pChat">
+        <input id="msg" placeholder="TYPE MESSAGE // ENTER TO TRANSMIT">
+        <button id="send" class="btn">SEND</button>
+        <div id="p2pLog" class="log"></div>
+      </div>
+      <p style="opacity:.7;font-size:.8rem;margin-top:.5rem">* Manual copy-paste signaling. No server. STUN for NAT only. Works air-gapped on LAN.</p>
+    </section>
+
+    <section id="view-builder" class="view panel" hidden>
+      <h2>DECKBUILDER // ALPHA 40 // 40 CARD MINIMUM</h2>
+      <div class="builderGrid">
+        <div>
+          <input id="search" placeholder="FILTER ALPHA CARDS...">
+          <div id="pool" class="pool"></div>
+        </div>
+        <div>
+          <div id="deckStats"></div>
+          <div id="deckList" class="decklist"></div>
+          <div style="display:flex;gap:.5rem;margin-top:.6rem;flex-wrap:wrap">
+            <button id="saveDeck" class="btn btn-magenta">SAVE + LOG LINEAGE</button>
+            <button id="clearDeck" class="btn">CLEAR</button>
+            <button id="sampleDeck" class="btn btn-blue">LOAD SAMPLE</button>
+          </div>
+          <p style="font-size:.75rem;opacity:.7;margin-top:.5rem">RULES: Power 9 max 1 each. Fast Mana (Lotus, Moxen, Sol Ring) max 4 total. No more than 4 copies except basic lands.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="view-tome" class="view panel" hidden>
+      <h2>TOME // SEARCHABLE ALPHA</h2>
+      <input id="tomeSearch" placeholder="SEARCH NAME...">
+      <div id="tomeList" class="tomeGrid" style="margin-top:.7rem"></div>
+    </section>
+
+    <section id="view-arena" class="view panel" hidden>
+      <h2>ARENA // GOLDFISH SIMULATOR</h2>
+      <div style="display:flex;gap:.5rem;flex-wrap:wrap;align-items:center">
+        <select id="deckSelect" style="max-width:320px"></select>
+        <button id="goldfish" class="btn">DRAW 7</button>
+        <button id="draw" class="btn btn-blue">DRAW</button>
+        <button id="mull" class="btn">MULLIGAN</button>
+        <span>LIBRARY: <b id="libCount" style="color:var(--amber)">0</b></span>
+      </div>
+      <div id="hand" class="hand"></div>
+    </section>
+
+    <section id="view-log" class="view panel" hidden>
+      <h2>LINEAGE LOG // EVERY SAVE IS HISTORY</h2>
+      <button id="exportLog" class="btn">EXPORT JSON WITH PROVENANCE</button>
+      <div id="logList" class="loglist" style="margin-top:.7rem"></div>
+      <p style="opacity:.7;font-size:.8rem">Location locked: Buffalo, MN. Author + "who taught you this" stored locally.</p>
+    </section>
+  </main>
+
+  <footer>COPY • MODIFY • SELL • OWN — NO CLOUD // COMMONS LICENSE // CODED LIKE CAMERON HOWE IN A GARAGE — 1993</footer>
+</div>
+
+<div id="cam"><div>DUSK<br>DAY<br>DAWN</div></div>
+
+<script>
+(() => {
+'use strict';
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+
+const CARDS = [
+{n:'Ancestral Recall',c:'U',t:'Instant',p9:1},
+{n:'Black Lotus',c:'0',t:'Artifact',p9:1,fast:1},
+{n:'Mox Emerald',c:'0',t:'Artifact',p9:1,fast:1},
+{n:'Mox Jet',c:'0',t:'Artifact',p9:1,fast:1},
+{n:'Mox Pearl',c:'0',t:'Artifact',p9:1,fast:1},
+{n:'Mox Ruby',c:'0',t:'Artifact',p9:1,fast:1},
+{n:'Mox Sapphire',c:'0',t:'Artifact',p9:1,fast:1},
+{n:'Time Walk',c:'1U',t:'Sorcery',p9:1},
+{n:'Timetwister',c:'2U',t:'Sorcery',p9:1},
+{n:'Sol Ring',c:'1',t:'Artifact',fast:1},
+{n:'Tundra',c:'',t:'Land - Dual'},
+{n:'Underground Sea',c:'',t:'Land - Dual'},
+{n:'Badlands',c:'',t:'Land - Dual'},
+{n:'Taiga',c:'',t:'Land - Dual'},
+{n:'Savannah',c:'',t:'Land - Dual'},
+{n:'Scrubland',c:'',t:'Land - Dual'},
+{n:'Volcanic Island',c:'',t:'Land - Dual'},
+{n:'Bayou',c:'',t:'Land - Dual'},
+{n:'Plateau',c:'',t:'Land - Dual'},
+{n:'Tropical Island',c:'',t:'Land - Dual'},
+{n:'Library of Alexandria',c:'',t:'Land - Legendary'},
+{n:'Strip Mine',c:'',t:'Land'},
+{n:'Plains',c:'',t:'Basic Land',basic:1},
+{n:'Island',c:'',t:'Basic Land',basic:1},
+{n:'Swamp',c:'',t:'Basic Land',basic:1},
+{n:'Mountain',c:'',t:'Basic Land',basic:1},
+{n:'Forest',c:'',t:'Basic Land',basic:1},
+{n:'Lightning Bolt',c:'R',t:'Instant'},
+{n:'Fireball',c:'XR',t:'Sorcery'},
+{n:'Disintegrate',c:'XR',t:'Sorcery'},
+{n:'Shivan Dragon',c:'4RR',t:'Creature - Dragon'},
+{n:'Serra Angel',c:'3WW',t:'Creature - Angel'},
+{n:'Sengir Vampire',c:'3BB',t:'Creature - Vampire'},
+{n:'Mahamoti Djinn',c:'4UU',t:'Creature - Djinn'},
+{n:'Lord of the Pit',c:'4BBB',t:'Creature - Demon'},
+{n:'Nightmare',c:'5B',t:'Creature - Nightmare'},
+{n:'Royal Assassin',c:'1BB',t:'Creature - Assassin'},
+{n:'Hypnotic Specter',c:'1BB',t:'Creature - Specter'},
+{n:'Craw Wurm',c:'4GG',t:'Creature - Wurm'},
+{n:'Force of Nature',c:'2GGGG',t:'Creature'},
+{n:'Llanowar Elves',c:'G',t:'Creature'},
+{n:'Birds of Paradise',c:'G',t:'Creature'},
+{n:'Giant Growth',c:'G',t:'Instant'},
+{n:'Dark Ritual',c:'B',t:'Instant'},
+{n:'Demonic Tutor',c:'1B',t:'Sorcery'},
+{n:'Mind Twist',c:'XB',t:'Sorcery'},
+{n:'Sinkhole',c:'BB',t:'Sorcery'},
+{n:'Terror',c:'1B',t:'Instant'},
+{n:'Counterspell',c:'UU',t:'Instant'},
+{n:'Clone',c:'3U',t:'Creature'},
+{n:'Control Magic',c:'2UU',t:'Enchantment'},
+{n:'Unsummon',c:'U',t:'Instant'},
+{n:'Swords to Plowshares',c:'W',t:'Instant'},
+{n:'Wrath of God',c:'2WW',t:'Sorcery'},
+{n:'Disenchant',c:'1W',t:'Instant'},
+{n:'Armageddon',c:'3W',t:'Sorcery'},
+{n:'Balance',c:'1W',t:'Sorcery'},
+{n:'Howling Mine',c:'2',t:'Artifact'},
+{n:'Winter Orb',c:'2',t:'Artifact'},
+{n:'Icy Manipulator',c:'4',t:'Artifact'},
+{n:'Jayemdae Tome',c:'4',t:'Artifact'},
+{n:'Nevinyrral\'s Disk',c:'4',t:'Artifact'},
+{n:'Black Vise',c:'1',t:'Artifact'},
+{n:'The Rack',c:'1',t:'Artifact'},
+{n:'Ivory Tower',c:'1',t:'Artifact'},
+{n:'Ankh of Mishra',c:'2',t:'Artifact'},
+{n:'Rod of Ruin',c:'3',t:'Artifact'},
+{n:'Disrupting Scepter',c:'3',t:'Artifact'},
+{n:'Juggernaut',c:'4',t:'Artifact Creature'},
+{n:'Clockwork Beast',c:'6',t:'Artifact Creature'},
+{n:'Basalt Monolith',c:'3',t:'Artifact'},
+{n:'Mana Vault',c:'1',t:'Artifact',fast:1},
+{n:'Circle of Protection: Red',c:'1W',t:'Enchantment'},
+{n:'Circle of Protection: Black',c:'1W',t:'Enchantment'},
+{n:'Circle of Protection: Blue',c:'1W',t:'Enchantment'},
+{n:'Circle of Protection: Green',c:'1W',t:'Enchantment'},
+{n:'Holy Armor',c:'W',t:'Enchantment'},
+{n:'Paralyze',c:'B',t:'Enchantment'},
+{n:'Animate Dead',c:'1B',t:'Enchantment'},
+{n:'Unholy Strength',c:'B',t:'Enchantment'},
+{n:'Instill Energy',c:'G',t:'Enchantment'},
+{n:'Raging River',c:'2R',t:'Enchantment'},
+{n:'Mana Flare',c:'2R',t:'Enchantment'},
+{n:'Power Surge',c:'3R',t:'Enchantment'},
+{n:'Glasses of Urza',c:'1',t:'Artifact'},
+{n:'Sunglasses of Urza',c:'4',t:'Artifact'},
+{n:'Millstone',c:'2',t:'Artifact'},
+{n:'Regrowth',c:'1G',t:'Sorcery'},
+{n:'Giant Spider',c:'3G',t:'Creature'},
+{n:'Scathe Zombies',c:'2B',t:'Creature'},
+{n:'Drudge Skeletons',c:'1B',t:'Creature'},
+{n:'Will-o\'-the-Wisp',c:'B',t:'Creature'},
+{n:'Phantom Monster',c:'3U',t:'Creature'},
+{n:'Air Elemental',c:'3UU',t:'Creature'},
+{n:'Water Elemental',c:'3UU',t:'Creature'},
+{n:'Earth Elemental',c:'3RR',t:'Creature'},
+{n:'Fire Elemental',c:'3RR',t:'Creature'},
+{n:'Granite Gargoyle',c:'2RR',t:'Creature'},
+{n:'Rock Hydra',c:'XRR',t:'Creature'},
+{n:'Dragon Whelp',c:'2RR',t:'Creature'},
+{n:'Samite Healer',c:'1W',t:'Creature'},
+{n:'White Knight',c:'WW',t:'Creature'},
+{n:'Black Knight',c:'BB',t:'Creature'},
+{n:'Benalish Hero',c:'W',t:'Creature'},
+{n:'Mons Goblin Raiders',c:'R',t:'Creature'},
+{n:'Goblin King',c:'2RR',t:'Creature'},
+{n:'Iron Star',c:'1',t:'Artifact'},
+{n:'Wooden Sphere',c:'1',t:'Artifact'},
+{n:'Crystal Rod',c:'1',t:'Artifact'},
+{n:'Throne of Bone',c:'1',t:'Artifact'},
+{n:'Ironclaw Orcs',c:'2R',t:'Creature'}
+].sort((a,b)=>a.n.localeCompare(b.n));
+
+// TABS
+function show(view){
+  $$('.view').forEach(s=>s.hidden = s.id!=='view-'+view);
+  $$('.navbtn').forEach(b=>b.classList.toggle('active', b.dataset.view===view));
+  localStorage.lastView = view;
+}
+$$('.navbtn').forEach(b=>b.onclick=()=>show(b.dataset.view));
+show(localStorage.lastView||'builder');
+
+// MIRROR
+const mirror = $('#mirror');
+mirror.checked = localStorage.mirror==='1';
+document.documentElement.classList.toggle('inverted', mirror.checked);
+mirror.onchange = e => {
+  localStorage.mirror = e.target.checked?'1':'0';
+  document.documentElement.classList.toggle('inverted', e.target.checked);
+};
+
+// EASTER EGG
+let buf='';
+window.addEventListener('keydown',e=>{
+  buf=(buf+e.key).toUpperCase().slice(-8);
+  if(buf.includes('CAMERON')){
+    const cam=$('#cam');
+    cam.classList.add('show');
+    setTimeout(()=>cam.classList.remove('show'),2600);
+    buf='';
+  }
+});
+
+// 8-POINT TETHER
+let pc, dc, tx=0, rx=0;
+const innerStatus=$('#innerStatus'), txEl=$('#tx'), rxEl=$('#rx'), p2pLog=$('#p2pLog');
+function log(m){p2pLog.innerHTML = `<div>&gt; ${m}</div>`+p2pLog.innerHTML}
+function setupDC(){
+  dc.onopen=()=>{innerStatus.textContent='LINKED';innerStatus.style.color='var(--g)';log('** CHANNEL OPEN **')};
+  dc.onclose=()=>{innerStatus.textContent='CLOSED';innerStatus.style.color='var(--m)'};
+  dc.onmessage=e=>{rx++;rxEl.textContent=rx;log(`RX: ${e.data}`)};
+}
+const STUN={iceServers:[{urls:'stun:stun.l.google.com:19302'}]};
+function genCode(){const words=['DUSK','DAWN','DAY','COMET','MUTINY','CARDIFF'];return words[Math.floor(Math.random()*words.length)]+'-'+(Math.floor(10000+Math.random()*90000))}
+$('#host').onclick=async()=>{
+  try{
+    pc=new RTCPeerConnection(STUN);
+    dc=pc.createDataChannel('alpha40',{ordered:true}); setupDC();
+    $('#hostBox').hidden=false; $('#visitBox').hidden=true;
+    $('#roomCode').textContent=genCode();
+    const offer=await pc.createOffer(); await pc.setLocalDescription(offer);
+    await new Promise(r=>{if(pc.iceGatheringState==='complete')r();else pc.onicecandidate=e=>!e.candidate&&r()});
+    $('#offerOut').value=btoa(JSON.stringify(pc.localDescription));
+    innerStatus.textContent='HOSTING';innerStatus.style.color='var(--b)';log('HOST OFFER CREATED');
+  }catch(err){alert('WebRTC error: '+err)}
+};
+$('#setAnswer').onclick=async()=>{
+  try{const ans=JSON.parse(atob($('#answerIn').value.trim())); await pc.setRemoteDescription(ans); log('ANSWER SET');}catch(e){alert('Bad answer')}
+};
+$('#visit').onclick=()=>{ $('#visitBox').hidden=false; $('#hostBox').hidden=true; innerStatus.textContent='VISITING';};
+$('#makeAnswer').onclick=async()=>{
+  try{
+    pc=new RTCPeerConnection(STUN);
+    pc.ondatachannel=e=>{dc=e.channel;setupDC()};
+    const off=JSON.parse(atob($('#offerIn').value.trim()));
+    await pc.setRemoteDescription(off);
+    const ans=await pc.createAnswer(); await pc.setLocalDescription(ans);
+    await new Promise(r=>{if(pc.iceGatheringState==='complete')r();else pc.onicecandidate=e=>!e.candidate&&r()});
+    $('#answerOut').value=btoa(JSON.stringify(pc.localDescription)); log('ANSWER CREATED');
+  }catch(e){alert('Bad offer')}
+};
+$('#send').onclick=()=>{
+  const v=$('#msg').value.trim(); if(!v||!dc||dc.readyState!=='open')return;
+  dc.send(v); tx++; txEl.textContent=tx; log(`TX: ${v}`); $('#msg').value='';
+};
+$('#msg').addEventListener('keydown',e=>{if(e.key==='Enter')$('#send').click()});
+
+// DECKBUILDER
+let deck={};
+const pool=$('#pool'), deckList=$('#deckList'), deckStats=$('#deckStats'), search=$('#search');
+function cardByName(n){return CARDS.find(c=>c.n===n)}
+function renderPool(){
+  const q=search.value.toLowerCase();
+  pool.innerHTML='';
+  CARDS.filter(c=>c.n.toLowerCase().includes(q)).slice(0,200).forEach(c=>{
+    const row=document.createElement('div'); row.className='cardrow';
+    row.innerHTML=`<span>${c.n} <em>${c.c||''}</em></span><button class="btn small">+</button>`;
+    row.querySelector('button').onclick=()=>addCard(c);
+    pool.appendChild(row);
+  });
+}
+function addCard(c){
+  const cur=deck[c.n]||0;
+  if(c.p9 && cur>=1){alert('POWER 9 // MAX 1');return}
+  if(!c.basic && cur>=4){alert('MAX 4 COPIES');return}
+  if(c.fast){
+    const fastTotal=Object.entries(deck).reduce((s,[k,v])=>s+(cardByName(k)?.fast? v:0),0);
+    if(fastTotal>=4){alert('FAST MANA // MAX 4 TOTAL');return}
+  }
+  deck[c.n]=cur+1; renderDeck();
+}
+function renderDeck(){
+  deckList.innerHTML='';
+  let total=0, fast=0, p9=0;
+  Object.entries(deck).sort((a,b)=>a[0].localeCompare(b[0])).forEach(([k,v])=>{
+    total+=v; const c=cardByName(k); if(c?.fast)fast+=v; if(c?.p9)p9+=v;
+    const row=document.createElement('div'); row.className='cardrow';
+    row.innerHTML=`<span>${v}x ${k}</span><button class="btn small">-</button>`;
+    row.querySelector('button').onclick=()=>{deck[k]--; if(deck[k]<=0)delete deck[k]; renderDeck()};
+    deckList.appendChild(row);
+  });
+  const warn=[];
+  if(total<40)warn.push(`NEED ${40-total} MORE`);
+  if(fast>4)warn.push(`FAST MANA ${fast}/4!`);
+  deckStats.innerHTML=`<div>TOTAL: <b style="color:${total>=40?'var(--g)':'var(--m)'}">${total}/40</b> // FAST: ${fast}/4 // P9: ${p9}</div><div style="color:var(--m)">${warn.join(' | ')}</div>`;
+}
+search.oninput=renderPool;
+$('#clearDeck').onclick=()=>{deck={};renderDeck()};
+$('#sampleDeck').onclick=()=>{deck={'Black Lotus':1,'Mox Pearl':1,'Mox Sapphire':1,'Mox Jet':1,'Ancestral Recall':1,'Time Walk':1,'Lightning Bolt':4,'Counterspell':4,'Serra Angel':2,'Shivan Dragon':2,'Sol Ring':1,'Swords to Plowshares':4,'Dark Ritual':4,'Island':6,'Mountain':6,'Plains':2}; renderDeck()};
+$('#saveDeck').onclick=()=>{
+  const total=Object.values(deck).reduce((a,b)=>a+b,0);
+  if(total<40 && !confirm('DECK UNDER 40 — SAVE ANYWAY?'))return;
+  const name=prompt('DECK NAME:','DUSK-'+new Date().toISOString().slice(5,10)); if(!name)return;
+  const author=prompt('AUTHOR:','ANON')||'ANON';
+  const teacher=prompt('WHO TAUGHT YOU THIS? (lineage)','')||'';
+  const decks=JSON.parse(localStorage.alpha40decks||'[]');
+  const entry={id:Date.now(),name,author,teacher,cards:{...deck},date:new Date().toISOString()};
+  decks.unshift(entry); localStorage.alpha40decks=JSON.stringify(decks.slice(0,100));
+  const lin=JSON.parse(localStorage.alpha40_lineage||'[]');
+  lin.unshift({ts:entry.date,loc:'Buffalo, MN',author,teacher,deck:name,total,hash:btoa(JSON.stringify(deck)).slice(0,12)});
+  localStorage.alpha40_lineage=JSON.stringify(lin.slice(0,200));
+  renderLog(); refreshDecks(); alert('SAVED TO LOCAL BOX // LINEAGE LOGGED');
+};
+renderPool(); renderDeck();
+
+// TOME
+const tomeSearch=$('#tomeSearch'), tomeList=$('#tomeList');
+function renderTome(){
+  const q=tomeSearch.value.toLowerCase();
+  tomeList.innerHTML=CARDS.filter(c=>c.n.toLowerCase().includes(q)).map(c=>`<div class="tomeCard"><b>${c.n}</b><span class="cost">${c.c||''}</span><br><i>${c.t}</i>${c.p9?'<br><span style="color:var(--m)">POWER 9</span>':''}${c.fast?'<br><span style="color:var(--amber)">FAST MANA</span>':''}</div>`).join('');
+}
+tomeSearch.oninput=renderTome; renderTome();
+
+// ARENA
+const deckSelect=$('#deckSelect'), handEl=$('#hand'), libCount=$('#libCount');
+let library=[], hand=[];
+function refreshDecks(){
+  const decks=JSON.parse(localStorage.alpha40decks||'[]');
+  deckSelect.innerHTML=decks.map(d=>`<option value="${d.id}">${d.name} — ${Object.values(d.cards).reduce((a,b)=>a+b,0)} cards</option>`).join('')||'<option>(no decks saved)</option>';
+}
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function renderArena(){handEl.innerHTML=hand.map(c=>`<div class="card">${c}</div>`).join(''); libCount.textContent=library.length}
+$('#goldfish').onclick=()=>{
+  const decks=JSON.parse(localStorage.alpha40decks||'[]'); const d=decks.find(x=>x.id==deckSelect.value); if(!d)return alert('SELECT DECK');
+  library=[]; Object.entries(d.cards).forEach(([k,v])=>{for(let i=0;i<v;i++)library.push(k)}); shuffle(library); hand=library.splice(0,7); renderArena();
+};
+$('#draw').onclick=()=>{if(library.length){hand.push(library.shift());renderArena()}};
+$('#mull').onclick=()=>$('#goldfish').click();
+refreshDecks();
+
+// LINEAGE
+const logList=$('#logList');
+function renderLog(){
+  const lin=JSON.parse(localStorage.alpha40_lineage||'[]');
+  logList.innerHTML = lin.length ? lin.map(e=>`<div class="logentry"><b>${new Date(e.ts).toLocaleString()}</b> // <span style="color:var(--b)">${e.deck}</span> // AUTHOR:${e.author} // TAUGHT_BY:${e.teacher||'—'} // ${e.loc} // HASH:${e.hash}</div>`).join('') : '<i>NO LINEAGE YET — SAVE A DECK</i>';
+}
+$('#exportLog').onclick=()=>{
+  const data=JSON.stringify({exported:new Date().toISOString(),location:'Buffalo, MN',lineage:JSON.parse(localStorage.alpha40_lineage||'[]'),decks:JSON.parse(localStorage.alpha40decks||'[]')},null,2);
+  const blob=new Blob([data],{type:'application/json'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='ALPHA40_LINEAGE_COMMONS.json'; a.click(); URL.revokeObjectURL(url);
+};
+renderLog();
+
+// INIT MESSAGE
+log('BOX ONLINE // TYPE CAMERON');
+})();
+</script>
+</body>
+</html>

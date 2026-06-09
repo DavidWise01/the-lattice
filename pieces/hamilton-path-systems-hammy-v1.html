@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hamilton-10 Stack — Final Production Blueprint</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Share+Tech+Mono&family=Kalam:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bp-blue:#0a1f44;
+  --bp-grid:rgba(56,189,248,0.14);
+  --bp-line:#7dd3fc;
+  --bp-cyan:#22d3ee;
+  --bp-white:#e0f2fe;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:#06122b;
+  color:var(--bp-white);
+  font-family:'Share Tech Mono', monospace;
+  overflow-x:hidden;
+}
+.blueprint{
+  position:fixed; inset:0;
+  background-color:var(--bp-blue);
+  background-image:
+    linear-gradient(var(--bp-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--bp-grid) 1px, transparent 1px),
+    linear-gradient(rgba(125,211,252,0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(125,211,252,0.05) 1px, transparent 1px);
+  background-size:48px 48px,48px 48px, 240px 240px, 240px 240px;
+}
+.blueprint::after{
+  content:''; position:absolute; inset:0;
+  background:radial-gradient(ellipse at center,transparent 30%, rgba(2,6,23,0.85) 100%);
+  pointer-events:none;
+}
+.blueprint::before{
+  content:''; position:absolute; inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events:none;
+}
+.frame{
+  position:relative;
+  border:2px solid rgba(125,211,252,0.45);
+  background:rgba(3,12,32,0.72);
+  backdrop-filter:blur(3px);
+  box-shadow:inset 0 0 80px rgba(0,0,0,0.6), 0 0 30px rgba(14,165,233,0.12);
+}
+.frame::before, .frame::after{
+  content:''; position:absolute; width:40px; height:40px; border-color:var(--bp-line); opacity:0.7;
+}
+.frame::before{top:-2px; left:-2px; border-top:2px solid; border-left:2px solid;}
+.frame::after{bottom:-2px; right:-2px; border-bottom:2px solid; border-right:2px solid;}
+.node{
+  position:relative;
+  border:1.5px solid var(--bp-line);
+  background:linear-gradient(180deg, rgba(8,47,73,0.85), rgba(2,18,36,0.9));
+  padding:12px 8px 10px;
+  min-height:86px;
+  clip-path:polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
+  transition:all .25s ease;
+  cursor:pointer;
+  box-shadow:inset 0 0 12px rgba(56,189,248,0.08), 0 0 0 rgba(56,189,248,0);
+}
+.node:hover{
+  transform:translateY(-2px);
+  border-color:#fff;
+  box-shadow:inset 0 0 18px rgba(125,211,252,0.2), 0 0 22px rgba(56,189,248,0.35);
+  background:linear-gradient(180deg, rgba(12,74,110,0.9), rgba(3,25,48,0.95));
+}
+.node.active{
+  border-color:#fef08a;
+  box-shadow:inset 0 0 20px rgba(254,240,138,0.25), 0 0 30px rgba(250,204,21,0.5);
+}
+.node-num{
+  position:absolute; top:5px; left:7px;
+  font-size:10px; color:#67e8f9; letter-spacing:1px; opacity:0.85;
+  font-family:'JetBrains Mono', monospace;
+}
+.node-name{
+  text-align:center; font-weight:600; letter-spacing:.08em; margin-top:10px; font-size:14px; color:#f0f9ff;
+}
+.node-desc{
+  text-align:center; font-size:10px; color:#7dd3fc; opacity:.75; margin-top:3px; letter-spacing:.02em;
+}
+.register-label{
+  display:inline-block; padding:4px 10px; font-size:11px; letter-spacing:.12em; text-transform:uppercase;
+  color:#082f49; background:#7dd3fc; font-weight:600; margin-bottom:10px;
+  clip-path:polygon(0 0, calc(100% - 6px) 0, 100% 100%, 6px 100%);
+}
+.core-wrap{
+  position:relative; display:flex; justify-content:center; align-items:center; margin:36px 0;
+}
+.core{
+  width:240px; height:240px; border-radius:50%; position:relative; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+}
+.core-main{
+  width:210px; height:210px; border-radius:50%;
+  border:2px solid #7dd3fc;
+  background:radial-gradient(circle at 35% 30%, rgba(103,232,249,0.35) 0%, rgba(6,28,64,0.9) 40%, rgba(2,8,23,1) 70%);
+  display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center;
+  box-shadow:0 0 40px rgba(34,211,238,0.35), inset 0 0 30px rgba(125,211,252,0.25), inset 0 0 60px rgba(2,132,199,0.2);
+  position:relative; z-index:5; transition:transform .3s ease;
+}
+.core:hover .core-main{ transform:scale(1.03); box-shadow:0 0 60px rgba(34,211,238,0.55), inset 0 0 40px rgba(125,211,252,0.35);}
+.core-ring{
+  position:absolute; border-radius:50%; border:1px solid rgba(125,211,252,0.4); left:50%; top:50%; transform:translate(-50%,-50%);
+  animation:spin 20s linear infinite;
+}
+.core-ring:nth-child(1){ width:260px; height:260px; border-style:dashed; opacity:.5; animation-duration:40s;}
+.core-ring:nth-child(2){ width:290px; height:290px; border-color:rgba(103,232,249,0.3); animation-direction:reverse; animation-duration:60s;}
+.core-ring:nth-child(3){ width:320px; height:320px; border-width:1.5px; border-color:rgba(56,189,248,0.2); opacity:.4;}
+@keyframes spin{ to{ transform:translate(-50%,-50%) rotate(360deg);} }
+@keyframes pulse{
+  0%,100%{ box-shadow:0 0 40px rgba(34,211,238,0.35), inset 0 0 30px rgba(125,211,252,0.25);}
+  50%{ box-shadow:0 0 80px rgba(34,211,238,0.8), inset 0 0 50px rgba(125,211,252,0.5);}
+}
+.core.pulse .core-main{ animation:pulse 1s ease-in-out 3; }
+
+.panel{
+  border:1px solid rgba(125,211,252,0.35);
+  background:rgba(2,14,35,0.75);
+  padding:14px;
+  position:relative;
+  backdrop-filter:blur(2px);
+}
+.panel h3{
+  font-size:11px; text-transform:uppercase; letter-spacing:.14em; color:#7dd3fc;
+  border-bottom:1px solid rgba(125,211,252,0.25); padding-bottom:6px; margin-bottom:10px;
+  font-family:'JetBrains Mono', monospace;
+}
+.panel::before{
+  content:''; position:absolute; top:0; left:0; width:22px; height:22px;
+  border-top:1.5px solid #7dd3fc; border-left:1.5px solid #7dd3fc; opacity:.6;
+}
+.stamp{
+  font-family:'JetBrains Mono', monospace; text-transform:uppercase; letter-spacing:2px;
+  border:2.5px solid; padding:6px 14px; font-weight:700; font-size:14px;
+  transform:rotate(-8deg); display:inline-block; box-shadow:0 0 15px currentColor;
+  background:rgba(0,0,0,0.2); backdrop-filter:blur(1px);
+}
+.hand{
+  font-family:'Kalam', cursive; color:#fef9c3; font-size:15px; line-height:1.2;
+  text-shadow:0 1px 3px rgba(0,0,0,0.9); transform:rotate(-4deg);
+}
+.grid-coord{
+  position:absolute; font-size:9px; color:rgba(125,211,252,0.4); font-family:'JetBrains Mono', monospace; pointer-events:none;
+}
+.wire{
+  stroke:#38bdf8; stroke-width:1.4; fill:none; stroke-linecap:round; filter:drop-shadow(0 0 4px rgba(56,189,248,0.5));
+}
+.wire-dim{ stroke:rgba(125,211,252,0.25); stroke-width:1; stroke-dasharray:3 4;}
+.dot{ fill:#7dd3fc; filter:drop-shadow(0 0 6px #22d3ee);}
+.particle{ fill:#e0f2fe; filter:drop-shadow(0 0 4px #fff); }
+.title-block{
+  border:1.5px solid rgba(125,211,252,0.5); background:rgba(2,10,26,0.85);
+  font-family:'JetBrains Mono', monospace; font-size:10px; line-height:1.4;
+}
+.title-block td{ border:1px solid rgba(125,211,252,0.2); padding:4px 8px; }
+.title-block td:first-child{ color:#7dd3fc; text-transform:uppercase; letter-spacing:.05em; }
+@media (max-width:768px){
+  .core{ width:200px; height:200px; }
+  .core-main{ width:175px; height:175px; }
+  .core-ring:nth-child(1){ width:220px; height:220px;}
+  .core-ring:nth-child(2){ width:245px; height:245px;}
+  .core-ring:nth-child(3){ width:270px; height:270px;}
+}
+</style>
+</head>
+<body>
+<div class="blueprint"></div>
+
+<div class="relative z-10 min-h-screen p-3 md:p-6 lg:p-8">
+  <div class="frame max-w-[1600px] mx-auto p-4 md:p-8 lg:p-10">
+    <!-- coords -->
+    <div class="grid-coord top-1 left-8">A</div>
+    <div class="grid-coord top-1 left-1/4">B</div>
+    <div class="grid-coord top-1 left-1/2">C</div>
+    <div class="grid-coord top-1 right-1/4">D</div>
+    <div class="grid-coord top-1 right-8">E</div>
+
+    <!-- Header -->
+    <div class="flex flex-col lg:flex-row lg:items-start justify-between gap-6 mb-8">
+      <div>
+        <div class="flex items-center gap-3 mb-2">
+          <div class="w-8 h-8 rounded-full border-2 border-cyan-300 flex items-center justify-center text-cyan-300 font-bold text-sm">H10</div>
+          <span class="text-[11px] tracking-[0.2em] text-cyan-300/80 uppercase">Hamilton Path Systems</span>
+        </div>
+        <h1 class="text-[28px] md:text-[36px] lg:text-[42px] leading-none font-medium tracking-wide text-sky-100" style="font-family:'JetBrains Mono', monospace; text-shadow:0 0 20px rgba(56,189,248,0.3)">5-1-5 STACK — FINAL PRODUCTION ARCHITECTURE</h1>
+        <p class="mt-3 text-cyan-200/90 text-[13px] md:text-[15px] tracking-wide">Upper register loads context, Core executes path, Lower register produces output</p>
+      </div>
+      <div class="flex gap-3 shrink-0">
+        <div class="stamp text-red-400 border-red-400 -rotate-6">FINAL</div>
+        <div class="stamp text-emerald-300 border-emerald-300 rotate-3 hidden sm:block">APPROVED</div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 xl:grid-cols-12 gap-6 lg:gap-8">
+      <!-- LEFT -->
+      <div class="xl:col-span-3 space-y-5">
+        <div class="panel">
+          <h3>Upper Register — Cortex Functions</h3>
+          <div class="space-y-3 text-[12px] leading-snug">
+            <div><span class="text-sky-300">01 SOURCE</span> — raw ingestion: sensors, APIs, streams. Zero filter, max fidelity.</div>
+            <div><span class="text-sky-300">02 WHY</span> — intent vector & objective function. Defines acceptable path cost.</div>
+            <div><span class="text-sky-300">03 CONTEXT</span> — state memory, history buffer, environmentals. 4.2TB hot cache.</div>
+            <div><span class="text-sky-300">04 CONSTRAINT</span> — physics, safety, budget, time. Hard limits enforced pre-core.</div>
+            <div><span class="text-sky-300">05 HUMAN</span> — operator alignment, ethics gate, manual override authority.</div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h3>Technical Notes</h3>
+          <ul class="text-[11px] space-y-2 text-cyan-100/85 list-disc pl-4">
+            <li>All 5 upper inputs must resolve before core unlock</li>
+            <li>Path hash computed via Hamiltonian traversal</li>
+            <li>.33 remainder prevents resonant lock</li>
+            <li>Fm-255 sync pulse every 11.4s</li>
+            <li>Zero data loss across feedback loop</li>
+          </ul>
+          <div class="hand mt-4 -rotate-2">check constraint bounding — critical ✓</div>
+        </div>
+
+        <div class="panel">
+          <h3>Applications</h3>
+          <div class="grid grid-cols-1 gap-2.5 text-[12px]">
+            <div class="flex gap-2 items-start"><span class="text-cyan-300">◉</span><div><b class="text-sky-200">Water Processing</b><br><span class="opacity-75">Molecular sorting, desalination at 98.7% efficiency</span></div></div>
+            <div class="flex gap-2 items-start"><span class="text-cyan-300">◉</span><div><b class="text-sky-200">Tritium Capture</b><br><span class="opacity-75">Isotope filtering, containment field control</span></div></div>
+            <div class="flex gap-2 items-start"><span class="text-cyan-300">◉</span><div><b class="text-sky-200">Fm-255 Element</b><br><span class="opacity-75">Synthesis timing, decay chain management</span></div></div>
+            <div class="flex gap-2 items-start"><span class="text-cyan-300">◉</span><div><b class="text-sky-200">Doc Ock Star</b><br><span class="opacity-75">Plasma containment, .33 remainder stabilization</span></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CENTER -->
+      <div class="xl:col-span-6">
+        <div class="register-label">UPPER REGISTER — UTILITY FUNCTIONS / CORTEX</div>
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2.5 md:gap-3">
+          <div class="node" data-n="1"><div class="node-num">01</div><div class="node-name">SOURCE</div><div class="node-desc">ingest</div></div>
+          <div class="node" data-n="2"><div class="node-num">02</div><div class="node-name">WHY</div><div class="node-desc">intent</div></div>
+          <div class="node" data-n="3"><div class="node-num">03</div><div class="node-name">CONTEXT</div><div class="node-desc">state</div></div>
+          <div class="node" data-n="4"><div class="node-num">04</div><div class="node-name">CONSTRAINT</div><div class="node-desc">limits</div></div>
+          <div class="node" data-n="5"><div class="node-num">05</div><div class="node-name">HUMAN</div><div class="node-desc">align</div></div>
+        </div>
+
+        <!-- upper convergence -->
+        <div class="relative h-[70px] md:h-[90px] -mt-1 -mb-2">
+          <svg class="absolute inset-0 w-full h-full" viewBox="0 0 1000 90" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="g1" x1="0" x2="0" y1="0" y2="1">
+                <stop offset="0%" stop-color="#7dd3fc" stop-opacity="0.1"/>
+                <stop offset="100%" stop-color="#22d3ee" stop-opacity="0.9"/>
+              </linearGradient>
+            </defs>
+            <path class="wire-dim" d="M0 45 H1000"/>
+            <path class="wire" d="M100 0 V20 C100 35, 180 35, 320 60 C380 72, 450 80, 500 85"/>
+            <path class="wire" d="M300 0 V18 C300 33, 360 40, 420 65 C460 78, 485 83, 500 85"/>
+            <path class="wire" d="M500 0 V85"/>
+            <path class="wire" d="M700 0 V18 C700 33, 640 40, 580 65 C540 78, 515 83, 500 85"/>
+            <path class="wire" d="M900 0 V20 C900 35, 820 35, 680 60 C620 72, 550 80, 500 85"/>
+            <circle class="dot" cx="500" cy="85" r="3.5"/>
+            <circle class="particle" cx="500" cy="30" r="2">
+              <animate attributeName="cy" values="5;85;5" dur="3s" repeatCount="indefinite"/>
+            </circle>
+          </svg>
+          <div class="absolute left-1/2 -translate-x-1/2 top-1/2 text-[10px] text-cyan-300/70 tracking-widest">CONVERGE</div>
+        </div>
+
+        <!-- CORE -->
+        <div class="core-wrap">
+          <div class="absolute -left-4 top-1/2 -translate-y-1/2 hidden xl:block">
+            <div class="hand w-[180px]">This is the final production value for this line →</div>
+          </div>
+          <div id="core" class="core">
+            <div class="core-ring"></div>
+            <div class="core-ring"></div>
+            <div class="core-ring"></div>
+            <div class="core-main">
+              <div class="text-[10px] tracking-[0.18em] text-cyan-300 mb-1">HAMILTON PATH PROCESSOR</div>
+              <div class="text-[28px] font-semibold tracking-wider" style="font-family:'JetBrains Mono', monospace; text-shadow:0 0 12px #22d3ee">( THE 1 )</div>
+              <div class="mt-2 text-[11px] leading-tight text-sky-200/90">Plasma Core / Fm-255<br><span class="text-cyan-300">.33 Remainder</span></div>
+              <div class="mt-3 flex gap-1.5">
+                <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse"></span>
+                <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" style="animation-delay:.2s"></span>
+                <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" style="animation-delay:.4s"></span>
+              </div>
+            </div>
+          <div class="absolute -right-2 top-8 hidden lg:block">
+            <div class="stamp text-amber-300 border-amber-300 text-[11px] px-2 py-1 rotate-12">REV 10.0</div>
+          </div>
+        </div>
+
+        <!-- lower divergence -->
+        <div class="relative h-[70px] md:h-[90px] -mt-2">
+          <svg class="absolute inset-0 w-full h-full" viewBox="0 0 1000 90" preserveAspectRatio="none">
+            <path class="wire" d="M500 0 V8 C500 25, 500 30, 500 35"/>
+            <path class="wire" d="M500 35 C450 45, 380 55, 320 68 C180 88, 100 85, 100 90"/>
+            <path class="wire" d="M500 35 C470 45, 430 55, 380 68 C340 78, 310 85, 300 90"/>
+            <path class="wire" d="M500 35 V90"/>
+            <path class="wire" d="M500 35 C530 45, 570 55, 620 68 C660 78, 690 85, 700 90"/>
+            <path class="wire" d="M500 35 C550 45, 620 55, 680 68 C820 88, 900 85, 900 90"/>
+            <circle class="dot" cx="500" cy="5" r="3.5"/>
+          </svg>
+          <div class="absolute left-1/2 -translate-x-1/2 top-3 text-[10px] text-cyan-300/70 tracking-widest">DISTRIBUTE</div>
+        </div>
+
+        <div class="register-label">LOWER REGISTER — PRODUCTION</div>
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2.5 md:gap-3">
+          <div class="node" data-n="6"><div class="node-num">06</div><div class="node-name">TRANSFORM</div><div class="node-desc">execute</div></div>
+          <div class="node" data-n="7"><div class="node-num">07</div><div class="node-name">VERIFY</div><div class="node-desc">checksum</div></div>
+          <div class="node" data-n="8"><div class="node-num">08</div><div class="node-name">LOG</div><div class="node-desc">record</div></div>
+          <div class="node" data-n="9"><div class="node-num">09</div><div class="node-name">RELEASE</div><div class="node-desc">deploy</div></div>
+          <div class="node" data-n="10"><div class="node-num">10</div><div class="node-name">FEEDBACK</div><div class="node-desc">loop</div></div>
+        </div>
+
+        <!-- feedback loop -->
+        <div class="relative h-[54px] mt-3 hidden md:block">
+          <svg class="absolute inset-0 w-full h-full overflow-visible" viewBox="0 0 1000 60" preserveAspectRatio="none">
+            <defs>
+              <marker id="arrow" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+                <path d="M0,0 L6,3 L0,6 Z" fill="#22d3ee"/>
+              </marker>
+            </defs>
+            <path class="wire" stroke-dasharray="4 4" marker-end="url(#arrow)" d="M915 0 C980 0, 1000 15, 1000 30 S1000 60, 940 60 H60 C20 60, 0 50, 0 30 S20 0, 60 0 H85"/>
+            <text x="500" y="52" fill="#67e8f9" font-size="10" text-anchor="middle" letter-spacing="1">FEEDBACK LOOP → SOURCE</text>
+          </svg>
+        </div>
+        <div class="md:hidden mt-3 text-center">
+          <div class="inline-flex items-center gap-2 text-[11px] text-cyan-300 border border-cyan-900/50 px-3 py-1.5 bg-cyan-950/30">↻ FEEDBACK → SOURCE</div>
+        </div>
+      </div>
+
+      <!-- RIGHT -->
+      <div class="xl:col-span-3 space-y-5">
+        <div class="panel">
+          <h3>Hamilton Path — 1→10→1</h3>
+          <div class="flex justify-center py-2">
+            <svg viewBox="0 0 200 200" class="w-[180px] h-[180px]">
+              <defs>
+                <radialGradient id="rg"><stop offset="0%" stop-color="#22d3ee" stop-opacity="0.3"/><stop offset="100%" stop-color="#0ea5e9" stop-opacity="0"/></radialGradient>
+              </defs>
+              <circle cx="100" cy="100" r="78" fill="none" stroke="rgba(125,211,252,0.15)" stroke-width="1"/>
+              <circle cx="100" cy="100" r="55" fill="url(#rg)" opacity="0.5"/>
+              <!-- path -->
+              <path d="M100 22 L144 38 L178 75 L178 125 L144 162 L100 178 L56 162 L22 125 L22 75 L56 38 Z" fill="none" stroke="#22d3ee" stroke-width="1.5" stroke-dasharray="3 3" opacity="0.8"/>
+              <path d="M100 22 L144 38 L178 75 L178 125 L144 162 L100 178 L56 162 L22 125 L22 75 L56 38 L100 22" fill="none" stroke="#7dd3fc" stroke-width="2" filter="url(#glow)"/>
+              <!-- nodes -->
+              <g font-size="9" fill="#e0f2fe" font-family="JetBrains Mono" text-anchor="middle" dominant-baseline="middle">
+                <circle cx="100" cy="22" r="10" fill="rgba(8,47,73,0.9)" stroke="#7dd3fc"/><text x="100" y="22">1</text>
+                <circle cx="144" cy="38" r="10" fill="rgba(8,47,73,0.9)" stroke="#7dd3fc"/><text x="144" y="38">2</text>
+                <circle cx="178" cy="75" r="10" fill="rgba(8,47,73,0.9)" stroke="#7dd3fc"/><text x="178" y="75">3</text>
+                <circle cx="178" cy="125" r="10" fill="rgba(8,47,73,0.9)" stroke="#7dd3fc"/><text x="178" y="125">4</text>
+                <circle cx="144" cy="162" r="10" fill="rgba(8,47,73,0.9)" stroke="#7dd3fc"/><text x="144" y="162">5</text>
+                <circle cx="100" cy="178" r="10" fill="rgba(8,47,73,0.9)" stroke="#7dd3fc"/><text x="100" y="178">6</text>
+                <circle cx="56" cy="162" r="10" fill="rgba(8,47,73,0.9)" stroke="#7dd3fc"/><text x="56" y="162">7</text>
+                <circle cx="22" cy="125" r="10" fill="rgba(8,47,73,0.9)" stroke="#7dd3fc"/><text x="22" y="125">8</text>
+                <circle cx="22" cy="75" r="10" fill="rgba(8,47,73,0.9)" stroke="#7dd3fc"/><text x="22" y="75">9</text>
+                <circle cx="56" cy="38" r="10" fill="rgba(8,47,73,0.9)" stroke="#7dd3fc"/><text x="56" y="38">10</text>
+              </g>
+              <circle cx="100" cy="100" r="14" fill="#0b1f3a" stroke="#22d3ee" stroke-width="2"/>
+              <text x="100" y="104" text-anchor="middle" fill="#7dd3fc" font-size="11" font-family="Share Tech Mono">1</text>
+            </svg>
+          </div>
+          <div class="text-[11px] text-cyan-200/80 text-center -mt-1">Visits each node exactly once. Returns to origin. No repeats.</div>
+        </div>
+
+        <div class="panel">
+          <h3>Core Specifications</h3>
+          <div class="space-y-2.5 text-[12px]">
+            <div class="flex justify-between border-b border-cyan-900/40 pb-1"><span class="text-cyan-300/80">Plasma Core</span><span>1.5e8 K</span></div>
+            <div class="flex justify-between border-b border-cyan-900/40 pb-1"><span class="text-cyan-300/80">Fm-255 Sync</span><span>11.4s half-life</span></div>
+            <div class="flex justify-between border-b border-cyan-900/40 pb-1"><span class="text-cyan-300/80">Remainder</span><span>.33 (non-resonant)</span></div>
+            <div class="flex justify-between border-b border-cyan-900/40 pb-1"><span class="text-cyan-300/80">Throughput</span><span>1.02×10⁹ paths/s</span></div>
+            <div class="flex justify-between"><span class="text-cyan-300/80">Latency</span><span>&lt;3.3ms E2E</span></div>
+          </div>
+          <div class="hand mt-3 text-right">loop verified ✓ .33 stable</div>
+        </div>
+
+        <div class="panel">
+          <h3>Production Flow</h3>
+          <ol class="text-[11px] space-y-1.5 list-decimal pl-4 marker:text-cyan-400">
+            <li>Upper 5 load → validation gate opens</li>
+            <li>Core computes Hamiltonian path</li>
+            <li>Lower 5 execute in sequence</li>
+            <li>Feedback measures delta</li>
+            <li>Loop closes to Source (01)</li>
+          </ol>
+          <div class="mt-3 p-2 border border-amber-400/30 bg-amber-950/20 text-amber-200 text-[11px]">⚠ Do not bypass Verify (07). Fm-255 validation mandatory.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Title Block -->
+    <div class="mt-10 flex flex-col md:flex-row justify-between gap-4 items-end">
+      <div class="flex gap-3">
+        <div class="w-10 h-10 border border-cyan-400/50 grid place-items-center">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#7dd3fc" stroke-width="1.5"><path d="M12 3v18M3 12h18"/></svg>
+        </div>
+        <div class="text-[10px] leading-tight text-cyan-200/70 font-mono">
+          HAMILTON SYSTEMS DIVISION<br>
+          CLASSIFICATION: ENGINEERING BLUEPRINT<br>
+          DISTRIBUTION: AUTHORIZED PERSONNEL ONLY
+        </div>
+      </div>
+      <div class="title-block">
+        <table class="w-full md:w-auto">
+          <tr><td>DWG NO</td><td>H10-515-1024-FINAL</td><td>REV</td><td>10.0</td></tr>
+          <tr><td>TITLE</td><td colspan="3">5-1-5 Stack Architecture</td></tr>
+          <tr><td>SCALE</td><td>1:1</td><td>DATE</td><td>2025-11-19</td></tr>
+          <tr><td>ENGINEER</td><td>HAMILTON</td><td>STATUS</td><td>FINAL PRODUCTION</td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- floating stamps -->
+  <div class="pointer-events-none fixed bottom-6 left-6 hidden lg:block">
+    <div class="stamp text-cyan-300 border-cyan-300 rotate-[-15deg] opacity-60 text-[10px]">BLUEPRINT // DO NOT COPY</div>
+  </div>
+</div>
+
+<script>
+// Interactive sequence
+const core = document.getElementById('core');
+const nodes = Array.from(document.querySelectorAll('.node'));
+
+function runSequence(){
+  core.classList.add('pulse');
+  nodes.forEach(n=>n.classList.remove('active'));
+  
+  const order = [0,1,2,3,4,5,6,7,8,9]; // 1-10
+  order.forEach((idx, i)=>{
+    setTimeout(()=>{
+      nodes[idx].classList.add('active');
+      nodes[idx].style.transform = 'translateY(-2px) scale(1.02)';
+      setTimeout(()=>{ nodes[idx].style.transform=''; }, 300);
+      if(i === order.length-1){
+        setTimeout(()=>{
+          nodes.forEach(n=>n.classList.remove('active'));
+          core.classList.remove('pulse');
+        }, 800);
+      }
+    }, i * 140);
+  });
+}
+
+core.addEventListener('click', runSequence);
+
+// auto demo on load
+window.addEventListener('load', ()=>{
+  setTimeout(runSequence, 800);
+});
+
+// node hover info
+nodes.forEach(n=>{
+  n.addEventListener('mouseenter', ()=>{
+    n.style.zIndex = '10';
+  });
+  n.addEventListener('mouseleave', ()=>{
+    n.style.zIndex = '';
+  });
+});
+
+// subtle parallax for blueprint
+document.addEventListener('mousemove', (e)=>{
+  const x = (e.clientX / window.innerWidth - 0.5) * 10;
+  const y = (e.clientY / window.innerHeight - 0.5) * 10;
+  document.querySelector('.blueprint').style.transform = `translate(${x}px, ${y}px)`;
+});
+</script>
+</body>
+</html>

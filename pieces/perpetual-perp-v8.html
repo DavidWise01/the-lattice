@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Playables SDK -->
+<script>// Playables SDK v1.0.0
+// Game lifecycle bridge: rAF-based game-ready detection + event communication
+(function() {
+  'use strict';
+
+  // Idempotency: skip if already initialized (e.g., server-side injection
+  // followed by client-side inject-javascript via the Bloks webview component).
+  if (window.playablesSDK) return;
+
+  var HANDLER_NAME = 'playablesGameEventHandler';
+  var ANDROID_BRIDGE_NAME = '_MetaPlayablesBridge';
+  var RAF_FRAME_THRESHOLD = 3;
+
+  var gameReadySent = false;
+  var firstInteractionSent = false;
+  var errorSent = false;
+  var frameCount = 0;
+  var originalRAF = window.requestAnimationFrame;
+
+  // --- Transport Layer ---
+
+  function hasIOSBridge() {
+    return !!(window.webkit &&
+              window.webkit.messageHandlers &&
+              window.webkit.messageHandlers[HANDLER_NAME]);
+  }
+
+  function hasAndroidBridge() {
+    return !!(window[ANDROID_BRIDGE_NAME] &&
+              typeof window[ANDROID_BRIDGE_NAME].postEvent === 'function');
+  }
+
+  function isInIframe() {
+    return !!(window.parent && window.parent !== window);
+  }
+
+  function sendEvent(eventName, payload) {
+    var message = {
+      type: eventName,
+      payload: payload || {},
+      timestamp: Date.now()
+    };
+
+    if (hasIOSBridge()) {
+      try {
+        window.webkit.messageHandlers[HANDLER_NAME].postMessage(message);
+      } catch (e) { /* ignore */ }
+      return;
+    }
+
+    if (hasAndroidBridge()) {
+    try {
+      var p = payload || {};
+      p.__secureToken = window.__fbAndroidBridgeAuthToken || '';
+      window[ANDROID_BRIDGE_NAME].postEvent(
+        eventName,
+        JSON.stringify(p)
+      );
+    } catch (e) { /* ignore */ }
+    return;
+  }
+
+    if (isInIframe()) {
+      try {
+        window.parent.postMessage(message, '*');
+      } catch (e) { /* ignore */ }
+      return;
+    }
+  }
+
+  // --- rAF Game-Ready Detection ---
+
+  function onFrame() {
+    if (gameReadySent) return;
+
+    frameCount++;
+    if (frameCount >= RAF_FRAME_THRESHOLD) {
+      gameReadySent = true;
+      sendEvent('game_ready', {
+        frame_count: frameCount,
+        detected_at: Date.now()
+      });
+      return;
+    }
+
+    originalRAF.call(window, onFrame);
+  }
+
+  if (originalRAF) {
+    window.requestAnimationFrame = function(callback) {
+      if (!gameReadySent) {
+        return originalRAF.call(window, function(timestamp) {
+          frameCount++;
+          if (frameCount >= RAF_FRAME_THRESHOLD && !gameReadySent) {
+            gameReadySent = true;
+            sendEvent('game_ready', {
+              frame_count: frameCount,
+              detected_at: Date.now()
+            });
+          }
+          callback(timestamp);
+        });
+      }
+      return originalRAF.call(window, callback);
+    };
+  }
+
+  // --- First User Interaction Detection ---
+
+  function setupFirstInteractionDetection() {
+    var events = ['touchstart', 'mousedown', 'keydown'];
+
+    function onFirstInteraction() {
+      if (firstInteractionSent) return;
+      firstInteractionSent = true;
+      sendEvent('user_interaction_start', null);
+
+      for (var i = 0; i < events.length; i++) {
+        document.removeEventListener(events[i], onFirstInteraction, true);
+      }
+    }
+
+    for (var i = 0; i < events.length; i++) {
+      document.addEventListener(events[i], onFirstInteraction, true);
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setupFirstInteractionDetection);
+  } else {
+    setupFirstInteractionDetection();
+  }
+
+  // --- Auto Error Capture ---
+
+  window.addEventListener('error', function(event) {
+    if (errorSent) return;
+    errorSent = true;
+    sendEvent('error', {
+      message: event.message || 'Unknown error',
+      source: event.filename || '',
+      lineno: event.lineno || 0,
+      colno: event.colno || 0,
+      auto_captured: true
+    });
+  });
+
+  window.addEventListener('unhandledrejection', function(event) {
+    if (errorSent) return;
+    errorSent = true;
+    var reason = event.reason;
+    sendEvent('error', {
+      message: (reason instanceof Error) ? reason.message : String(reason),
+      type: 'unhandled_promise_rejection',
+      auto_captured: true
+    });
+  });
+
+  // --- Public API ---
+
+  window.playablesSDK = {
+    complete: function(score) {
+      sendEvent('game_ended', {
+        score: score,
+        completed: true
+      });
+    },
+
+    error: function(message) {
+      if (errorSent) return;
+      errorSent = true;
+      sendEvent('error', {
+        message: message || 'Unknown error',
+        auto_captured: false
+      });
+    },
+
+    sendEvent: function(eventName, payload) {
+      if (!eventName || typeof eventName !== 'string') return;
+      sendEvent(eventName, payload);
+    }
+  };
+
+  // Kick off rAF detection in case no game code calls rAF immediately
+  if (originalRAF) {
+    originalRAF.call(window, onFrame);
+  }
+})();</script>
+<script>window.Intl=window.Intl||{};Intl.t=function(s){return(Intl._locale&&Intl._locale[s])||s;};</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>bit 99 — ONLINE</title>
+<style>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+  
+  html, body {
+    height: 100%;
+    width: 100%;
+    background: #000000;
+    color: #fff;
+    overflow: hidden;
+    font-family: "JetBrains Mono", "SF Mono", "Cascadia Code", "Roboto Mono", ui-monospace, Menlo, Monaco, Consolas, "Courier New", monospace;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    user-select: none;
+  }
+  
+  body {
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* 6:3:1 VERTICAL RATIO */
+  .top {
+    height: 60vh;
+    min-height: 60vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    background: radial-gradient(ellipse at center 40%, rgba(255,215,0,0.08) 0%, transparent 60%);
+  }
+  
+  .top-inner {
+    text-align: center;
+    line-height: 0.78;
+    transform: scale(1.05);
+  }
+  
+  .line {
+    font-size: clamp(32px, 8vw, 12vh);
+    font-weight: 500;
+    letter-spacing: 0.16em;
+    color: #FFD700;
+    text-transform: lowercase;
+    margin: 0.03em 0;
+    white-space: nowrap;
+    text-shadow: 
+      0 0 20px rgba(255,215,0,0.7),
+      0 0 40px rgba(255,215,0,0.4),
+      0 0 80px rgba(255,215,0,0.2),
+      0 0 120px rgba(255,215,0,0.1);
+    animation: goldPulse 3.5s ease-in-out infinite;
+  }
+  
+  @keyframes goldPulse {
+    0%, 100% {
+      opacity: 1;
+      text-shadow: 
+        0 0 20px rgba(255,215,0,0.7),
+        0 0 40px rgba(255,215,0,0.4),
+        0 0 80px rgba(255,215,0,0.2),
+        0 0 120px rgba(255,215,0,0.1);
+      filter: brightness(1);
+    }
+    50% {
+      opacity: 0.96;
+      text-shadow: 
+        0 0 30px rgba(255,215,0,0.9),
+        0 0 60px rgba(255,215,0,0.6),
+        0 0 100px rgba(255,215,0,0.3),
+        0 0 160px rgba(255,215,0,0.15);
+      filter: brightness(1.15);
+    }
+  }
+
+  /* MIDDLE - 1:1:1 */
+  .middle {
+    height: 30vh;
+    min-height: 30vh;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-rows: 1fr auto;
+    border-top: 1px solid rgba(255,215,0,0.15);
+    border-bottom: 1px solid rgba(255,215,0,0.15);
+    position: relative;
+    background: #000;
+  }
+  
+  .col {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-right: 1px solid rgba(255,255,255,0.08);
+    padding: 2vh 1.5vw;
+    text-align: center;
+    font-size: clamp(16px, 2.8vw, 4.5vh);
+    letter-spacing: 0.14em;
+    line-height: 1.15;
+    font-weight: 450;
+    position: relative;
+    overflow: hidden;
+    text-transform: lowercase;
+  }
+  
+  .col:last-child {
+    border-right: none;
+  }
+  
+  .col::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, transparent 0%, rgba(255,255,255,0.03) 50%, transparent 100%);
+    opacity: 0.6;
+  }
+  
+  .col::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 10%;
+    right: 10%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, currentColor, transparent);
+    opacity: 0.3;
+  }
+  
+  .col-left {
+    color: #00FFFF;
+    text-shadow: 0 0 15px rgba(0,255,255,0.5), 0 0 30px rgba(0,255,255,0.2);
+  }
+  
+  .col-center {
+    color: #FFFFFF;
+    text-shadow: 0 0 12px rgba(255,255,255,0.4), 0 0 24px rgba(255,255,255,0.15);
+  }
+  
+  .col-right {
+    color: #FFD700;
+    text-shadow: 0 0 15px rgba(255,215,0,0.5), 0 0 30px rgba(255,215,0,0.2);
+  }
+
+  /* VOTE BAR */
+  .vote-bar {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 3vw;
+    padding: 1.4vh 2vw;
+    background: rgba(0,0,0,0.85);
+    border-top: 1px solid rgba(255,255,255,0.06);
+    backdrop-filter: blur(4px);
+  }
+  
+  .vote-group {
+    display: flex;
+    align-items: center;
+    gap: 0.8vw;
+  }
+  
+  .vote-btn {
+    font-family: inherit;
+    background: transparent;
+    color: #666;
+    border: 1px solid rgba(255,255,255,0.12);
+    padding: 0.5em 1.4em;
+    font-size: clamp(9px, 1.05vw, 13px);
+    letter-spacing: 0.2em;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.2,0,0,1);
+    text-transform: uppercase;
+    font-weight: 500;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .vote-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: currentColor;
+    opacity: 0;
+    transition: opacity 0.25s;
+  }
+  
+  .vote-btn:hover {
+    color: #fff;
+    border-color: currentColor;
+    transform: translateY(-1px);
+  }
+  
+  .vote-btn:hover::before {
+    opacity: 0.08;
+  }
+  
+  .vote-btn:active {
+    transform: translateY(0) scale(0.97);
+  }
+  
+  .vote-btn[data-vote="plant"] { color: #00FFAA; }
+  .vote-btn[data-vote="burn"] { color: #FF5555; }
+  .vote-btn[data-vote="hold"] { color: #FFD700; }
+  
+  .vote-count {
+    font-size: clamp(10px, 1vw, 12px);
+    color: #444;
+    min-width: 3ch;
+    text-align: left;
+    letter-spacing: 0.08em;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* BOTTOM - 10% */
+  .bottom {
+    height: 10vh;
+    min-height: 10vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 3vw;
+    font-size: clamp(11px, 1.4vw, 17px);
+    letter-spacing: 0.28em;
+    color: #FFD700;
+    text-transform: uppercase;
+    font-weight: 500;
+    background: linear-gradient(0deg, rgba(255,215,0,0.03), transparent 60%);
+    text-shadow: 0 0 10px rgba(255,215,0,0.3);
+    white-space: nowrap;
+    overflow: hidden;
+  }
+
+  /* GRID OVERLAY - 1:1:1 */
+  .grid-overlay {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 10;
+    opacity: 0.07;
+    background-image: 
+      linear-gradient(to right, rgba(255,215,0,0.5) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(255,215,0,0.3) 1px, transparent 1px);
+    background-size: 33.333vw 33.333vh;
+    mix-blend-mode: screen;
+  }
+  
+  .vignette {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.8) 100%);
+    z-index: 5;
+  }
+
+  /* MOBILE */
+  @media (max-width: 900px) {
+    .line {
+      font-size: clamp(28px, 11vw, 9vh);
+      letter-spacing: 0.1em;
+    }
+    .col {
+      font-size: clamp(12px, 2.9vw, 18px);
+      letter-spacing: 0.08em;
+      padding: 1vh 1vw;
+    }
+    .vote-bar {
+      gap: 2.5vw;
+      flex-wrap: wrap;
+      padding: 1vh 1vw;
+    }
+    .vote-btn {
+      padding: 0.4em 1em;
+      font-size: 10px;
+    }
+    .bottom {
+      font-size: 10px;
+      letter-spacing: 0.18em;
+      padding: 0 2vw;
+    }
+    .grid-overlay {
+      background-size: 33.333vw 20vh;
+    }
+  }
+  
+  @media (max-width: 500px) {
+    .top-inner { transform: scale(1); line-height: 0.82; }
+    .line { letter-spacing: 0.06em; }
+    .middle { grid-template-rows: 1fr 1fr 1fr auto; grid-template-columns: 1fr; }
+    .col { border-right: none; border-bottom: 1px solid rgba(255,255,255,0.05); }
+    .col:last-child { border-bottom: none; }
+    .vote-bar { grid-row: 4; }
+  }
+</style>
+</head>
+<body>
+  <div class="vignette"></div>
+  <div class="grid-overlay"></div>
+  
+  <!-- TOP 60% -->
+  <section class="top">
+    <div class="top-inner">
+      <div class="line">bit 99</div>
+      <div class="line">0 99 = +17</div>
+      <div class="line">= 1</div>
+      <div class="line">= x4</div>
+      <div class="line">= repeat</div>
+      <div class="line">= perp = 1</div>
+    </div>
+  </section>
+  
+  <!-- MIDDLE 30% - 1:1:1 -->
+  <section class="middle">
+    <div class="col col-left">-+32i = 0 = 1</div>
+    <div class="col col-center">0-33-00 = 1 = +17</div>
+    <div class="col col-right">010 anchor 9999 = 1</div>
+    
+    <div class="vote-bar">
+      <div class="vote-group">
+        <button class="vote-btn" data-vote="plant" type="button">PLANT</button>
+        <span class="vote-count" id="count-plant">0</span>
+      </div>
+      <div class="vote-group">
+        <button class="vote-btn" data-vote="burn" type="button">BURN</button>
+        <span class="vote-count" id="count-burn">0</span>
+      </div>
+      <div class="vote-group">
+        <button class="vote-btn" data-vote="hold" type="button">HOLD</button>
+        <span class="vote-count" id="count-hold">0</span>
+      </div>
+    </div>
+  </section>
+  
+  <!-- BOTTOM 10% -->
+  <section class="bottom">
+    DAVID × VOID = 0 // 1:1:1 // 6:3:1 // ONLINE
+  </section>
+
+<script>
+(function() {
+  const KEY = 'bit99_votes';
+  let votes = { plant: 0, burn: 0, hold: 0 };
+  
+  try {
+    const saved = localStorage.getItem(KEY);
+    if (saved) {
+      votes = JSON.parse(saved);
+    }
+  } catch(e) {}
+  
+  function update() {
+    document.getElementById('count-plant').textContent = votes.plant;
+    document.getElementById('count-burn').textContent = votes.burn;
+    document.getElementById('count-hold').textContent = votes.hold;
+  }
+  
+  function save() {
+    try {
+      localStorage.setItem(KEY, JSON.stringify(votes));
+    } catch(e) {}
+  }
+  
+  document.querySelectorAll('.vote-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const type = btn.dataset.vote;
+      votes[type] = (votes[type] || 0) + 1;
+      save();
+      update();
+      
+      // flash
+      const orig = btn.style.boxShadow;
+      btn.style.boxShadow = `0 0 20px ${getComputedStyle(btn).color}`;
+      setTimeout(() => { btn.style.boxShadow = orig; }, 250);
+      
+      // subtle screen pulse
+      document.body.style.transition = 'background 0.15s';
+      document.body.style.background = '#050500';
+      setTimeout(() => { document.body.style.background = '#000000'; }, 150);
+    });
+  });
+  
+  update();
+  
+  // ambient flicker
+  setInterval(() => {
+    if (Math.random() > 0.97) {
+      document.querySelector('.top').style.opacity = '0.98';
+      setTimeout(() => { document.querySelector('.top').style.opacity = '1'; }, 50);
+    }
+  }, 2000);
+})();
+</script>
+</body>
+</html>
