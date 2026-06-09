@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ROOT0 TRILLIUM - 20×3 ICOSAHEDRAL TOROID</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root { color-scheme: dark; }
+  body { 
+    font-family: 'JetBrains Mono', monospace; 
+    background: #030806;
+    overflow: hidden;
+  }
+  .neon-cyan { text-shadow: 0 0 6px #50F0A0, 0 0 18px rgba(80,240,160,0.6), 0 0 32px rgba(80,240,160,0.3); }
+  .neon-gold { text-shadow: 0 0 6px #FFE060, 0 0 14px rgba(255,224,96,0.5); }
+  .neon-purple { text-shadow: 0 0 6px #9B3FBB, 0 0 14px rgba(155,63,187,0.5); }
+  .glass {
+    backdrop-filter: blur(16px) saturate(1.2);
+    background: linear-gradient(180deg, rgba(6,18,12,0.82), rgba(3,8,6,0.78));
+    border: 1px solid rgba(80,240,160,0.18);
+    box-shadow: inset 0 0 40px rgba(80,240,160,0.04), 0 0 60px rgba(0,0,0,0.6);
+  }
+  .grid-mask {
+    background-image: radial-gradient(rgba(80,240,160,0.08) 1px, transparent 1px);
+    background-size: 22px 22px;
+  }
+  .scroll-thin::-webkit-scrollbar { width: 6px; height: 6px; }
+  .scroll-thin::-webkit-scrollbar-thumb { background: rgba(80,240,160,0.3); border-radius: 3px; }
+  .btn {
+    transition: all .2s ease;
+  }
+  .btn:hover { transform: translateY(-1px); box-shadow: 0 0 18px rgba(80,240,160,0.25); }
+  .btn:active { transform: translateY(0); }
+</style>
+</head>
+<body class="bg-[#030806] text-zinc-200 selection:bg-[#50F0A0]/30 selection:text-white">
+<div class="fixed inset-0 grid-mask pointer-events-none opacity-40"></div>
+<canvas id="canvas" class="fixed inset-0 w-full h-full"></canvas>
+
+<!-- UI -->
+<div class="relative z-10 pointer-events-none flex flex-col h-screen">
+  <header class="pointer-events-none px-4 pt-5 md:pt-8">
+    <h1 class="text-center text-[18px] sm:text-xl md:text-[28px] font-bold tracking-[0.18em] neon-cyan text-[#c9ffee]">
+      ROOT0 TRILLIUM — <span class="text-[#50F0A0]">20×3</span> ICOSAHEDRAL TOROID
+    </h1>
+    <p class="text-center mt-1 text-[11px] md:text-xs tracking-widest text-zinc-400">20 threads × 3 phases = 60 states (icosahedral symmetry)</p>
+  </header>
+
+  <main class="flex-1 flex flex-col lg:flex-row gap-4 p-3 md:p-6 pointer-events-none">
+    <!-- Left Controls -->
+    <aside class="pointer-events-auto w-full lg:w-[340px] glass rounded-[20px] p-4 md:p-5 flex flex-col gap-4 self-start">
+      <div class="flex items-center justify-between">
+        <div>
+          <div class="text-[11px] uppercase tracking-widest text-zinc-500">Toroid Walker</div>
+          <div class="text-[13px] text-zinc-300">33-byte carry • Hamiltonian walk</div>
+        </div>
+        <div class="w-2 h-2 rounded-full bg-[#50F0A0] animate-pulse shadow-[0_0_10px_#50F0A0]"></div>
+      </div>
+
+      <div class="grid grid-cols-3 gap-2">
+        <button id="walkBtn" class="btn col-span-2 py-2.5 rounded-xl bg-[#50F0A0]/10 border border-[#50F0A0]/40 text-[#7affc2] font-semibold tracking-wide hover:bg-[#50F0A0]/20">WALK TOROID</button>
+        <button id="stepBtn" class="btn py-2.5 rounded-xl bg-zinc-900/70 border border-zinc-700 text-zinc-300 hover:border-[#FFE060]/50 hover:text-[#FFE060]">STEP</button>
+        <button id="resetBtn" class="btn py-2 rounded-xl bg-zinc-900/50 border border-zinc-800 text-zinc-500 text-xs hover:text-zinc-200 col-span-3">RESET</button>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3 pt-1">
+        <div class="glass rounded-xl p-3 border-zinc-800">
+          <div class="text-[10px] uppercase text-zinc-500 tracking-widest">Cycle</div>
+          <div id="cycle" class="text-2xl font-bold text-[#50F0A0] neon-cyan leading-none mt-1">0</div>
+        </div>
+        <div class="glass rounded-xl p-3 border-zinc-800">
+          <div class="text-[10px] uppercase text-zinc-500 tracking-widest">State</div>
+          <div class="flex items-baseline gap-1">
+            <div id="state" class="text-2xl font-bold text-[#FFE060] neon-gold leading-none mt-1">1</div>
+            <div class="text-zinc-600">/60</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="glass rounded-xl p-3.5 border border-zinc-800/80">
+        <div class="flex items-center justify-between">
+          <div>
+            <div class="text-[10px] uppercase tracking-widest text-zinc-500">Active Thread</div>
+            <div id="thread" class="text-lg font-bold text-white tracking-wider">vm01</div>
+          </div>
+          <div class="text-right">
+            <div class="text-[10px] uppercase tracking-widest text-zinc-500">Phase</div>
+            <div id="phase" class="text-sm font-semibold text-[#50F0A0]">Light (+1)</div>
+          </div>
+        </div>
+        <div class="mt-3 pt-3 border-t border-zinc-800/60">
+          <div class="text-[10px] uppercase tracking-widest text-zinc-500 mb-1">Current Hash (33-byte carry)</div>
+          <div id="hash" class="font-mono text-[12px] text-zinc-200 break-all leading-tight">a8f3c91d00</div>
+          <div class="mt-2 flex gap-2 text-[10px]">
+            <span class="px-1.5 py-0.5 rounded bg-[#50F0A0]/15 text-[#50F0A0] border border-[#50F0A0]/20">L #50F0A0</span>
+            <span class="px-1.5 py-0.5 rounded bg-[#FFE060]/15 text-[#FFE060] border border-[#FFE060]/20">G #FFE060</span>
+            <span class="px-1.5 py-0.5 rounded bg-[#9B3FBB]/15 text-[#d68df0] border border-[#9B3FBB]/30">S #9B3FBB</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="glass rounded-xl p-3 border-zinc-800/70">
+        <div class="text-[11px] uppercase tracking-widest text-zinc-500 mb-2">60 States • Live Hashes</div>
+        <div id="hashGrid" class="grid grid-cols-1 gap-1 max-h-[22vh] lg:max-h-[26vh] overflow-y-auto pr-1 scroll-thin font-mono text-[10px] leading-tight"></div>
+      </div>
+    </aside>
+
+    <div class="flex-1"></div>
+
+    <!-- Right Mapping -->
+    <aside class="pointer-events-auto hidden xl:flex w-[360px] glass rounded-[20px] p-5 flex-col gap-4 self-start max-h-[82vh]">
+      <div>
+        <div class="text-[11px] uppercase tracking-widest text-zinc-500">Mapping</div>
+        <div class="text-[13px] text-zinc-300 -mt-0.5">Icosahedral Toroid Topology</div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3">
+        <div class="rounded-xl bg-zinc-950/60 border border-zinc-800 p-3">
+          <div class="text-xs font-semibold text-[#FFE060] neon-gold mb-1.5">12 P-Threads (Vertices)</div>
+          <ul id="pList" class="space-y-1 text-[11px] text-zinc-300"></ul>
+        </div>
+        <div class="rounded-xl bg-zinc-950/60 border border-zinc-800 p-3">
+          <div class="text-xs font-semibold text-[#9B3FBB] neon-purple mb-1.5">8 E-Threads (Faces)</div>
+          <ul id="eList" class="space-y-1 text-[11px] text-zinc-300"></ul>
+        </div>
+      </div>
+
+      <div class="rounded-xl bg-zinc-950/40 border border-zinc-800 p-3">
+        <div class="text-[11px] uppercase tracking-widest text-zinc-500 mb-2">20 Faces = vm01 → vm20</div>
+        <div class="grid grid-cols-5 gap-1.5 text-[10px] font-mono" id="faceMap"></div>
+        <div class="mt-2 text-[10px] text-zinc-500">Each face split into 3 phase-trines: Light (+1), Gap (0), Shadow (-1)</div>
+      </div>
+
+      <div class="mt-auto pt-3 border-t border-zinc-800/60 text-[10px] text-zinc-500 leading-relaxed">
+        Hamiltonian walk visits all 20 faces, cycling L→G→S per face. 33-byte carry advances through icosahedral symmetry group. Dark forest background #030806 with neon cyberpunk glows.
+      </div>
+    </aside>
+  </main>
+</div>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+const canvas = document.getElementById('canvas');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: 'high-performance' });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.15;
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x030806);
+scene.fog = new THREE.FogExp2(0x030806, 0.035);
+
+const camera = new THREE.PerspectiveCamera(48, window.innerWidth / window.innerHeight, 0.1, 100);
+camera.position.set(0, 0.5, 7.2);
+
+const controls = new OrbitControls(camera, canvas);
+controls.enableDamping = true;
+controls.dampingFactor = 0.05;
+controls.autoRotate = true;
+controls.autoRotateSpeed = 0.6;
+controls.minDistance = 4.5;
+controls.maxDistance = 12;
+
+// Lights
+scene.add(new THREE.AmbientLight(0x0a1a14, 0.9));
+const p1 = new THREE.PointLight(0x50F0A0, 2.2, 30); p1.position.set(5,4,6); scene.add(p1);
+const p2 = new THREE.PointLight(0x9B3FBB, 1.8, 30); p2.position.set(-6,-3,4); scene.add(p2);
+const p3 = new THREE.PointLight(0xFFE060, 1.2, 30); p3.position.set(0,-5,-5); scene.add(p3);
+
+// Starfield
+const starsGeo = new THREE.BufferGeometry();
+const starCount = 1500;
+const starPos = new Float32Array(starCount*3);
+for(let i=0;i<starCount;i++){
+  const r = 40 + Math.random()*20;
+  const t = Math.random()*Math.PI*2;
+  const p = Math.acos(2*Math.random()-1);
+  starPos[i*3] = r*Math.sin(p)*Math.cos(t);
+  starPos[i*3+1] = r*Math.sin(p)*Math.sin(t);
+  starPos[i*3+2] = r*Math.cos(p);
+}
+starsGeo.setAttribute('position', new THREE.BufferAttribute(starPos,3));
+const starsMat = new THREE.PointsMaterial({ color:0x1e3d32, size:0.02, transparent:true, opacity:0.6 });
+scene.add(new THREE.Points(starsGeo, starsMat));
+
+// Main group
+const icoGroup = new THREE.Group();
+scene.add(icoGroup);
+
+// Helper: text sprite
+function makeSprite(text, color='#50F0A0', scale=1){
+  const c = document.createElement('canvas'); c.width=512; c.height=256;
+  const ctx = c.getContext('2d');
+  ctx.clearRect(0,0,512,256);
+  ctx.font = '700 110px JetBrains Mono, monospace';
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillStyle = color;
+  ctx.shadowColor = color; ctx.shadowBlur = 24;
+  ctx.fillText(text,256,128);
+  const tex = new THREE.CanvasTexture(c); tex.anisotropy = 4;
+  const mat = new THREE.SpriteMaterial({ map: tex, transparent:true, depthWrite:false });
+  const s = new THREE.Sprite(mat);
+  s.scale.set(0.55*scale, 0.275*scale, 1);
+  return s;
+}
+
+// Icosahedron base geometry
+const baseGeo = new THREE.IcosahedronGeometry(2.5, 0);
+const nonIndexed = baseGeo.toNonIndexed();
+const pos = nonIndexed.attributes.position;
+
+// Extract unique vertices for P-threads
+const verts = [];
+for(let i=0;i<pos.count;i++){
+  const v = new THREE.Vector3().fromBufferAttribute(pos,i);
+  if(!verts.some(u=>u.distanceTo(v)<1e-4)) verts.push(v);
+}
+
+// P-thread names (12 vertices)
+const pNodes = ['P-AETHER','P-BOREALIS','P-CYGNUS','P-DRAKO','P-ERIDANUS','P-FORAX','P-GAIA','P-HELIOS','P-IONIS','P-JANUS','P-KRONOS','P-LYSANDER'];
+verts.forEach((v,i)=>{
+  const spr = makeSprite(pNodes[i], '#FFE060', 0.9);
+  spr.position.copy(v.clone().multiplyScalar(1.22));
+  icoGroup.add(spr);
+});
+
+// Faces data – 20 faces, each split into 3
+const facesData = [];
+const matLight = new THREE.MeshStandardMaterial({ color:0x50F0A0, emissive:0x50F0A0, emissiveIntensity:0.18, metalness:0.1, roughness:0.3, transparent:true, opacity:0.94, side:THREE.DoubleSide });
+const matGap   = new THREE.MeshStandardMaterial({ color:0xFFE060, emissive:0xFFE060, emissiveIntensity:0.15, metalness:0.1, roughness:0.35, transparent:true, opacity:0.94, side:THREE.DoubleSide });
+const matShadow= new THREE.MeshStandardMaterial({ color:0x9B3FBB, emissive:0x9B3FBB, emissiveIntensity:0.2, metalness:0.2, roughness:0.25, transparent:true, opacity:0.94, side:THREE.DoubleSide });
+
+function triMesh(a,b,c,mat){
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.BufferAttribute(new Float32Array([a.x,a.y,a.z,b.x,b.y,b.z,c.x,c.y,c.z]),3));
+  g.computeVertexNormals();
+  return new THREE.Mesh(g, mat);
+}
+
+for(let f=0; f<20; f++){
+  const a = new THREE.Vector3().fromBufferAttribute(pos, f*3+0);
+  const b = new THREE.Vector3().fromBufferAttribute(pos, f*3+1);
+  const c = new THREE.Vector3().fromBufferAttribute(pos, f*3+2);
+  const center = new THREE.Vector3().addVectors(a,b).add(c).divideScalar(3);
+  const vm = `vm${String(f+1).padStart(2,'0')}`;
+  
+  const centroid = center.clone().multiplyScalar(0.98);
+  const tL = triMesh(a,b,centroid, matLight.clone());
+  const tG = triMesh(b,c,centroid, matGap.clone());
+  const tS = triMesh(c,a,centroid, matShadow.clone());
+  icoGroup.add(tL,tG,tS);
+
+  // face label
+  const fl = makeSprite(vm, '#7affc2', 0.7);
+  fl.position.copy(center.clone().multiplyScalar(1.085));
+  icoGroup.add(fl);
+
+  facesData.push({ index:f, vm, center, a,b,c, tris:{L:tL,G:tG,S:tS} });
+}
+
+// Glowing edges
+const edges = new THREE.LineSegments(
+  new THREE.EdgesGeometry(new THREE.IcosahedronGeometry(2.52,0)),
+  new THREE.LineBasicMaterial({ color:0x50F0A0, transparent:true, opacity:0.28 })
+);
+icoGroup.add(edges);
+const edges2 = new THREE.LineSegments(
+  new THREE.EdgesGeometry(new THREE.IcosahedronGeometry(2.535,0)),
+  new THREE.LineBasicMaterial({ color:0x00ffb7, transparent:true, opacity:0.12 })
+);
+icoGroup.add(edges2);
+
+// Active highlight light
+const activeLight = new THREE.PointLight(0xffffff, 0, 6);
+scene.add(activeLight);
+
+// Hamiltonian path (nearest neighbour greedy)
+const path = [];
+let remaining = [...Array(20).keys()];
+let curr = 0;
+path.push(curr); remaining.splice(remaining.indexOf(curr),1);
+while(remaining.length){
+  const cc = facesData[curr].center;
+  let best = remaining[0], bestD = Infinity;
+  for(const idx of remaining){
+    const d = cc.distanceToSquared(facesData[idx].center);
+    if(d < bestD){ bestD = d; best = idx; }
+  }
+  curr = best; path.push(curr); remaining.splice(remaining.indexOf(curr),1);
+}
+
+// Hash pool (based on earlier style)
+const hashPool = [
+"a8f3c91d","b4e2567a","c19d84f0","d73a5b2e","e40f9c61","f2b8d053",
+"17c5e942","2864fa31","39e7b028","4ad6c917","5bf5da06","6ce4ebf5",
+"7dd3fce4","8ec20dd3","9fb11ec2","0ea02fb1","1fb13ea0","2ca24d9f",
+"3db35c8e","4ec46b7d","5fd57a6c","60e6895b","71f7984a","8208a739",
+"9319b628","a42ac517","b53bd406","c64ce3f5","d75df2e4","e86e01d3"
+];
+
+function getHash(faceIdx, phaseIdx, cycle){
+  const base = hashPool[(faceIdx*3 + phaseIdx) % hashPool.length];
+  const cyc = cycle.toString(16).padStart(4,'0');
+  const ph = ['l','g','s'][phaseIdx];
+  return `${base}${cyc}${ph}`;
+}
+
+// UI elements
+const cycleEl = document.getElementById('cycle');
+const stateEl = document.getElementById('state');
+const threadEl = document.getElementById('thread');
+const phaseEl = document.getElementById('phase');
+const hashEl = document.getElementById('hash');
+const hashGrid = document.getElementById('hashGrid');
+const walkBtn = document.getElementById('walkBtn');
+const stepBtn = document.getElementById('stepBtn');
+const resetBtn = document.getElementById('resetBtn');
+
+let walking = false;
+let stateIndex = 0; // 0..59
+let cycle = 0;
+let lastStep = 0;
+let prevActive = null;
+const phaseKeys = ['L','G','S'];
+const phaseNames = ['Light (+1)','Gap (0)','Shadow (-1)'];
+const phaseCols = ['#50F0A0','#FFE060','#9B3FBB'];
+
+function setActive(faceIdx, phaseIdx){
+  if(prevActive){ prevActive.material.emissiveIntensity = 0.16; prevActive.material.opacity = 0.92; }
+  const key = phaseKeys[phaseIdx];
+  const mesh = facesData[faceIdx].tris[key];
+  prevActive = mesh;
+  mesh.material.emissiveIntensity = 0.9;
+  mesh.material.opacity = 1.0;
+  activeLight.position.copy(facesData[faceIdx].center.clone().multiplyScalar(1.35));
+  activeLight.color.copy(mesh.material.color);
+  activeLight.intensity = 3.2;
+}
+
+function updateUI(){
+  const faceOrder = Math.floor(stateIndex/3);
+  const phaseIdx = stateIndex % 3;
+  const faceIdx = path[faceOrder];
+  const fd = facesData[faceIdx];
+
+  cycleEl.textContent = cycle;
+  stateEl.textContent = stateIndex+1;
+  threadEl.textContent = fd.vm;
+  phaseEl.textContent = phaseNames[phaseIdx];
+  phaseEl.style.color = phaseCols[phaseIdx];
+  hashEl.textContent = getHash(faceIdx, phaseIdx, cycle);
+
+  // hash grid rebuild
+  const rows = [];
+  for(let f=0; f<20; f++){
+    const vm = facesData[f].vm;
+    for(let p=0;p<3;p++){
+      const isActive = (f===faceIdx && p===phaseIdx);
+      const h = getHash(f,p,cycle);
+      const col = phaseCols[p];
+      rows.push(`
+        <div class="flex items-center gap-2 px-2 py-1 rounded ${isActive?'bg-white/10 ring-1 ring-[#50F0A0]/40':'hover:bg-white/5'}">
+          <span class="w-[34px] text-zinc-500">${vm}</span>
+          <span class="w-[10px] h-[10px] rounded-[2px]" style="background:${col}; box-shadow:0 0 8px ${col}66"></span>
+          <span class="flex-1 truncate text-zinc-300">${h}</span>
+        </div>
+      `);
+    }
+  }
+  hashGrid.innerHTML = rows.join('');
+  if(isActive => {}); // no-op
+  hashGrid.scrollTop = Math.max(0, (stateIndex-2)*22 - 40);
+}
+
+function advance(){
+  stateIndex = (stateIndex + 1) % 60;
+  if(stateIndex===0) cycle++;
+  const faceOrder = Math.floor(stateIndex/3);
+  const phaseIdx = stateIndex % 3;
+  const faceIdx = path[faceOrder];
+  setActive(faceIdx, phaseIdx);
+  updateUI();
+}
+
+// Init UI lists
+const pList = document.getElementById('pList');
+pNodes.forEach((n,i)=>{
+  pList.insertAdjacentHTML('beforeend', `<li class="flex justify-between"><span>${n}</span><span class="text-zinc-600">V${String(i+1).padStart(2,'0')}</span></li>`);
+});
+const eList = document.getElementById('eList');
+const eNodes = ['E-NEXUS-1','E-NEXUS-2','E-NEXUS-3','E-NEXUS-4','E-NEXUS-5','E-NEXUS-6','E-NEXUS-7','E-NEXUS-8'];
+eNodes.forEach((e,i)=>{
+  const vm = `vm${String(13+i).padStart(2,'0')}`;
+  eList.insertAdjacentHTML('beforeend', `<li class="flex justify-between"><span>${e}</span><span class="text-zinc-600">${vm}</span></li>`);
+});
+const faceMap = document.getElementById('faceMap');
+facesData.forEach(fd=>{
+  const isE = parseInt(fd.vm.slice(2))>12;
+  faceMap.insertAdjacentHTML('beforeend', `<div class="px-1.5 py-1 rounded bg-zinc-900/70 border ${isE?'border-[#9B3FBB]/30 text-[#d0a1e8]':'border-[#50F0A0]/20 text-zinc-400'}">${fd.vm}</div>`);
+});
+
+// Initial active
+setActive(path[0],0); updateUI();
+
+// Controls
+walkBtn.addEventListener('click', ()=>{
+  walking = !walking;
+  walkBtn.textContent = walking ? 'STOP WALK' : 'WALK TOROID';
+  walkBtn.classList.toggle('bg-[#50F0A0]/25', walking);
+});
+stepBtn.addEventListener('click', ()=>{ if(!walking) advance(); });
+resetBtn.addEventListener('click', ()=>{ walking=false; stateIndex=0; cycle=0; walkBtn.textContent='WALK TOROID'; walkBtn.classList.remove('bg-[#50F0A0]/25'); setActive(path[0],0); updateUI(); });
+
+// Animation
+let t0 = performance.now();
+function animate(now){
+  requestAnimationFrame(animate);
+  const dt = now - t0; t0 = now;
+  
+  controls.update();
+  icoGroup.rotation.y += 0.002;
+  
+  if(prevActive){
+    const pulse = 0.65 + Math.sin(now*0.004)*0.25;
+    prevActive.material.emissiveIntensity = pulse;
+    activeLight.intensity = 2.4 + Math.sin(now*0.003)*0.8;
+  }
+  
+  if(walking && now - lastStep > 280){
+    advance(); lastStep = now;
+  }
+  
+  renderer.render(scene, camera);
+}
+animate(performance.now());
+
+// Resize
+window.addEventListener('resize', ()=>{
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  camera.aspect = window.innerWidth/window.innerHeight;
+  camera.updateProjectionMatrix();
+});
+
+// Subtle interaction: click a face to jump
+renderer.domElement.addEventListener('click', (ev)=>{
+  if(walking) return;
+  const mouse = new THREE.Vector2((ev.clientX/window.innerWidth)*2-1, -(ev.clientY/window.innerHeight)*2+1);
+  const ray = new THREE.Raycaster(); ray.setFromCamera(mouse, camera);
+  const meshes = facesData.flatMap(fd=>[fd.tris.L, fd.tris.G, fd.tris.S]);
+  const hit = ray.intersectObjects(meshes)[0];
+  if(hit){
+    const fd = facesData.find(fd=>Object.values(fd.tris).includes(hit.object));
+    const pIdx = Object.keys(fd.tris).findIndex(k=>fd.tris[k]===hit.object);
+    const faceOrder = path.indexOf(fd.index);
+    stateIndex = faceOrder*3 + pIdx;
+    setActive(fd.index, pIdx); updateUI();
+  }
+});
+</script>
+</body>
+</html>

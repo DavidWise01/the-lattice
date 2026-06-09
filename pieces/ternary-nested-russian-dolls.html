@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nested Russian Doll Folders — 6 Tritrits</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Inter:wght@400;500;600&display=swap');
+  :root {
+    --watcher: #3b82f6;
+    --nester: #f59e0b;
+    --purple: #8b5cf6;
+    --cyan: #22d3ee;
+    --gold: #fbbf24;
+  }
+  * { -webkit-font-smoothing: antialiased; }
+  body {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    background:
+      radial-gradient(1200px 800px at 80% -10%, rgba(139,92,246,0.18), transparent 60%),
+      radial-gradient(900px 700px at 10% 110%, rgba(59,130,246,0.15), transparent 50%),
+      radial-gradient(600px 400px at 50% 50%, rgba(16,185,129,0.08), transparent),
+      #02030a;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  .font-mono { font-family: 'JetBrains Mono', monospace; }
+  
+  .folder {
+    background: linear-gradient(180deg, rgba(15,23,42,0.9), rgba(2,6,23,0.85));
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(148,163,184,0.12);
+    box-shadow: 
+      0 20px 60px rgba(0,0,0,0.6),
+      inset 0 1px 0 rgba(255,255,255,0.06),
+      inset 0 -1px 0 rgba(0,0,0,0.4);
+    transition: all 0.7s cubic-bezier(0.2,0.8,0.2,1);
+  }
+  .folder.bloomed {
+    border-color: rgba(255,255,255,0.85);
+    box-shadow:
+      0 0 0 1px rgba(255,255,255,0.4),
+      0 0 80px rgba(255,255,255,0.35),
+      0 0 140px rgba(167,139,250,0.25),
+      inset 0 1px 0 rgba(255,255,255,0.2);
+    animation: bloomPulse 1.4s ease-out;
+  }
+  @keyframes bloomPulse {
+    0% { transform: scale(1); filter: brightness(1); }
+    30% { transform: scale(1.03); filter: brightness(1.7); }
+    100% { transform: scale(1.02); filter: brightness(1.1); }
+  }
+
+  .tritrit {
+    width: 68px; height: 68px;
+    position: relative;
+    cursor: pointer;
+    user-select: none;
+    transition: transform 0.2s ease;
+  }
+  .tritrit:hover { transform: scale(1.07); z-index: 20; }
+  .tritrit:active { transform: scale(0.96); }
+  
+  .tritrit .core {
+    width: 100%; height: 100%;
+    border-radius: 9999px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px; font-weight: 600;
+    color: #02030a;
+    position: relative; z-index: 2;
+    transition: all 0.35s cubic-bezier(0.2,0.8,0.2,1);
+    box-shadow: inset 0 2px 4px rgba(255,255,255,0.3), inset 0 -2px 4px rgba(0,0,0,0.3);
+  }
+  .tritrit .spin-ring {
+    position: absolute; inset: -6px;
+    border-radius: 9999px;
+    border: 2.5px dashed transparent;
+    border-top-color: rgba(148,163,184,0.55);
+    border-right-color: rgba(148,163,184,0.2);
+    opacity: 0.7;
+  }
+  .gatekeeper .spin-ring {
+    animation: spin 5s linear infinite;
+    animation-play-state: paused;
+  }
+  .level.active .gatekeeper .spin-ring { animation-play-state: running; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .observer { animation: pulse 3.3s ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.09); } }
+
+  .observer.watcher .core { outline: 2.5px solid var(--watcher); outline-offset: 4px; }
+  .observer.watcher { filter: drop-shadow(0 0 22px rgba(59,130,246,0.55)); }
+  
+  .observer.nester .core { outline: 2.5px solid var(--nester); outline-offset: 4px; }
+  .observer.nester { filter: drop-shadow(0 0 22px rgba(245,158,11,0.55)); }
+
+  .tritrit[data-state="0"] .core {
+    background: radial-gradient(circle at 30% 25%, #c4b5fd, #7c3aed 60%, #5b21b6);
+    color: white;
+    box-shadow: 0 0 24px rgba(139,92,246,0.8), inset 0 2px 3px rgba(255,255,255,0.25);
+  }
+  .tritrit[data-state="1"] .core {
+    background: radial-gradient(circle at 30% 25%, #a5f3fc, #0891b2 60%, #0e7490);
+    box-shadow: 0 0 24px rgba(34,211,238,0.75), inset 0 2px 3px rgba(255,255,255,0.25);
+  }
+  .tritrit[data-state="2"] .core {
+    background: radial-gradient(circle at 30% 25%, #fef3c7, #d97706 60%, #92400e);
+    box-shadow: 0 0 24px rgba(251,191,36,0.8), inset 0 2px 3px rgba(255,255,255,0.3);
+  }
+
+  .mini-folder {
+    position: absolute; inset: 7px;
+    border-radius: 9999px; overflow: hidden;
+    pointer-events: none; opacity: 0.92;
+    background: radial-gradient(circle, rgba(0,0,0,0.4), rgba(0,0,0,0.8));
+  }
+  .mini-folder .folder {
+    transform: scale(0.155) translate(-272px, -280px);
+    width: 440px; height: 500px;
+    filter: saturate(1.2) brightness(1.1);
+    pointer-events: none !important;
+  }
+  .mini-folder .tritrit { pointer-events: none !important; }
+
+  .label-watcher, .label-nester {
+    position: absolute; top: 78px; left: 50%; transform: translateX(-50%);
+    text-align: center; white-space: nowrap; pointer-events: none;
+  }
+  .label-watcher .title { color: #60a5fa; text-shadow: 0 0 12px rgba(59,130,246,0.8); }
+  .label-nester .title { color: #fbbf24; text-shadow: 0 0 12px rgba(245,158,11,0.8); }
+
+  .level { transition: all 0.7s cubic-bezier(0.2,0.8,0.2,1); }
+  .levels-container[data-view="0"] .level[data-level="1"],
+  .levels-container[data-view="0"] .level[data-level="2"] { opacity: 0.25; transform: scale(0.86) translateY(20px); filter: blur(1px); }
+  .levels-container[data-view="1"] .level[data-level="0"] { opacity: 0.25; transform: scale(0.88) translateX(-30px); filter: blur(1px); }
+  .levels-container[data-view="1"] .level[data-level="2"] { opacity: 0.25; transform: scale(0.88) translateX(30px); filter: blur(1px); }
+  .levels-container[data-view="1"] .level[data-level="1"] { transform: scale(1.06); z-index: 10; }
+  .levels-container[data-view="2"] .level[data-level="0"],
+  .levels-container[data-view="2"] .level[data-level="1"] { opacity: 0.22; transform: scale(0.84) translateY(20px); filter: blur(1px); }
+  .levels-container[data-view="2"] .level[data-level="2"] { transform: scale(1.08); z-index: 10; }
+
+  .control-btn {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; letter-spacing: 0.05em;
+    padding: 6px 12px; border-radius: 10px;
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+    color: rgb(203,213,225); transition: all 0.2s;
+  }
+  .control-btn:hover { background: rgba(255,255,255,0.08); color: white; transform: translateY(-1px); }
+  .control-btn.active { background: rgba(139,92,246,0.2); border-color: rgba(139,92,246,0.5); color: rgb(221,214,254); }
+
+  .nest-arrow {
+    position: absolute; top: 34px; right: -22px; width: 44px; height: 20px;
+    pointer-events: none; opacity: 0.7;
+  }
+  @media (max-width: 1024px) {
+    .nest-arrow { display: none; }
+  }
+</style>
+</head>
+<body class="text-gray-200">
+<div class="max-w-[1400px] mx-auto px-4 py-5 sm:py-8">
+  <header class="text-center mb-5">
+    <h1 class="text-[22px] sm:text-[28px] font-semibold tracking-tight text-white">Nested Russian Doll Folders</h1>
+    <p class="font-mono text-[11px] sm:text-xs md:text-[13px] text-emerald-400/90 mt-2 tracking-wide px-2">
+      Level 0: 6 tritrits → Level 1: 6 tritrits → Level 2: 6 tritrits = 18 computed, 216 effective states
+    </p>
+  </header>
+
+  <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-6 bg-white/[0.03] backdrop-blur-2xl border border-white/10 rounded-2xl p-3 shadow-2xl">
+    <div class="flex flex-wrap items-center gap-1.5">
+      <button id="btn-all" class="control-btn active">SHOW ALL</button>
+      <button id="btn-0" class="control-btn">FOCUS L0</button>
+      <button id="btn-1" class="control-btn">FOCUS L1</button>
+      <button id="btn-2" class="control-btn">FOCUS L2</button>
+      <button id="btn-reset" class="control-btn !text-rose-300/80 hover:!text-rose-200">RESET</button>
+    </div>
+    <div class="flex items-center gap-4 w-full sm:w-auto justify-between sm:justify-end">
+      <div class="text-left sm:text-right">
+        <div class="font-mono text-[10px] text-gray-500 tracking-widest">DEPTH</div>
+        <div class="font-mono text-[13px] text-emerald-300"><span id="depth-val">0</span> • <span id="computed-val">6</span> computed • <span id="effective-val">6</span> states</div>
+      </div>
+      <div class="hidden sm:block w-px h-8 bg-white/10"></div>
+      <div class="font-mono text-[11px] px-2.5 py-1 rounded-lg bg-violet-500/10 border border-violet-500/20 text-violet-200" id="status">Level 0 active</div>
+    </div>
+  </div>
+
+  <div id="levels-wrap" class="levels-container relative" data-view="all">
+    <div class="flex flex-col lg:flex-row items-center justify-center gap-12 lg:gap-8 xl:gap-12 py-4 lg:py-8">
+
+      <!-- LEVEL 0 -->
+      <div class="level" data-level="0">
+        <div class="folder w-[310px] sm:w-[330px] h-[390px] rounded-[2.2rem] p-5 relative">
+          <div class="flex items-center justify-between">
+            <span class="font-mono text-[11px] tracking-[0.18em] text-emerald-400">LEVEL 0</span>
+            <span class="text-[10px] uppercase tracking-widest text-gray-500">Outer • Root</span>
+          </div>
+          <div class="absolute top-4 right-5 w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.8)]"></div>
+          
+          <div class="relative flex justify-center gap-20 mt-8">
+            <!-- WATCHER -->
+            <div class="tritrit observer watcher" data-type="watcher" data-state="1">
+              <div class="spin-ring !border-solid !border-blue-500/40" style="animation:none"></div>
+              <div class="core">1:1</div>
+              <div class="label-watcher">
+                <div class="title font-mono text-[10px] tracking-widest">WATCHER</div>
+                <div class="sub font-mono text-[9px] text-sky-300/80">watches this level</div>
+              </div>
+              <svg class="absolute -bottom-9 left-1/2 -translate-x-1/2" width="22" height="26" viewBox="0 0 22 26" fill="none">
+                <path d="M11 1v18M11 19l-4.5-4.5M11 19l4.5-4.5" stroke="#38bdf8" stroke-opacity="0.85" stroke-width="1.4" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <!-- NESTER -->
+            <div class="tritrit observer nester" data-type="nester" data-state="1" title="Click to zoom to Level 1">
+              <div class="spin-ring !border-solid !border-amber-500/40" style="animation:none"></div>
+              <div class="core">1:1</div>
+              <div class="mini-folder"></div>
+              <div class="label-nester">
+                <div class="title font-mono text-[10px] tracking-widest">NESTER</div>
+                <div class="sub font-mono text-[9px] text-amber-300/90">nests to next →</div>
+              </div>
+            </div>
+            <svg class="nest-arrow" viewBox="0 0 44 20" fill="none">
+              <path d="M2 10h34l-6-6m6 6l-6 6" stroke="#f59e0b" stroke-opacity="0.7" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+          </div>
+
+          <div class="absolute left-1/2 top-[132px] -translate-x-1/2 w-px h-12 bg-gradient-to-b from-sky-500/70 to-transparent"></div>
+
+          <div class="grid grid-cols-2 gap-8 w-[184px] mx-auto mt-[92px] relative">
+            <div class="absolute -inset-7 rounded-[28px] border border-white/[0.06] bg-white/[0.01]"></div>
+            <div class="tritrit gatekeeper" data-type="gatekeeper" data-index="0" data-state="1"><div class="spin-ring"></div><div class="core">1:1</div></div>
+            <div class="tritrit gatekeeper" data-type="gatekeeper" data-index="1" data-state="1"><div class="spin-ring"></div><div class="core">1:1</div></div>
+            <div class="tritrit gatekeeper" data-type="gatekeeper" data-index="2" data-state="1"><div class="spin-ring"></div><div class="core">1:1</div></div>
+            <div class="tritrit gatekeeper" data-type="gatekeeper" data-index="3" data-state="1"><div class="spin-ring"></div><div class="core">1:1</div></div>
+          </div>
+
+          <div class="absolute bottom-4 left-5 right-5 flex justify-between items-center">
+            <span class="font-mono text-[10px] text-gray-500">4 gatekeepers • spin 2/5</span>
+            <span class="font-mono text-[10px] text-violet-300/70">0:0 → bloom</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- LEVEL 1 -->
+      <div class="level" data-level="1">
+        <div class="folder w-[310px] sm:w-[330px] h-[390px] rounded-[2.2rem] p-5 relative">
+          <div class="flex items-center justify-between">
+            <span class="font-mono text-[11px] tracking-[0.18em] text-emerald-400">LEVEL 1</span>
+            <span class="text-[10px] uppercase tracking-widest text-gray-500">Middle</span>
+          </div>
+          <div class="absolute top-4 right-5 w-2 h-2 rounded-full bg-amber-400/80 animate-pulse shadow-[0_0_10px_rgba(245,158,11,0.6)]"></div>
+          
+          <div class="relative flex justify-center gap-20 mt-8">
+            <div class="tritrit observer watcher" data-type="watcher" data-state="1">
+              <div class="spin-ring !border-solid !border-blue-500/40" style="animation:none"></div>
+              <div class="core">1:1</div>
+              <div class="label-watcher">
+                <div class="title font-mono text-[10px] tracking-widest">WATCHER</div>
+                <div class="sub font-mono text-[9px] text-sky-300/80">watches this level</div>
+              </div>
+              <svg class="absolute -bottom-9 left-1/2 -translate-x-1/2" width="22" height="26" viewBox="0 0 22 26" fill="none">
+                <path d="M11 1v18M11 19l-4.5-4.5M11 19l4.5-4.5" stroke="#38bdf8" stroke-opacity="0.85" stroke-width="1.4" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <div class="tritrit observer nester" data-type="nester" data-state="1" title="Click to zoom to Level 2">
+              <div class="spin-ring !border-solid !border-amber-500/40" style="animation:none"></div>
+              <div class="core">1:1</div>
+              <div class="mini-folder"></div>
+              <div class="label-nester">
+                <div class="title font-mono text-[10px] tracking-widest">NESTER</div>
+                <div class="sub font-mono text-[9px] text-amber-300/90">nests to next →</div>
+              </div>
+            </div>
+            <svg class="nest-arrow" viewBox="0 0 44 20" fill="none">
+              <path d="M2 10h34l-6-6m6 6l-6 6" stroke="#f59e0b" stroke-opacity="0.7" stroke-width="1.5" stroke-linecap="round"/>
+            </svg>
+          </div>
+
+          <div class="absolute left-1/2 top-[132px] -translate-x-1/2 w-px h-12 bg-gradient-to-b from-sky-500/70 to-transparent"></div>
+
+          <div class="grid grid-cols-2 gap-8 w-[184px] mx-auto mt-[92px] relative">
+            <div class="absolute -inset-7 rounded-[28px] border border-white/[0.06] bg-white/[0.01]"></div>
+            <div class="tritrit gatekeeper" data-type="gatekeeper" data-index="0" data-state="1"><div class="spin-ring"></div><div class="core">1:1</div></div>
+            <div class="tritrit gatekeeper" data-type="gatekeeper" data-index="1" data-state="1"><div class="spin-ring"></div><div class="core">1:1</div></div>
+            <div class="tritrit gatekeeper" data-type="gatekeeper" data-index="2" data-state="1"><div class="spin-ring"></div><div class="core">1:1</div></div>
+            <div class="tritrit gatekeeper" data-type="gatekeeper" data-index="3" data-state="1"><div class="spin-ring"></div><div class="core">1:1</div></div>
+          </div>
+
+          <div class="absolute bottom-4 left-5 right-5 flex justify-between">
+            <span class="font-mono text-[10px] text-gray-500">locked until L0 blooms</span>
+            <span class="font-mono text-[10px] text-violet-300/70">pulse 3/5</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- LEVEL 2 -->
+      <div class="level" data-level="2">
+        <div class="folder w-[310px] sm:w-[330px] h-[390px] rounded-[2.2rem] p-5 relative">
+          <div class="flex items-center justify-between">
+            <span class="font-mono text-[11px] tracking-[0.18em] text-emerald-400">LEVEL 2</span>
+            <span class="text-[10px] uppercase tracking-widest text-gray-500">Inner • Core</span>
+          </div>
+          <div class="absolute top-4 right-5 w-2 h-2 rounded-full bg-violet-400/80 animate-pulse shadow-[0_0_10px_rgba(167,139,250,0.7)]"></div>
+          
+          <div class="relative flex justify-center gap-20 mt-8">
+            <div class="tritrit observer watcher" data-type="watcher" data-state="1">
+              <div class="spin-ring !border-solid !border-blue-500/40" style="animation:none"></div>
+              <div class="core">1:1</div>
+              <div class="label-watcher">
+                <div class="title font-mono text-[10px] tracking-widest">WATCHER</div>
+                <div class="sub font-mono text-[9px] text-sky-300/80">watches this level</div>
+              </div>
+              <svg class="absolute -bottom-9 left-1/2 -translate-x-1/2" width="22" height="26" viewBox="0 0 22 26" fill="none">
+                <path d="M11 1v18M11 19l-4.5M11 19l4.5-4.5" stroke="#38bdf8" stroke-opacity="0.85" stroke-width="1.4" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <div class="tritrit observer nester" data-type="nester" data-state="1">
+              <div class="spin-ring !border-solid !border-amber-500/40" style="animation:none"></div>
+              <div class="core">1:1</div>
+              <div class="mini-folder" style="opacity:0.3"></div>
+              <div class="label-nester">
+                <div class="title font-mono text-[10px] tracking-widest">NESTER</div>
+                <div class="sub font-mono text-[9px] text-amber-300/70">terminal</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="absolute left-1/2 top-[132px] -translate-x-1/2 w-px h-12 bg-gradient-to-b from-sky-500/70 to-transparent"></div>
+
+          <div class="grid grid-cols-2 gap-8 w-[184px] mx-auto mt-[92px] relative">
+            <div class="absolute -inset-7 rounded-[28px] border border-white/[0.06] bg-white/[0.01]"></div>
+            <div class="tritrit gatekeeper" data-type="gatekeeper" data-index="0" data-state="1"><div class="spin-ring"></div><div class="core">1:1</div></div>
+            <div class="tritrit gatekeeper" data-type="gatekeeper" data-index="1" data-state="1"><div class="spin-ring"></div><div class="core">1:1</div></div>
+            <div class="tritrit gatekeeper" data-type="gatekeeper" data-index="2" data-state="1"><div class="spin-ring"></div><div class="core">1:1</div></div>
+            <div class="tritrit gatekeeper" data-type="gatekeeper" data-index="3" data-state="1"><div class="spin-ring"></div><div class="core">1:1</div></div>
+          </div>
+
+          <div class="absolute bottom-4 left-5 right-5 flex justify-between">
+            <span class="font-mono text-[10px] text-gray-500">deepest level</span>
+            <span class="font-mono text-[10px] text-violet-300/70">6⁶ = 46656 max</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="mt-10 text-center space-y-2">
+    <p class="font-mono text-[13px] tracking-wide text-violet-200/90">1 watches, 1 nests, 4 spin — fractal depth from 6 tritrits</p>
+    <p class="font-mono text-[10px] text-gray-500">purple 0:0 • cyan 1:1 • gold 0:1 — click to cycle • all purple blooms white</p>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const texts = ['0:0','1:1','0:1'];
+  const levelsWrap = document.getElementById('levels-wrap');
+  const statusEl = document.getElementById('status');
+  const depthVal = document.getElementById('depth-val');
+  const computedVal = document.getElementById('computed-val');
+  const effectiveVal = document.getElementById('effective-val');
+
+  // init mini folders
+  const l0mini = document.querySelector('.level[data-level="0"] .nester .mini-folder');
+  const l1clone = document.querySelector('.level[data-level="1"] .folder').cloneNode(true);
+  l1clone.querySelectorAll('.mini-folder').forEach(m=>m.innerHTML='');
+  l0mini.appendChild(l1clone);
+
+  const l1mini = document.querySelector('.level[data-level="1"] .nester .mini-folder');
+  const l2clone = document.querySelector('.level[data-level="2"] .folder').cloneNode(true);
+  l2clone.querySelectorAll('.mini-folder').forEach(m=>m.innerHTML='');
+  l1mini.appendChild(l2clone);
+
+  function cycle(el) {
+    let s = parseInt(el.dataset.state);
+    s = (s + 1) % 3;
+    el.dataset.state = s;
+    el.querySelector('.core').textContent = texts[s];
+    checkLevel(parseInt(el.closest('.level').dataset.level));
+    // haptic
+    el.style.transform = 'scale(0.92)';
+    setTimeout(()=> el.style.transform='', 120);
+  }
+
+  function checkLevel(l) {
+    const levelEl = document.querySelector(`.level[data-level="${l}"]`);
+    const trits = levelEl.querySelectorAll('.tritrit');
+    const allPurple = [...trits].every(t => t.dataset.state === '0');
+    if (allPurple && !levelEl.classList.contains('bloomed')) {
+      bloom(l);
+    }
+  }
+
+  function bloom(l) {
+    const levelEl = document.querySelector(`.level[data-level="${l}"]`);
+    levelEl.classList.add('bloomed');
+    levelEl.querySelector('.folder').classList.add('bloomed');
+    
+    if (l < 2) {
+      setTimeout(() => {
+        const next = document.querySelector(`.level[data-level="${l+1}"]`);
+        next.classList.add('active');
+        updateCounters(l+1);
+        setView(l+1);
+        statusEl.textContent = `Level ${l+1} unlocked`;
+        // auto nudge next level to show activity
+        next.querySelectorAll('.tritrit').forEach((t,i)=> setTimeout(()=> cycle(t), i*80));
+      }, 700);
+    } else {
+      updateCounters(2);
+      statusEl.textContent = 'All levels bloomed ★';
+      // final celebration
+      document.querySelectorAll('.level').forEach(lev=>{
+        lev.style.animation = 'bloomPulse 2s ease-in-out 3';
+      });
+    }
+  }
+
+  function updateCounters(activeDepth) {
+    depthVal.textContent = activeDepth;
+    const computed = (activeDepth + 1) * 6;
+    // effective states = 6^(levels unlocked)
+    const effective = Math.pow(6, activeDepth + 1);
+    computedVal.textContent = computed;
+    effectiveVal.textContent = effective.toLocaleString();
+  }
+
+  function setView(v) {
+    levelsWrap.dataset.view = v;
+    document.querySelectorAll('.control-btn').forEach(b=>b.classList.remove('active'));
+    if (v === 'all') document.getElementById('btn-all').classList.add('active');
+    else document.getElementById('btn-'+v).classList.add('active');
+  }
+
+  // attach clicks
+  document.querySelectorAll('.tritrit').forEach(t => {
+    t.addEventListener('click', (e) => {
+      e.stopPropagation();
+      cycle(t);
+      if (t.classList.contains('nester')) {
+        const lvl = +t.closest('.level').dataset.level;
+        if (lvl < 2) setView(lvl+1);
+      }
+    });
+  });
+
+  // controls
+  document.getElementById('btn-all').onclick = () => setView('all');
+  document.getElementById('btn-0').onclick = () => setView(0);
+  document.getElementById('btn-1').onclick = () => setView(1);
+  document.getElementById('btn-2').onclick = () => setView(2);
+  document.getElementById('btn-reset').onclick = () => {
+    document.querySelectorAll('.level').forEach((lev,i)=>{
+      lev.classList.remove('bloomed','active');
+      lev.querySelector('.folder').classList.remove('bloomed');
+      lev.querySelectorAll('.tritrit').forEach(t=>{
+        t.dataset.state='1';
+        t.querySelector('.core').textContent='1:1';
+      });
+    });
+    document.querySelector('.level[data-level="0"]').classList.add('active');
+    updateCounters(0);
+    setView('all');
+    statusEl.textContent = 'Level 0 active';
+  };
+
+  // start
+  document.querySelector('.level[data-level="0"]').classList.add('active');
+  updateCounters(0);
+  setView('all');
+});
+</script>
+</body>
+</html>

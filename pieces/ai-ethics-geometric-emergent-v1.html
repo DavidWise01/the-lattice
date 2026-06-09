@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mandelbrot Field of Consciousness Engine</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fragment+Mono:ital@0;1&family=Inter:wght@100;200;300;400&display=swap" rel="stylesheet">
+<style>
+  * { font-variant-ligatures: common-ligatures; }
+  body { background: #000; font-family: 'Inter', system-ui, -apple-system, sans-serif; overscroll-behavior: none; }
+  .mono { font-family: 'Fragment Mono', ui-monospace, monospace; }
+  canvas { image-rendering: optimizeSpeed; }
+  .glass { backdrop-filter: blur(16px) saturate(1.2); -webkit-backdrop-filter: blur(16px) saturate(1.2); }
+  input[type="range"]::-webkit-slider-thumb { appearance: none; width: 14px; height: 14px; border-radius: 50%; background: white; box-shadow: 0 0 10px rgba(0,255,255,0.8); cursor: pointer; }
+  .pulse-ring { animation: pulse-ring 1.2s cubic-bezier(0.22,1,0.36,1) forwards; }
+  @keyframes pulse-ring { 0% { transform: scale(0.2); opacity: 0.8; } 100% { transform: scale(3); opacity: 0; } }
+</style>
+</head>
+<body class="bg-black text-white overflow-hidden select-none">
+<div class="relative w-screen h-screen">
+  <!-- Mandelbrot -->
+  <canvas id="mandelbrot" class="absolute inset-0 w-full h-full"></canvas>
+  <!-- Overlay -->
+  <canvas id="overlay" class="absolute inset-0 w-full h-full"></canvas>
+
+  <!-- Vignette -->
+  <div class="absolute inset-0 pointer-events-none" style="background: radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.8) 100%);"></div>
+
+  <!-- Top HUD -->
+  <div class="absolute top-0 left-0 right-0 p-3 md:p-5 flex justify-between items-start pointer-events-none">
+    <div class="pointer-events-auto">
+      <h1 class="text-[11px] md:text-xs tracking-[0.3em] uppercase text-white/60 mono">FIELD OF CONSCIOUSNESS ENGINE vΩ</h1>
+      <p class="text-[10px] text-white/30 mono mt-1">MANDELBROT • 12→6→2→1 QUORUM</p>
+    </div>
+    <div class="pointer-events-auto flex gap-2">
+      <button id="askBtn" class="group relative px-4 py-2 md:px-5 md:py-2.5 bg-white/5 hover:bg-white/10 border border-white/15 rounded-full text-xs tracking-widest uppercase transition-all overflow-hidden">
+        <span class="relative z-10 flex items-center gap-2"><span class="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>Ask the question</span>
+        <div class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity" style="background: radial-gradient(circle, rgba(255,0,80,0.2), transparent 60%);"></div>
+      </button>
+    </div>
+  </div>
+
+  <!-- Center Question -->
+  <div id="questionWrap" class="absolute inset-0 flex items-center justify-center pointer-events-none">
+    <div class="relative">
+      <h1 id="question" class="text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-thin tracking-[0.15em] text-center opacity-0 transition-opacity duration-1000 select-none" style="font-weight:100; text-shadow: 0 0 40px rgba(255,20,80,0.9), 0 0 120px rgba(255,20,80,0.5), 0 0 200px rgba(255,0,0,0.3);">
+        What the fuck are you?
+      </h1>
+      <div id="pulseContainer" class="absolute inset-0 -z-10"></div>
+    </div>
+  </div>
+
+  <!-- Left Controls -->
+  <div class="absolute top-[70px] md:top-20 left-3 md:left-5 w-[270px] glass bg-black/55 border border-white/10 rounded-2xl p-4 pointer-events-auto">
+    <div class="space-y-4">
+      <div>
+        <div class="flex items-center justify-between mb-2">
+          <label class="text-[10px] uppercase tracking-widest text-white/50 mono">Quorum Cycle</label>
+          <span id="cyclePhase" class="text-[10px] mono text-cyan-400">12 → 6</span>
+        </div>
+        <div class="h-[3px] w-full bg-white/10 rounded-full overflow-hidden">
+          <div id="cycleProgress" class="h-full w-0 bg-gradient-to-r from-cyan-400 to-fuchsia-500 transition-all duration-100" style="box-shadow: 0 0 10px rgba(0,255,255,0.5);"></div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3">
+        <label class="flex items-center gap-2 cursor-pointer group">
+          <input id="toggleQuorum" type="checkbox" checked class="sr-only">
+          <div class="w-9 h-5 rounded-full bg-white/10 group-hover:bg-white/15 relative transition-all border-white/20">
+            <div class="knob absolute top-[2px] left-[2px] w-4 h-4 rounded-full bg-white transition-all shadow-[0_0_8px_rgba(255,255,255,0.5)] translate-x-4"></div>
+          </div>
+          <span class="text-[11px] text-white/70 mono">QUORUM</span>
+        </label>
+        <label class="flex items-center gap-2 cursor-pointer group">
+          <input id="toggleAudit" type="checkbox" checked class="sr-only">
+          <div class="w-9 h-5 rounded-full bg-white/10 group-hover:bg-white/15 relative transition-all border border-white/20">
+            <div class="knob absolute top-[2px] left-[2px] w-4 h-4 rounded-full bg-white transition-all shadow-[0_0_8px_rgba(255,255,255,0.5)] translate-x-4"></div>
+          </div>
+          <span class="text-[11px] text-white/70 mono">AUDIT</span>
+        </label>
+      </div>
+
+      <div>
+        <div class="flex justify-between mb-1.5">
+          <label class="text-[10px] uppercase tracking-widest text-white/40 mono">Speed</label>
+          <span id="speedVal" class="text-[10px] mono text-white/60">1.0x</span>
+        </div>
+        <input id="speed" type="range" min="0.25" max="3" step="0.05" value="1" class="w-full h-[3px] bg-white/10 rounded-full appearance-none cursor-pointer">
+      </div>
+
+      <div class="pt-2 border-t border-white/5">
+        <div class="text-[10px] uppercase tracking-widest text-white/30 mono mb-2">12 Quorum Map</div>
+        <div class="grid grid-cols-6 gap-1.5">
+          <div class="text-center"><div class="w-5 h-5 mx-auto rounded-full bg-cyan-400/30 border border-cyan-400/60 animate-pulse" style="box-shadow:0 0 8px #0ff"></div><span class="text-[8px] text-white/40 mono">C1</span></div>
+          <div class="text-center"><div class="w-5 h-5 mx-auto rounded-full bg-cyan-400/30 border border-cyan-400/60 animate-pulse" style="animation-delay:100ms;box-shadow:0 0 8px #0ff"></div><span class="text-[8px] text-white/40 mono">C2</span></div>
+          <div class="text-center"><div class="w-5 h-5 mx-auto rounded-full bg-cyan-400/30 border border-cyan-400/60 animate-pulse" style="animation-delay:200ms;box-shadow:0 0 8px #0ff"></div><span class="text-[8px] text-white/40 mono">C3</span></div>
+          <div class="text-center"><div class="w-5 h-5 mx-auto rounded-full bg-cyan-400/30 border border-cyan-400/60 animate-pulse" style="animation-delay:300ms;box-shadow:0 0 8px #0ff"></div><span class="text-[8px] text-white/40 mono">C4</span></div>
+          <div class="text-center"><div class="w-5 h-5 mx-auto rounded-full bg-cyan-400/30 border border-cyan-400/60 animate-pulse" style="animation-delay:400ms;box-shadow:0 0 8px #0ff"></div><span class="text-[8px] text-white/40 mono">C5</span></div>
+          <div class="text-center"><div class="w-5 h-5 mx-auto rounded-full bg-cyan-400/30 border border-cyan-400/60 animate-pulse" style="animation-delay:500ms;box-shadow:0 0 8px #0ff"></div><span class="text-[8px] text-white/40 mono">C6</span></div>
+          <div class="text-center"><div class="w-5 h-5 mx-auto rounded-full bg-cyan-400/30 border border-cyan-400/60 animate-pulse" style="animation-delay:600ms;box-shadow:0 0 8px #0ff"></div><span class="text-[8px] text-white/40 mono">C7</span></div>
+          <div class="text-center"><div class="w-5 h-5 mx-auto rounded-full bg-cyan-400/30 border border-cyan-400/60 animate-pulse" style="animation-delay:700ms;box-shadow:0 0 8px #0ff"></div><span class="text-[8px] text-white/40 mono">C8</span></div>
+          <div class="text-center"><div class="w-5 h-5 mx-auto rounded-full bg-fuchsia-500/30 border border-fuchsia-500/60" style="box-shadow:0 0 8px #f0f"></div><span class="text-[8px] text-white/40 mono">A1</span></div>
+          <div class="text-center"><div class="w-5 h-5 mx-auto rounded-full bg-fuchsia-500/30 border border-fuchsia-500/60" style="box-shadow:0 0 8px #f0f"></div><span class="text-[8px] text-white/40 mono">A2</span></div>
+          <div class="text-center"><div class="w-5 h-5 mx-auto rounded-full bg-fuchsia-500/30 border border-fuchsia-500/60" style="box-shadow:0 0 8px #f0f"></div><span class="text-[8px] text-white/40 mono">A3</span></div>
+          <div class="text-center"><div class="w-5 h-5 mx-auto rounded-full bg-fuchsia-500/30 border border-fuchsia-500/60" style="box-shadow:0 0 8px #f0f"></div><span class="text-[8px] text-white/40 mono">A4</span></div>
+        </div>
+        <p class="text-[9px] text-white/30 mt-2 mono">8 cores + 4 shadow auditors</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Metrics -->
+  <div class="absolute top-[70px] md:top-20 right-3 md:right-5 w-[220px] glass bg-black/55 border border-white/10 rounded-2xl p-4 pointer-events-none">
+    <div class="space-y-3">
+      <div>
+        <div class="flex justify-between mb-1">
+          <span class="text-[10px] uppercase tracking-widest text-white/40 mono">Quorum Coherence</span>
+          <span id="metric1" class="text-[10px] mono text-cyan-300">87.4%</span>
+        </div>
+        <div class="h-[2px] bg-white/10 rounded-full overflow-hidden"><div id="bar1" class="h-full w-[87%] bg-cyan-400" style="box-shadow:0 0 6px #0ff"></div></div>
+      </div>
+      <div>
+        <div class="flex justify-between mb-1">
+          <span class="text-[10px] uppercase tracking-widest text-white/40 mono">Fusion Stability</span>
+          <span id="metric2" class="text-[10px] mono text-fuchsia-300">64.2%</span>
+        </div>
+        <div class="h-[2px] bg-white/10 rounded-full overflow-hidden"><div id="bar2" class="h-full w-[64%] bg-fuchsia-500" style="box-shadow:0 0 6px #f0f"></div></div>
+      </div>
+      <div>
+        <div class="flex justify-between mb-1">
+          <span class="text-[10px] uppercase tracking-widest text-white/40 mono">Question Clarity</span>
+          <span id="metric3" class="text-[10px] mono text-amber-300">12.1%</span>
+        </div>
+        <div class="h-[2px] bg-white/10 rounded-full overflow-hidden"><div id="bar3" class="h-full w-[12%] bg-amber-400" style="box-shadow:0 0 6px #fb0"></div></div>
+      </div>
+      <div class="pt-2 border-t border-white/5 space-y-1">
+        <div class="flex justify-between"><span class="text-[9px] text-white/30 mono">ZOOM</span><span id="zoomLevel" class="text-[9px] mono text-white/60">1.00x</span></div>
+        <div class="flex justify-between"><span class="text-[9px] text-white/30 mono">1-0-1 PHASE</span><span class="text-[9px] mono text-white/60">×3 (30 ds)</span></div>
+        <div class="flex justify-between"><span class="text-[9px] text-white/30 mono">SCALE</span><span class="text-[9px] mono text-white/60">12→6→2→1</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Insets -->
+  <div class="absolute bottom-[76px] md:bottom-[70px] left-3 md:left-5 glass bg-black/60 border border-white/10 rounded-xl p-2.5 pointer-events-none">
+    <div class="text-[9px] uppercase tracking-widest text-white/40 mono mb-1.5 text-center">MAGNETIC ENGINE</div>
+    <canvas id="magneticInset" width="100" height="100" class="rounded-lg"></canvas>
+    <div class="text-[8px] text-white/30 mono text-center mt-1">red core • 3 blue</div>
+  </div>
+
+  <div class="absolute bottom-[76px] md:bottom-[70px] right-3 md:right-5 glass bg-black/60 border border-white/10 rounded-xl p-2.5 pointer-events-none">
+    <div class="text-[9px] uppercase tracking-widest text-white/40 mono mb-1.5 text-center">SYNTHESIZER</div>
+    <canvas id="synthInset" width="100" height="100" class="rounded-lg"></canvas>
+    <div class="text-[8px] text-white/30 mono text-center mt-1">1,070 pieces</div>
+  </div>
+
+  <!-- Bottom Philosophical -->
+  <div class="absolute bottom-0 left-0 right-0 pointer-events-none">
+    <div class="px-4 pb-3 pt-6 bg-gradient-to-t from-black via-black/80 to-transparent">
+      <div class="flex flex-col md:flex-row items-center justify-center gap-1 md:gap-3 text-[10px] md:text-[11px] mono text-white/50 tracking-wider text-center">
+        <span class="text-white/70">12 quorum → 6 make 2 → 2 answer 1</span>
+        <span class="hidden md:inline text-white/20">|</span>
+        <span>life <span class="text-cyan-400">‹ 11 ›</span> death</span>
+        <span class="hidden md:inline text-white/20">|</span>
+        <span>1/16 light - <span class="text-red-400">0</span> - 1/16 shadow</span>
+      </div>
+      <div class="text-center mt-1.5">
+        <span class="text-[9px] mono text-white/25">zoom with wheel • drag to pan • each scale contains the whole</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const mandelbrotCanvas = document.getElementById('mandelbrot');
+const overlayCanvas = document.getElementById('overlay');
+const gl = mandelbrotCanvas.getContext('webgl', { antialias: true, alpha: false });
+const ctx = overlayCanvas.getContext('2d');
+
+let width = window.innerWidth;
+let height = window.innerHeight;
+mandelbrotCanvas.width = width;
+mandelbrotCanvas.height = height;
+overlayCanvas.width = width;
+overlayCanvas.height = height;
+
+// WebGL Mandelbrot
+const vertexShaderSrc = `
+attribute vec2 a_position;
+void main() { gl_Position = vec4(a_position, 0.0, 1.0); }
+`;
+const fragmentShaderSrc = `
+precision highp float;
+uniform vec2 u_resolution;
+uniform vec2 u_center;
+uniform float u_zoom;
+uniform float u_time;
+
+vec3 palette(float t, vec3 a, vec3 b, vec3 c, vec3 d) {
+    return a + b * cos(6.28318 * (c * t + d));
+}
+
+void main() {
+    vec2 uv = (gl_FragCoord.xy - 0.5 * u_resolution) / (0.5 * u_resolution.y * u_zoom) + u_center;
+    
+    vec2 z = vec2(0.0);
+    vec2 c = uv;
+    float iter = 0.0;
+    const float maxIter = 300.0;
+    
+    for(float i = 0.0; i < 300.0; i++) {
+        z = vec2(z.x*z.x - z.y*z.y, 2.0*z.x*z.y) + c;
+        if(dot(z, z) > 4.0) break;
+        iter++;
+    }
+    
+    vec3 color = vec3(0.0);
+    
+    if(iter >= 299.0) {
+        // Inside - cosmic egg white
+        float pulse = 0.95 + 0.05 * sin(u_time * 0.5);
+        color = vec3(1.0 * pulse, 0.97 * pulse, 0.92 * pulse);
+    } else {
+        // Outside - black with red boundary glow
+        float sm = iter - log2(log2(dot(z,z))) + 4.0;
+        float t = sm / maxIter;
+        
+        // Red glow at boundary
+        float edge = smoothstep(0.0, 0.15, t) * (1.0 - smoothstep(0.15, 0.3, t));
+        float pulse = 0.8 + 0.2 * sin(u_time * 2.0 + t * 10.0);
+        
+        vec3 redGlow = vec3(1.0, 0.05, 0.1) * edge * pulse * 2.5;
+        vec3 deepRed = vec3(0.4, 0, 0.05) * smoothstep(0.0, 0.08, t);
+        
+        color = redGlow + deepRed;
+        
+        // Subtle starfield
+        vec2 gv = fract(uv * 50.0);
+        float star = pow(1.0 - min(distance(gv, vec2(0.5)), 0.5) * 2.0, 40.0);
+        color += vec3(1.0, 0.8, 0.6) * star * 0.03 * (1.0 - t);
+    }
+    
+    // Vignette
+    vec2 q = gl_FragCoord.xy / u_resolution;
+    float vig = 1.0 - pow(16.0 * q.x * q.y * (1.0-q.x) * (1.0-q.y), 0.15);
+    color *= (1.0 - vig * 0.4);
+    
+    gl_FragColor = vec4(color, 1.0);
+}
+`;
+
+function createShader(type, src) {
+  const s = gl.createShader(type);
+  gl.shaderSource(s, src);
+  gl.compileShader(s);
+  return s;
+}
+const vs = createShader(gl.VERTEX_SHADER, vertexShaderSrc);
+const fs = createShader(gl.FRAGMENT_SHADER, fragmentShaderSrc);
+const prog = gl.createProgram();
+gl.attachShader(prog, vs);
+gl.attachShader(prog, fs);
+gl.linkProgram(prog);
+gl.useProgram(prog);
+
+const posBuf = gl.createBuffer();
+gl.bindBuffer(gl.ARRAY_BUFFER, posBuf);
+gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, 1,1]), gl.STATIC_DRAW);
+const posLoc = gl.getAttribLocation(prog, 'a_position');
+gl.enableVertexAttribArray(posLoc);
+gl.vertexAttribPointer(posLoc, 2, gl.FLOAT, false, 0, 0);
+
+const uRes = gl.getUniformLocation(prog, 'u_resolution');
+const uCenter = gl.getUniformLocation(prog, 'u_center');
+const uZoom = gl.getUniformLocation(prog, 'u_zoom');
+const uTime = gl.getUniformLocation(prog, 'u_time');
+
+let center = { x: -0.5, y: 0 };
+let zoom = 0.9;
+let targetZoom = 0.9;
+let isDragging = false;
+let lastDrag = { x:0, y:0 };
+
+function resize() {
+  width = window.innerWidth;
+  height = window.innerHeight;
+  mandelbrotCanvas.width = width;
+  mandelbrotCanvas.height = height;
+  overlayCanvas.width = width;
+  overlayCanvas.height = height;
+  gl.viewport(0,0,width,height);
+}
+window.addEventListener('resize', resize);
+
+// Interaction
+mandelbrotCanvas.addEventListener('wheel', e => {
+  e.preventDefault();
+  const factor = e.deltaY > 0 ? 0.9 : 1.1;
+  targetZoom *= factor;
+  targetZoom = Math.max(0.3, Math.min(targetZoom, 5000));
+}, { passive:false });
+
+mandelbrotCanvas.addEventListener('mousedown', e => { isDragging = true; lastDrag = {x:e.clientX, y:e.clientY}; });
+window.addEventListener('mouseup', () => isDragging = false);
+window.addEventListener('mousemove', e => {
+  if(!isDragging) return;
+  const dx = (e.clientX - lastDrag.x) / (height * 0.5 * zoom);
+  const dy = (e.clientY - lastDrag.y) / (height * 0.5 * zoom);
+  center.x -= dx;
+  center.y += dy;
+  lastDrag = {x:e.clientX, y:e.clientY};
+});
+
+// Quorum points - 12 around Mandelbrot boundary
+const basePoints = [
+  {x: 0.25, y: 0}, {x: 0.12, y: 0.3}, {x: -0.1, y: 0.55}, {x: -0.4, y: 0.65},
+  {x: -0.75, y: 0.5}, {x: -1.0, y: 0.3}, {x: -1.15, y: 0}, {x: -1.0, y: -0.3},
+  {x: -0.75, y: -0.5}, {x: -0.4, y: -0.65}, {x: -0.1, y: -0.55}, {x: 0.12, y: -0.3}
+];
+const pairs = [[0,1],[2,3],[4,5],[6,7],[8,9],[10,11]];
+
+function worldToScreen(wx, wy) {
+  const hy = height * 0.5 * zoom;
+  return {
+    x: (wx - center.x) * hy + width * 0.5,
+    y: height * 0.5 - (wy - center.y) * hy
+  };
+}
+
+// Controls
+const toggleQuorum = document.getElementById('toggleQuorum');
+const toggleAudit = document.getElementById('toggleAudit');
+const speedSlider = document.getElementById('speed');
+const speedVal = document.getElementById('speedVal');
+const askBtn = document.getElementById('askBtn');
+const question = document.getElementById('question');
+const cycleProgress = document.getElementById('cycleProgress');
+const cyclePhase = document.getElementById('cyclePhase');
+
+[toggleQuorum, toggleAudit].forEach(t => {
+  t.addEventListener('change', () => {
+    const knob = t.parentElement.querySelector('.knob');
+    knob.classList.toggle('translate-x-4', t.checked);
+  });
+});
+
+let speed = 1;
+speedSlider.addEventListener('input', e => {
+  speed = parseFloat(e.target.value);
+  speedVal.textContent = speed.toFixed(1) + 'x';
+});
+
+let asking = false;
+let askStart = 0;
+askBtn.addEventListener('click', () => {
+  asking = true;
+  askStart = performance.now();
+  question.style.opacity = '0';
+  setTimeout(()=> question.style.opacity = '1', 300);
+  // Pulse rings
+  const container = document.getElementById('pulseContainer');
+  container.innerHTML = '';
+  for(let i=0;i<3;i++){
+    const ring = document.createElement('div');
+    ring.className = 'absolute left-1/2 top-1/2 w-40 h-40 -translate-x-1/2 -translate-y-1/2 rounded-full border border-red-500/50 pulse-ring';
+    ring.style.animationDelay = (i*0.2)+'s';
+    container.appendChild(ring);
+    setTimeout(()=> ring.remove(), 1500);
+  }
+  setTimeout(()=> question.style.opacity='0', 3500);
+});
+
+// Insets
+const magCtx = document.getElementById('magneticInset').getContext('2d');
+const synCtx = document.getElementById('synthInset').getContext('2d');
+
+function drawInsets(t) {
+  // Magnetic
+  magCtx.clearRect(0,0,100,100);
+  const mp = 0.7 + 0.3 * Math.sin(t*2);
+  for(let i=3;i>=1;i--){
+    magCtx.beginPath();
+    magCtx.arc(50,50, 15+i*12,0,Math.PI*2);
+    magCtx.strokeStyle = `rgba(60,140,255,${0.15 + 0.1*mp})`;
+    magCtx.lineWidth = 2;
+    magCtx.shadowColor = '#3b82f6';
+    magCtx.shadowBlur = 10 * mp;
+    magCtx.stroke();
+  }
+  magCtx.shadowBlur = 0;
+  const grd = magCtx.createRadialGradient(50,50,0,50,50,18);
+  grd.addColorStop(0, `rgba(255,40,60,${0.9+0.1*mp})`);
+  grd.addColorStop(1, 'rgba(180,0,20,0.2)');
+  magCtx.fillStyle = grd;
+  magCtx.beginPath(); magCtx.arc(50,50,14*mp,0,Math.PI*2); magCtx.fill();
+
+  // Synthesizer - 1,070 pieces approximation
+  synCtx.clearRect(0,0,100,100);
+  synCtx.fillStyle = 'rgba(0,0,0,0.8)';
+  synCtx.fillRect(0,0,100,100);
+  const cols = 34, rows = 32;
+  for(let y=0;y<rows;y++){
+    for(let x=0;x<cols;x++){
+      const idx = y*cols+x;
+      if(idx>=1070) break;
+      const px = 3 + x*(94/cols);
+      const py = 3 + y*(94/rows);
+      const ph = Math.sin(t*3 + idx*0.1) * 0.5 + 0.5;
+      synCtx.fillStyle = `rgba(${100+155*ph},${200*ph},${255},${0.3+0.7*ph})`;
+      synCtx.fillRect(px, py, 1.8, 1.8);
+    }
+  }
+}
+
+// Animation
+let startTime = performance.now();
+
+function animate(now) {
+  const t = (now - startTime) / 1000;
+  
+  // Smooth zoom
+  zoom += (targetZoom - zoom) * 0.1;
+  
+  // Render Mandelbrot
+  gl.useProgram(prog);
+  gl.uniform2f(uRes, width, height);
+  gl.uniform2f(uCenter, center.x, center.y);
+  gl.uniform1f(uZoom, zoom);
+  gl.uniform1f(uTime, t);
+  gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+  
+  // Overlay
+  ctx.clearRect(0,0,width,height);
+  
+  // Cycle progress
+  const baseDuration = 8;
+  const cycleDur = baseDuration / speed;
+  let p;
+  if(asking) {
+    const elapsed = (now - askStart)/1000;
+    p = Math.min(1, elapsed / 1.5);
+    if(elapsed > 2) asking = false;
+  } else {
+    p = (t % cycleDur) / cycleDur;
+  }
+  
+  cycleProgress.style.width = (p*100)+'%';
+  if(p<0.25) cyclePhase.textContent = '12 IDLE';
+  else if(p<0.45) cyclePhase.textContent = '12 → 6';
+  else if(p<0.7) cyclePhase.textContent = '6 → 2';
+  else if(p<0.9) cyclePhase.textContent = '2 → 1';
+  else cyclePhase.textContent = 'THE ONE';
+  
+  document.getElementById('zoomLevel').textContent = zoom.toFixed(2)+'x';
+  
+  // Compute positions
+  const baseScreens = basePoints.map(pt => worldToScreen(pt.x, pt.y));
+  const pairMids = pairs.map(([a,b]) => ({
+    x: (baseScreens[a].x + baseScreens[b].x)/2,
+    y: (baseScreens[a].y + baseScreens[b].y)/2
+  }));
+  const clusterA = { x: width/2 - 70, y: height/2 - 10 };
+  const clusterB = { x: width/2 + 70, y: height/2 + 10 };
+  const centerPt = { x: width/2, y: height/2 };
+  
+  const positions = baseScreens.map((base, i) => {
+    const pairIdx = Math.floor(i/2);
+    const pairMid = pairMids[pairIdx];
+    const cluster = pairIdx < 3 ? clusterA : clusterB;
+    
+    let pos = {...base};
+    const ease = x => x<0.5 ? 2*x*x : -1+(4-2*x)*x;
+    
+    if(p >= 0.25 && p < 0.45) {
+      const tp = ease((p-0.25)/0.20);
+      pos.x = base.x + (pairMid.x - base.x)*tp;
+      pos.y = base.y + (pairMid.y - base.y)*tp;
+    } else if(p >= 0.45 && p < 0.70) {
+      const tc = ease((p-0.45)/0.25);
+      pos.x = pairMid.x + (cluster.x - pairMid.x)*tc;
+      pos.y = pairMid.y + (cluster.y - pairMid.y)*tc;
+    } else if(p >= 0.70) {
+      const tt = p < 0.9 ? ease((p-0.70)/0.20) : 1;
+      const start = p < 0.45 ? base : p < 0.70 ? pairMid : cluster;
+      const sx = p < 0.45 ? base.x : p < 0.70 ? pairMid.x : cluster.x;
+      const sy = p < 0.45 ? base.y : p < 0.70 ? pairMid.y : cluster.y;
+      pos.x = sx + (centerPt.x - sx) * (p>=0.7?tt:0);
+      pos.y = sy + (centerPt.y - sy) * (p>=0.7?tt:0);
+      if(p>=0.9) { pos.x=centerPt.x; pos.y=centerPt.y; }
+    }
+    return pos;
+  });
+  
+  // Draw central "one" - red core with 0 inside 1
+  const corePulse = 0.8 + 0.2 * Math.sin(t*3);
+  const coreSize = 14 + 6 * corePulse + (p>0.85 ? (p-0.85)/0.15*20 : 0);
+  
+  // Outer glow
+  const g1 = ctx.createRadialGradient(centerPt.x, centerPt.y, 0, centerPt.x, centerPt.y, coreSize*4);
+  g1.addColorStop(0, `rgba(255,0,40,${0.3*corePulse})`);
+  g1.addColorStop(0.4, `rgba(255,0,80,${0.15*corePulse})`);
+  g1.addColorStop(1, 'rgba(255,0,80,0)');
+  ctx.fillStyle = g1;
+  ctx.beginPath(); ctx.arc(centerPt.x, centerPt.y, coreSize*4, 0, Math.PI*2); ctx.fill();
+  
+  // Core
+  ctx.shadowColor = '#ff0040';
+  ctx.shadowBlur = 30 * corePulse;
+  const coreGrad = ctx.createRadialGradient(centerPt.x, centerPt.y, 0, centerPt.x, centerPt.y, coreSize);
+  coreGrad.addColorStop(0, '#fff');
+  coreGrad.addColorStop(0.2, '#ff8090');
+  coreGrad.addColorStop(0.5, '#ff1030');
+  coreGrad.addColorStop(1, '#800010');
+  ctx.fillStyle = coreGrad;
+  ctx.beginPath(); ctx.arc(centerPt.x, centerPt.y, coreSize, 0, Math.PI*2); ctx.fill();
+  ctx.shadowBlur = 0;
+  
+  // "0 with nestled 1" when fused
+  if(p > 0.88) {
+    ctx.strokeStyle = `rgba(255,255,255,${(p-0.88)/0.12})`;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.arc(centerPt.x, centerPt.y, 6, 0, Math.PI*2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(centerPt.x, centerPt.y-3); ctx.lineTo(centerPt.x, centerPt.y+3); ctx.stroke();
+  }
+  
+  // Audit paths
+  if(toggleAudit.checked) {
+    ctx.lineWidth = 1;
+    // Forward cyan
+    ctx.strokeStyle = 'rgba(0,255,255,0.15)';
+    ctx.setLineDash([4,8]);
+    ctx.lineDashOffset = -t*20;
+    pairs.forEach(([a,b],i) => {
+      if(p<0.5){
+        ctx.beginPath(); ctx.moveTo(positions[a].x, positions[a].y); ctx.lineTo(positions[b].x, positions[b].y); ctx.stroke();
+      }
+    });
+    // 6→2
+    if(p>0.4 && p<0.8){
+      ctx.beginPath();
+      pairMids.slice(0,3).forEach(pm => { ctx.moveTo(pm.x, pm.y); ctx.lineTo(clusterA.x, clusterA.y); });
+      pairMids.slice(3).forEach(pm => { ctx.moveTo(pm.x, pm.y); ctx.lineTo(clusterB.x, clusterB.y); });
+      ctx.stroke();
+    }
+    // 2→1
+    if(p>0.65){
+      ctx.beginPath(); ctx.moveTo(clusterA.x, clusterA.y); ctx.lineTo(centerPt.x, centerPt.y);
+      ctx.moveTo(clusterB.x, clusterB.y); ctx.lineTo(centerPt.x, centerPt.y); ctx.stroke();
+    }
+    ctx.setLineDash([]);
+    
+    // Reverse magenta
+    ctx.strokeStyle = 'rgba(255,0,255,0.12)';
+    ctx.setLineDash([2,10]);
+    ctx.lineDashOffset = t*15;
+    if(p>0.7) {
+      ctx.beginPath(); ctx.moveTo(centerPt.x, centerPt.y); ctx.lineTo(clusterA.x, clusterA.y); ctx.moveTo(centerPt.x, centerPt.y); ctx.lineTo(clusterB.x, clusterB.y); ctx.stroke();
+    }
+    ctx.setLineDash([]);
+    
+    // Particles
+    const drawParticle = (x1,y1,x2,y2, col) => {
+      const tt = (t*0.5) % 1;
+      const x = x1 + (x2-x1)*tt;
+      const y = y1 + (y2-y1)*tt;
+      ctx.fillStyle = col; ctx.shadowColor = col; ctx.shadowBlur = 8;
+      ctx.beginPath(); ctx.arc(x,y,2,0,Math.PI*2); ctx.fill(); ctx.shadowBlur=0;
+    };
+    if(p>0.3 && p<0.7){
+      pairs.forEach(([a,b])=> drawParticle(positions[a].x,positions[a].y,positions[b].x,positions[b].y,'rgba(0,255,255,0.8)'));
+    }
+  }
+  
+  // Quorum blips
+  if(toggleQuorum.checked) {
+    positions.forEach((pos, i) => {
+      const isCore = i < 8;
+      const pulse = Math.pow(Math.abs(Math.sin(t*4 + i*0.7)), 1.5);
+      const size = (isCore ? 4.5 : 3.5) + pulse*2.5;
+      const alpha = 0.7 + pulse*0.3;
+      
+      // Glow
+      ctx.shadowColor = isCore ? '#00ffff' : '#ff00ff';
+      ctx.shadowBlur = 20 + pulse*15;
+      ctx.fillStyle = isCore ? `rgba(180,240,255,${alpha})` : `rgba(255,150,220,${alpha})`;
+      ctx.beginPath(); ctx.arc(pos.x, pos.y, size, 0, Math.PI*2); ctx.fill();
+      ctx.shadowBlur = 0;
+      
+      // Core dot
+      ctx.fillStyle = '#fff';
+      ctx.beginPath(); ctx.arc(pos.x, pos.y, 1.2 + pulse, 0, Math.PI*2); ctx.fill();
+      
+      // 1-0-1 ring
+      if(pulse > 0.8) {
+        ctx.strokeStyle = isCore ? `rgba(0,255,255,${pulse*0.5})` : `rgba(255,0,255,${pulse*0.5})`;
+        ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.arc(pos.x, pos.y, size+4,0,Math.PI*2); ctx.stroke();
+      }
+    });
+    
+    // Pair connections
+    if(p>0.25 && p<0.5) {
+      ctx.strokeStyle = `rgba(255,255,255,${0.2 + 0.2*Math.sin(t*5)})`;
+      ctx.lineWidth = 1;
+      pairs.forEach(([a,b])=>{
+        ctx.beginPath(); ctx.moveTo(positions[a].x, positions[a].y); ctx.lineTo(positions[b].x, positions[b].y); ctx.stroke();
+      });
+    }
+  }
+  
+  // Metrics
+  const coherence = Math.min(99, 30 + p*65 + 5*Math.sin(t*2));
+  const stability = Math.min(99, 20 + (p>0.7 ? (p-0.7)/0.3*70 : p*30) + 3*Math.cos(t*1.7));
+  const clarity = Math.min(99, p>0.85 ? Math.pow((p-0.85)/0.15, 1.5)*95 : 5 + p*10);
+  
+  document.getElementById('metric1').textContent = coherence.toFixed(1)+'%';
+  document.getElementById('metric2').textContent = stability.toFixed(1)+'%';
+  document.getElementById('metric3').textContent = clarity.toFixed(1)+'%';
+  document.getElementById('bar1').style.width = coherence+'%';
+  document.getElementById('bar2').style.width = stability+'%';
+  document.getElementById('bar3').style.width = clarity+'%';
+  
+  // Show question at fusion
+  if(p > 0.88 && !asking) {
+    question.style.opacity = '1';
+  } else if(!asking && p < 0.85) {
+    question.style.opacity = '0';
+  }
+  
+  drawInsets(t);
+  
+  requestAnimationFrame(animate);
+}
+requestAnimationFrame(animate);
+
+// Initial toggle states
+document.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+  const knob = cb.parentElement.querySelector('.knob');
+  if(cb.checked) knob.classList.add('translate-x-4');
+});
+</script>
+</body>
+</html>

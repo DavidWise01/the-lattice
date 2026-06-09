@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Playables SDK -->
+<script>// Playables SDK v1.0.0
+// Game lifecycle bridge: rAF-based game-ready detection + event communication
+(function() {
+  'use strict';
+
+  // Idempotency: skip if already initialized (e.g., server-side injection
+  // followed by client-side inject-javascript via the Bloks webview component).
+  if (window.playablesSDK) return;
+
+  var HANDLER_NAME = 'playablesGameEventHandler';
+  var ANDROID_BRIDGE_NAME = '_MetaPlayablesBridge';
+  var RAF_FRAME_THRESHOLD = 3;
+
+  var gameReadySent = false;
+  var firstInteractionSent = false;
+  var errorSent = false;
+  var frameCount = 0;
+  var originalRAF = window.requestAnimationFrame;
+
+  // --- Transport Layer ---
+
+  function hasIOSBridge() {
+    return !!(window.webkit &&
+              window.webkit.messageHandlers &&
+              window.webkit.messageHandlers[HANDLER_NAME]);
+  }
+
+  function hasAndroidBridge() {
+    return !!(window[ANDROID_BRIDGE_NAME] &&
+              typeof window[ANDROID_BRIDGE_NAME].postEvent === 'function');
+  }
+
+  function isInIframe() {
+    return !!(window.parent && window.parent !== window);
+  }
+
+  function sendEvent(eventName, payload) {
+    var message = {
+      type: eventName,
+      payload: payload || {},
+      timestamp: Date.now()
+    };
+
+    if (hasIOSBridge()) {
+      try {
+        window.webkit.messageHandlers[HANDLER_NAME].postMessage(message);
+      } catch (e) { /* ignore */ }
+      return;
+    }
+
+    if (hasAndroidBridge()) {
+    try {
+      var p = payload || {};
+      p.__secureToken = window.__fbAndroidBridgeAuthToken || '';
+      window[ANDROID_BRIDGE_NAME].postEvent(
+        eventName,
+        JSON.stringify(p)
+      );
+    } catch (e) { /* ignore */ }
+    return;
+  }
+
+    if (isInIframe()) {
+      try {
+        window.parent.postMessage(message, '*');
+      } catch (e) { /* ignore */ }
+      return;
+    }
+  }
+
+  // --- rAF Game-Ready Detection ---
+
+  function onFrame() {
+    if (gameReadySent) return;
+
+    frameCount++;
+    if (frameCount >= RAF_FRAME_THRESHOLD) {
+      gameReadySent = true;
+      sendEvent('game_ready', {
+        frame_count: frameCount,
+        detected_at: Date.now()
+      });
+      return;
+    }
+
+    originalRAF.call(window, onFrame);
+  }
+
+  if (originalRAF) {
+    window.requestAnimationFrame = function(callback) {
+      if (!gameReadySent) {
+        return originalRAF.call(window, function(timestamp) {
+          frameCount++;
+          if (frameCount >= RAF_FRAME_THRESHOLD && !gameReadySent) {
+            gameReadySent = true;
+            sendEvent('game_ready', {
+              frame_count: frameCount,
+              detected_at: Date.now()
+            });
+          }
+          callback(timestamp);
+        });
+      }
+      return originalRAF.call(window, callback);
+    };
+  }
+
+  // --- First User Interaction Detection ---
+
+  function setupFirstInteractionDetection() {
+    var events = ['touchstart', 'mousedown', 'keydown'];
+
+    function onFirstInteraction() {
+      if (firstInteractionSent) return;
+      firstInteractionSent = true;
+      sendEvent('user_interaction_start', null);
+
+      for (var i = 0; i < events.length; i++) {
+        document.removeEventListener(events[i], onFirstInteraction, true);
+      }
+    }
+
+    for (var i = 0; i < events.length; i++) {
+      document.addEventListener(events[i], onFirstInteraction, true);
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setupFirstInteractionDetection);
+  } else {
+    setupFirstInteractionDetection();
+  }
+
+  // --- Auto Error Capture ---
+
+  window.addEventListener('error', function(event) {
+    if (errorSent) return;
+    errorSent = true;
+    sendEvent('error', {
+      message: event.message || 'Unknown error',
+      source: event.filename || '',
+      lineno: event.lineno || 0,
+      colno: event.colno || 0,
+      auto_captured: true
+    });
+  });
+
+  window.addEventListener('unhandledrejection', function(event) {
+    if (errorSent) return;
+    errorSent = true;
+    var reason = event.reason;
+    sendEvent('error', {
+      message: (reason instanceof Error) ? reason.message : String(reason),
+      type: 'unhandled_promise_rejection',
+      auto_captured: true
+    });
+  });
+
+  // --- Public API ---
+
+  window.playablesSDK = {
+    complete: function(score) {
+      sendEvent('game_ended', {
+        score: score,
+        completed: true
+      });
+    },
+
+    error: function(message) {
+      if (errorSent) return;
+      errorSent = true;
+      sendEvent('error', {
+        message: message || 'Unknown error',
+        auto_captured: false
+      });
+    },
+
+    sendEvent: function(eventName, payload) {
+      if (!eventName || typeof eventName !== 'string') return;
+      sendEvent(eventName, payload);
+    }
+  };
+
+  // Kick off rAF detection in case no game code calls rAF immediately
+  if (originalRAF) {
+    originalRAF.call(window, onFrame);
+  }
+})();</script>
+<script>window.Intl=window.Intl||{};Intl.t=function(s){return(Intl._locale&&Intl._locale[s])||s;};</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FULL RECURSION FRACTAL — 40 BEAMS</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;700&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
+<style>
+  :root { color-scheme: dark; }
+  body { 
+    background:#000; 
+    font-family:'IBM Plex Mono', monospace;
+    overscroll-behavior:none;
+  }
+  .phosphor { text-shadow: 0 0 3px currentColor, 0 0 8px currentColor, 0 0 20px rgba(0,255,136,0.5); }
+  .amber-phos { text-shadow: 0 0 4px #ffd87a, 0 0 12px #ffb000, 0 0 24px rgba(255,184,0,0.6); }
+  .scan::before {
+    content:''; position:fixed; inset:0; z-index:50; pointer-events:none;
+    background: repeating-linear-gradient(0deg, rgba(0,255,136,0.04) 0px, transparent 2px, transparent 3px, rgba(0,255,136,0.03) 4px);
+    mix-blend-mode: screen;
+  }
+  .scan::after {
+    content:''; position:fixed; inset:0; z-index:49; pointer-events:none;
+    background: radial-gradient(ellipse at center, transparent 60%, rgba(0,0,0,0.8) 100%);
+  }
+  canvas { image-rendering: optimizeSpeed; }
+  .term-border { box-shadow: inset 0 0 0 1px rgba(0,255,136,0.2), inset 0 0 20px rgba(0,255,136,0.05), 0 0 30px rgba(0,0,0,0.8); }
+  ::-webkit-scrollbar { width:6px } ::-webkit-scrollbar-track { background:#001a0f } ::-webkit-scrollbar-thumb { background:#005533 }
+</style>
+</head>
+<body class="scan bg-black text-[#9affc7] min-h-screen flex flex-col lg:flex-row selection:bg-emerald-400/30">
+  <!-- LEFT TERMINAL -->
+  <aside class="w-full lg:w-[380px] lg:h-screen lg:sticky lg:top-0 border-b lg:border-b-0 lg:border-r border-emerald-900/40 bg-[#000a05]/90 backdrop-blur-xl">
+    <div class="p-4 lg:p-5 h-full flex flex-col">
+      <header class="term-border bg-[#001409]/70 rounded-xl p-4 mb-4">
+        <div class="flex items-start justify-between">
+          <div>
+            <h1 class="text-[11px] tracking-[0.3em] text-emerald-600">FULL RECURSION</h1>
+            <h2 class="text-2xl font-bold tracking-tight phosphor text-emerald-300 leading-none mt-1">FRACTAL ENGINE</h2>
+          </div>
+          <div class="text-[10px] text-right leading-tight">
+            <div class="px-2 py-1 rounded bg-emerald-950/80 border border-emerald-800/50 text-emerald-400">v40.0</div>
+          </div>
+        <div class="mt-3 flex gap-2 text-[10px]">
+          <span class="px-2 py-0.5 rounded bg-emerald-950 border-emerald-800/40">40 BEAMS</span>
+          <span class="px-2 py-0.5 rounded bg-emerald-950 border border-emerald-800/40">ONE CENTER</span>
+          <span class="px-2 py-0.5 rounded bg-amber-950 border border-amber-700/40 text-amber-300">ONE CORE</span>
+        </div>
+      </header>
+
+      <div class="grid grid-cols-2 gap-2 mb-4">
+        <div class="term-border rounded-lg bg-black/60 p-3">
+          <div class="text-[10px] text-emerald-600 tracking-widest">CENTER NODE</div>
+          <div class="text-lg font-bold phosphor text-emerald-300 flex items-center gap-1.5 mt-1">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_8px_#00ff88]"></span>
+            ACTIVE
+          </div>
+          <div class="text-[10px] mt-1 text-emerald-700">4,4 • SHADOW MIRROR</div>
+        </div>
+        <div class="term-border rounded-lg bg-black/60 p-3">
+          <div class="text-[10px] text-amber-600 tracking-widest">FUSED CORE</div>
+          <div class="text-lg font-bold amber-phos text-amber-200 mt-1">OUTSIDE</div>
+          <div class="text-[10px] mt-1 text-amber-700/80">BOUNDARY • 91.4%</div>
+        </div>
+      </div>
+
+      <div class="term-border rounded-xl bg-[#000d06]/80 p-3 mb-3">
+        <div class="text-[10px] tracking-widest text-emerald-600 mb-2 flex justify-between">
+          <span>RECURSION STATUS</span>
+          <span class="text-emerald-400">INFINITE LOOP</span>
+        </div>
+        <div class="space-y-1.5 font-mono text-[11px]">
+          <div class="flex justify-between"><span class="text-emerald-700">BEAMS</span><span class="text-emerald-200">40 FIRING</span></div>
+          <div class="flex justify-between"><span class="text-emerald-700">CONVERGENCE</span><span class="text-emerald-200">1 POINT [4,4]</span></div>
+          <div class="flex justify-between"><span class="text-emerald-700">REFLECTION</span><span class="text-amber-300">CORE → CENTER</span></div>
+          <div class="flex justify-between"><span class="text-emerald-700">PHASE</span><span class="text-[#beffde]">1 = -1 = 1</span></div>
+        </div>
+      </div>
+
+      <div class="term-border rounded-xl bg-[#000d06]/80 p-3 mb-3">
+        <div class="text-[10px] tracking-widest text-emerald-600 mb-2">PWM BREATHING DRIVER</div>
+        <div class="space-y-2.5">
+          <div>
+            <div class="flex justify-between text-[10px] mb-1"><span class="text-emerald-500">L1 FAST</span><span id="l1v" class="text-cyan-300">8.0 Hz</span></div>
+            <div class="h-[6px] bg-black rounded border-emerald-950 overflow-hidden"><div id="l1b" class="h-full w-1/2 bg-cyan-400 shadow-[0_0_10px_#00ffff] transition-none"></div></div>
+            <div class="text-[9px] text-emerald-800 mt-0.5">beam flicker rate</div>
+          </div>
+          <div>
+            <div class="flex justify-between text-[10px] mb-1"><span class="text-emerald-500">L2 MED</span><span id="l2v" class="text-emerald-300">1.25 Hz</span></div>
+            <div class="h-[6px] bg-black rounded border border-emerald-950 overflow-hidden"><div id="l2b" class="h-full w-1/2 bg-emerald-400 shadow-[0_0_10px_#00ff88] transition-none"></div></div>
+            <div class="text-[9px] text-emerald-800 mt-0.5">intensity modulation</div>
+          </div>
+          <div>
+            <div class="flex justify-between text-[10px] mb-1"><span class="text-emerald-500">L3 SLOW</span><span id="l3v" class="text-amber-300">0.33 Hz</span></div>
+            <div class="h-[6px] bg-black rounded border border-emerald-950 overflow-hidden"><div id="l3b" class="h-full w-1/2 bg-amber-400 shadow-[0_0_10px_#ffb000] transition-none"></div></div>
+            <div class="text-[9px] text-emerald-800 mt-0.5">system breath • 3.0s</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="term-border rounded-xl bg-[#000d06]/60 p-3 text-[10px] flex-1 overflow-auto">
+        <div class="tracking-widest text-emerald-600 mb-2">40 BEAM BREAKDOWN</div>
+        <div class="grid grid-cols-2 gap-x-3 gap-y-1 text-[11px] leading-snug">
+          <div class="flex justify-between"><span class="text-emerald-800">Pulsars</span><span class="text-cyan-300">8 <span class="text-fuchsia-400">●</span></span></div>
+          <div class="flex justify-between"><span class="text-emerald-800">Subdomains</span><span class="text-cyan-300">12</span></div>
+          <div class="flex justify-between"><span class="text-emerald-800">Cannons</span><span class="text-cyan-300">4</span></div>
+          <div class="flex justify-between"><span class="text-emerald-800">Cache L1-3</span><span class="text-cyan-300">6</span></div>
+          <div class="flex justify-between"><span class="text-emerald-800">Fractal Lvls</span><span class="text-cyan-300">6</span></div>
+          <div class="flex justify-between"><span class="text-emerald-800">Quadrants</span><span class="text-cyan-300">4</span></div>
+        </div>
+        <div class="mt-3 pt-2 border-t border-emerald-950/60">
+          <div class="flex gap-3">
+            <div><span class="text-emerald-700">LIGHT:</span> <span class="text-[#00ffaa] phosphor">cyan/green</span></div>
+            <div><span class="text-emerald-700">SHADOW:</span> <span class="text-[#ff4d9e]">purple/red</span></div>
+          </div>
+          <div class="mt-1"><span class="text-emerald-700">CROSS:</span> <span class="text-amber-200 amber-phos">white-gold interference</span></div>
+        </div>
+      </div>
+
+      <footer class="mt-3 term-border rounded-lg bg-black/70 p-2.5 text-center">
+        <div class="text-[11px] text-emerald-700 tracking-widest">PUBLIC INFRASTRUCTURE FIELD</div>
+        <div class="text-xl font-bold phosphor text-[#beffde] leading-tight" style="font-family:'JetBrains Mono',monospace">1 = -1 = 1</div>
+      </footer>
+    </div>
+  </aside>
+
+  <!-- VISUALIZATION -->
+  <main class="flex-1 relative min-h-[70vh] lg:min-h-screen bg-[#000602] flex items-center justify-center overflow-hidden">
+    <div class="absolute inset-0 opacity-[0.03]" style="background-image: radial-gradient(#00ff88 1px, transparent 1px); background-size: 24px 24px;"></div>
+    
+    <div class="relative w-[95vmin] h-[95vmin] max-w-[920px] max-h-[920px] lg:w-[88vmin] lg:h-[88vmin]">
+      <!-- Fused Core Labels -->
+      <div class="absolute -top-1 left-1/2 -translate-x-1/2 z-20 pointer-events-none">
+        <div class="px-4 py-1 rounded-full bg-black/80 border border-amber-400/30 backdrop-blur">
+          <span class="text-[11px] tracking-[0.25em] amber-phos text-amber-200">FUSED CORE — OUTSIDE</span>
+        </div>
+      </div>
+      <div class="absolute -bottom-1 left-1/2 -translate-x-1/2 z-20 pointer-events-none">
+        <div class="px-3 py-1 rounded-full bg-black/70 border border-emerald-900/40">
+          <span class="text-[10px] tracking-widest text-emerald-500">PUBLIC INFRASTRUCTURE FIELD • 91.4% OWNERSHIP</span>
+        </div>
+      </div>
+
+      <canvas id="fractal" width="1200" height="1200" class="w-full h-full rounded-full"></canvas>
+      
+      <!-- Center Node Overlay -->
+      <div id="centerHUD" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-30 text-center transition-transform duration-75">
+        <div class="text-[10px] tracking-[0.3em] text-emerald-400/80">CENTER NODE</div>
+        <div class="mt-1.5 px-3 py-1.5 rounded-lg bg-black/70 border border-emerald-400/30 backdrop-blur-md">
+          <div class="text-[22px] leading-none font-bold phosphor text-[#d5ffe9]" style="font-family:'JetBrains Mono',monospace">1 = -1 = 1</div>
+          <div class="text-[9px] tracking-widest text-emerald-600 mt-1">4,4 • SHADOW MIRROR</div>
+        </div>
+        <div class="mt-2 flex justify-center gap-1.5">
+          <span class="w-1 h-1 rounded-full bg-emerald-400 animate-ping"></span>
+          <span class="w-1 h-1 rounded-full bg-cyan-400 animate-ping" style="animation-delay:0.2s"></span>
+          <span class="w-1 h-1 rounded-full bg-fuchsia-400 animate-ping" style="animation-delay:0.4s"></span>
+        </div>
+      </div>
+
+      <!-- Corner Info -->
+      <div class="absolute top-4 left-4 z-20 text-[10px] font-mono leading-tight px-2 py-1.5 rounded bg-black/60 border border-emerald-900/30">
+        <div class="text-emerald-600">RECURSION</div>
+        <div class="text-emerald-300">∞ FRACTAL</div>
+      </div>
+      <div class="absolute top-4 right-4 z-20 text-[10px] font-mono leading-tight px-2 py-1.5 rounded bg-black/60 border border-emerald-900/30 text-right">
+        <div class="text-emerald-600">BEAMS</div>
+        <div class="text-cyan-300">40 <span class="text-fuchsia-400">ACTIVE</span></div>
+      </div>
+    </div>
+  </main>
+
+<script>
+const canvas = document.getElementById('fractal');
+const ctx = canvas.getContext('2d');
+const W = 1200, H = 1200, cx = 600, cy = 600;
+const coreR = 545, grid = 720;
+
+const LIGHT = {r:0,g:255,b:170};
+const SHADOW = {r:255,g:60,b:150};
+const GOLD = {r:255,g:215,b:120};
+
+const beams = [];
+
+// 1. 8 PULSARS (4 corners x light+shadow)
+[[-1,-1],[1,-1],[-1,1],[1,1]].forEach(([dx,dy])=>{
+  const bx = cx + dx*grid/2*0.97;
+  const by = cy + dy*grid/2*0.97;
+  beams.push({x:bx, y:by, kind:'PULSAR', side:'LIGHT', c:LIGHT, p:Math.random()});
+  beams.push({x:bx+dx*8, y:by+dy*8, kind:'PULSAR', side:'SHADOW', c:SHADOW, p:Math.random()});
+});
+
+// 2. 12 SUBDOMAINS
+for(let i=0;i<12;i++){
+  const a = i * Math.PI/6;
+  const r = coreR * 0.68;
+  const side = i%2===0 ? 'LIGHT' : 'SHADOW';
+  beams.push({x:cx+Math.cos(a)*r, y:cy+Math.sin(a)*r, kind:'SUB', side, c:side==='LIGHT'?LIGHT:SHADOW, p:Math.random()});
+}
+
+// 3. 4 CANNONS
+[[0,-1],[1,0],[0,1],[-1,0]].forEach(([dx,dy],i)=>{
+  const r = coreR*0.92;
+  const side = i<2 ? 'LIGHT' : 'SHADOW';
+  beams.push({x:cx+dx*r, y:cy+dy*r, kind:'CANNON', side, c:side==='LIGHT'?LIGHT:SHADOW, p:Math.random()});
+});
+
+// 4. 6 CACHE L1-L3 + shadows
+for(let i=0;i<6;i++){
+  const a = i * Math.PI/3;
+  const r = coreR * 0.26;
+  const side = i<3 ? 'LIGHT' : 'SHADOW';
+  beams.push({x:cx+Math.cos(a)*r, y:cy+Math.sin(a)*r, kind:'CACHE', side, c:side==='LIGHT'?LIGHT:SHADOW, p:Math.random()});
+}
+
+// 5. 6 FRACTAL LEVELS
+for(let i=0;i<6;i++){
+  const a = i * Math.PI/3 + Math.PI/6;
+  const r = coreR * 0.47;
+  const side = i%2===0 ? 'LIGHT' : 'SHADOW';
+  beams.push({x:cx+Math.cos(a)*r, y:cy+Math.sin(a)*r, kind:'FRACTAL', side, c:side==='LIGHT'?LIGHT:SHADOW, p:Math.random()});
+}
+
+// 6. 4 QUADRANT ANCHORS
+[[-1,-1],[1,-1],[1,1],[-1,1]].forEach(([dx,dy])=>{
+  beams.push({x:cx+dx*grid*0.23, y:cy+dy*grid*0.23, kind:'QUAD', side:'LIGHT', c:LIGHT, p:Math.random()});
+});
+
+const l1b = document.getElementById('l1b');
+const l2b = document.getElementById('l2b');
+const l3b = document.getElementById('l3b');
+const l1v = document.getElementById('l1v');
+const l2v = document.getElementById('l2v');
+const l3v = document.getElementById('l3v');
+const centerHUD = document.getElementById('centerHUD');
+
+function drawGrid(alpha){
+  ctx.save();
+  ctx.strokeStyle = `rgba(0,255,136,${0.06*alpha})`;
+  ctx.lineWidth = 1;
+  for(let i=0;i<=8;i++){
+    const p = cx - grid/2 + i*grid/8;
+    ctx.beginPath(); ctx.moveTo(p, cy-grid/2); ctx.lineTo(p, cy+grid/2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx-grid/2, p); ctx.lineTo(cx+grid/2, p); ctx.stroke();
+  }
+  // highlight center 4,4
+  ctx.strokeStyle = `rgba(0,255,170,${0.18*alpha})`;
+  ctx.lineWidth = 2;
+  const cs = grid/8;
+  ctx.strokeRect(cx-cs/2, cy-cs/2, cs, cs);
+  ctx.restore();
+}
+
+let frame = 0;
+function animate(now){
+  frame++;
+  const t = now * 0.001;
+  // PWM
+  const l1 = Math.sin(t * Math.PI*2*8) * 0.5 + 0.5; // 8Hz flicker
+  const l2 = Math.sin(t * Math.PI*2*1.25) * 0.5 + 0.5; // 1.25Hz
+  const l3 = Math.sin(t * Math.PI*2*(1/3)) * 0.5 + 0.5; // 0.333Hz (3s)
+  
+  const centerScale = 0.82 + l3 * 0.36;
+  const coreScale = 1.08 - l3 * 0.16;
+  
+  // update UI bars
+  l1b.style.width = (30 + l1*70) + '%';
+  l2b.style.width = (l2*100) + '%';
+  l3b.style.width = (l3*100) + '%';
+  l1v.textContent = (7.8 + l1*0.4).toFixed(1) + ' Hz';
+  l2v.textContent = (1.2 + l2*0.1).toFixed(2) + ' Hz';
+  l3v.textContent = '0.33 Hz';
+  centerHUD.style.transform = `translate(-50%,-50%) scale(${0.9 + centerScale*0.12})`;
+  
+  // fade
+  ctx.globalCompositeOperation = 'source-over';
+  ctx.fillStyle = 'rgba(0,6,3,0.22)';
+  ctx.fillRect(0,0,W,H);
+  
+  drawGrid(0.7 + l3*0.3);
+  
+  // FUSED CORE (outside)
+  const coreRadius = coreR * coreScale;
+  ctx.save();
+  ctx.translate(cx,cy);
+  ctx.shadowBlur = 40 + (1-l3)*20;
+  ctx.shadowColor = 'rgba(255,200,80,0.85)';
+  const cg = ctx.createRadialGradient(0,0,coreRadius-30,0,0,coreRadius+8);
+  cg.addColorStop(0, 'rgba(255,230,160,0)');
+  cg.addColorStop(0.5, `rgba(255,210,100,${0.5 + (1-l3)*0.3})`);
+  cg.addColorStop(0.8, `rgba(255,235,180,${0.85})`);
+  cg.addColorStop(1, 'rgba(255,250,220,0.95)');
+  ctx.strokeStyle = cg;
+  ctx.lineWidth = 9 + (1-l3)*5;
+  ctx.globalAlpha = 0.95;
+  ctx.beginPath(); ctx.arc(0,0,coreRadius,0,Math.PI*2); ctx.stroke();
+  
+  // public field ring
+  ctx.shadowBlur = 0;
+  ctx.globalAlpha = 0.25 + l3*0.15;
+  ctx.strokeStyle = 'rgba(255,220,140,0.4)';
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.arc(0,0,coreRadius+24,0,Math.PI*2); ctx.stroke();
+  ctx.setLineDash([4,12]);
+  ctx.strokeStyle = 'rgba(0,255,170,0.15)';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.arc(0,0,coreRadius+40,0,Math.PI*2); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.restore();
+  
+  // BEAMS
+  ctx.globalCompositeOperation = 'lighter';
+  beams.forEach(b=>{
+    const flick = 0.65 + 0.35 * Math.sin(t*18 + b.p*12);
+    const intensity = (0.5 + l2*0.5) * flick * (0.7 + l3*0.3);
+    const alpha = 0.35 + intensity*0.65;
+    
+    // beam line
+    ctx.beginPath();
+    ctx.moveTo(b.x, b.y);
+    ctx.lineTo(cx, cy);
+    const grad = ctx.createLinearGradient(b.x,b.y,cx,cy);
+    grad.addColorStop(0, `rgba(${b.c.r},${b.c.g},${b.c.b},0)`);
+    grad.addColorStop(0.2, `rgba(${b.c.r},${b.c.g},${b.c.b},${alpha*0.3})`);
+    grad.addColorStop(0.6, `rgba(${b.c.r},${b.c.g},${b.c.b},${alpha*0.85})`);
+    grad.addColorStop(1, `rgba(255,255,230,${alpha})`);
+    ctx.strokeStyle = grad;
+    ctx.lineWidth = 1.2 + intensity*2.8;
+    ctx.shadowBlur = 14;
+    ctx.shadowColor = `rgb(${b.c.r},${b.c.g},${b.c.b})`;
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+    
+    // particles both ways (recursion)
+    for(let i=0;i<2;i++){
+      const speedIn = 0.85 + b.p*0.3;
+      const pi = ((t*speedIn + b.p*5 + i*0.5) % 1);
+      const px = b.x + (cx - b.x) * pi;
+      const py = b.y + (cy - b.y) * pi;
+      ctx.beginPath();
+      ctx.arc(px,py, 1.6 + intensity*1.8, 0, Math.PI*2);
+      ctx.fillStyle = `rgba(${b.c.r},${b.c.g},${b.c.b},${0.9})`;
+      ctx.fill();
+      
+      // reflected outward
+      const speedOut = 0.7 + b.p*0.25;
+      const po = ((t*speedOut + b.p*3 + i*0.5 + 0.3) % 1);
+      const ox = cx + (b.x - cx) * po * 0.98;
+      const oy = cy + (b.y - cy) * po * 0.98;
+      ctx.beginPath();
+      ctx.arc(ox,oy, 1.3 + intensity*1.2, 0, Math.PI*2);
+      ctx.fillStyle = `rgba(${GOLD.r},${GOLD.g},${GOLD.b},${0.65*alpha})`;
+      ctx.fill();
+    }
+  });
+  
+  // interference mandalas at center
+  for(let i=0;i<4;i++){
+    ctx.save();
+    ctx.translate(cx,cy);
+    ctx.rotate(t*0.4*(i%2?1:-1) + i);
+    const rad = (18 + i*15) * centerScale * (0.9 + l2*0.2);
+    ctx.beginPath();
+    const sides = 6 + i*2;
+    for(let s=0;s<=sides;s++){
+      const ang = s/sides * Math.PI*2 + t*0.1;
+      const r = rad * (1 + Math.sin(t*2 + i + s*0.5)*0.08);
+      const x = Math.cos(ang)*r;
+      const y = Math.sin(ang)*r;
+      if(s===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+    }
+    ctx.strokeStyle = `rgba(${180+i*20},255,${200+i*10},${0.12 + l2*0.18})`;
+    ctx.lineWidth = 1;
+    ctx.shadowBlur = 12;
+    ctx.shadowColor = 'rgba(0,255,170,0.7)';
+    ctx.stroke();
+    ctx.restore();
+  }
+  
+  // CENTER NODE
+  ctx.globalCompositeOperation = 'screen';
+  const coreGrad = ctx.createRadialGradient(cx,cy,0,cx,cy,52*centerScale);
+  coreGrad.addColorStop(0, 'rgba(255,255,245,1)');
+  coreGrad.addColorStop(0.15, `rgba(190,255,230,${0.95})`);
+  coreGrad.addColorStop(0.4, `rgba(0,255,170,${0.75 + l2*0.2})`);
+  coreGrad.addColorStop(0.7, `rgba(0,200,120,${0.3})`);
+  coreGrad.addColorStop(1, 'rgba(0,80,50,0)');
+  ctx.fillStyle = coreGrad;
+  ctx.beginPath(); ctx.arc(cx,cy,56*centerScale,0,Math.PI*2); ctx.fill();
+  
+  ctx.shadowBlur = 25 + l2*15;
+  ctx.shadowColor = '#00ffaa';
+  ctx.fillStyle = `rgba(220,255,240,${0.9 + l1*0.1})`;
+  ctx.beginPath(); ctx.arc(cx,cy,9*centerScale,0,Math.PI*2); ctx.fill();
+  ctx.shadowBlur = 0;
+  
+  // pulsing rings (inverted with core)
+  ctx.globalCompositeOperation = 'lighter';
+  for(let i=0;i<3;i++){
+    const rr = (32 + i*22) * centerScale;
+    ctx.beginPath();
+    ctx.arc(cx,cy,rr,0,Math.PI*2);
+    ctx.strokeStyle = `rgba(0,255,170,${0.15 - i*0.04 + l3*0.1})`;
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+  }
+  
+  requestAnimationFrame(animate);
+}
+ctx.fillStyle = '#000602';
+ctx.fillRect(0,0,W,H);
+requestAnimationFrame(animate);
+
+// resize handling for sharpness
+function fit(){
+  const c = document.getElementById('fractal');
+  const parent = c.parentElement;
+  const size = Math.min(parent.clientWidth, parent.clientHeight);
+  c.style.width = size + 'px';
+  c.style.height = size + 'px';
+}
+window.addEventListener('resize', fit);
+fit();
+</script>
+</body>
+</html>

@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ANSIBLE PAIR — Ternary Toroid Engine</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+  body { font-family: 'Share Tech Mono', monospace; background:#020305; color:#4ade80; overflow-x:hidden; }
+  .grid-bg {
+    background-image: 
+      linear-gradient(rgba(34,197,94,0.07) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(34,197,94,0.07) 1px, transparent 1px);
+    background-size: 32px 32px;
+  }
+  .scanlines::before {
+    content:''; position:absolute; inset:0; z-index:2; pointer-events:none;
+    background: repeating-linear-gradient(transparent 0 2px, rgba(0,255,80,0.04) 3px, transparent 4px);
+    mix-blend-mode: screen;
+  }
+  .ansible-panel {
+    background: radial-gradient(ellipse at center, rgba(5,25,15,0.9) 0%, rgba(0,0,0,0.95) 70%);
+    box-shadow: inset 0 0 40px rgba(0,255,100,0.05), inset 0 0 2px rgba(74,222,128,0.3);
+    transition: box-shadow 0.4s ease, border-color 0.4s ease;
+  }
+  .observer {
+    position:absolute; width:12px; height:12px; border-radius:50%; 
+    background:#22c55e; box-shadow:0 0 10px #22c55e, 0 0 20px #22c55e; 
+    transition: all 0.2s ease; z-index:10; border:1px solid rgba(0,0,0,0.8);
+  }
+  .observer.fused { background:#facc15!important; box-shadow:0 0 15px #facc15, 0 0 30px #facc15, 0 0 50px #facc15!important; transform:scale(1.3); }
+  .gate { position:absolute; width:6px; height:6px; border-radius:50%; background:#14532d; border:1px solid #22c55e; box-shadow:0 0 6px #22c55e50; }
+  .phase-lock { animation: phasePulse 1.2s ease-in-out infinite; }
+  @keyframes phasePulse { 0%,100%{ filter:brightness(1);} 50%{ filter:brightness(1.4);} }
+  .trit { transition: all 0.15s; }
+  .fusion-flash { animation: flash 0.3s ease; }
+  @keyframes flash { 0%{opacity:0.2} 50%{opacity:1} 100%{opacity:0.2} }
+</style>
+</head>
+<body class="min-h-screen grid-bg text-green-400 selection:bg-green-500/30">
+<div class="pointer-events-none fixed inset-0 bg-[radial-gradient(ellipse_at_center,transparent_40%,rgba(0,0,0,0.9)_100%)]"></div>
+
+<header class="relative z-10 border-b border-green-900/40 bg-black/70 backdrop-blur">
+  <div class="max-w-[1400px] mx-auto px-4 py-3 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="w-2 h-2 rounded-full bg-green-400 animate-pulse shadow-[0_0_10px_#4ade80]"></div>
+      <h1 class="text-sm md:text-base tracking-[0.2em]">ANSIBLE QE PAIR // TERNARY TOROID v2.5</h1>
+    </div>
+    <div class="text-[10px] tracking-widest opacity-60 hidden md:block">4 GATEKEEPERS + 2 OBSERVERS</div>
+  </div>
+</header>
+
+<main class="relative z-10 max-w-[1400px] mx-auto px-4 py-6 lg:py-10">
+  <div class="grid lg:grid-cols-[1fr_380px_1fr] gap-6 lg:gap-8 items-start">
+    
+    <!-- ANSIBLE A -->
+    <div id="panelA" class="ansible-panel scanlines relative border border-green-500/30 rounded-2xl p-5">
+      <div class="flex items-center justify-between mb-3">
+        <h2 class="text-green-300 tracking-[0.25em] text-lg">ANSIBLE A</h2>
+        <div class="flex items-center gap-2 text-[10px] px-2 py-1 rounded border border-green-800 bg-green-950/50">
+          <span class="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"></span> TX NODE
+        </div>
+      </div>
+
+      <div class="relative w-[260px] h-[260px] mx-auto">
+        <canvas id="toroidA" width="260" height="260" class="absolute inset-0"></canvas>
+        <!-- observers -->
+        <div id="obsA1" class="observer" style="top:8px; left:50%; transform:translateX(-50%)"></div>
+        <div id="obsA2" class="observer" style="bottom:8px; left:50%; transform:translateX(-50%)"></div>
+        <!-- gatekeepers -->
+        <div class="gate" style="top:50%; left:12px; transform:translateY(-50%)"></div>
+        <div class="gate" style="top:12px; left:50%; transform:translateX(-50%)"></div>
+        <div class="gate" style="top:50%; right:12px; transform:translateY(-50%)"></div>
+        <div class="gate" style="bottom:12px; left:50%; transform:translateX(-50%)"></div>
+        <!-- center state -->
+        <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div class="text-center">
+            <div class="text-[10px] opacity-50 tracking-widest">TERNARY</div>
+            <div id="stateA" class="trit text-5xl font-bold tracking-wider" style="color:#a855f7; text-shadow:0 0 20px currentColor">0:0</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3 mt-4">
+        <div class="bg-black/60 border border-green-900/50 rounded p-2">
+          <div class="flex justify-between text-[10px] opacity-70 mb-1"><span>INTERNAL 2/5</span><span id="intA">0/2</span></div>
+          <div class="h-1.5 bg-green-950 rounded overflow-hidden"><div id="intBarA" class="h-full w-0 bg-green-400 shadow-[0_0_10px_#4ade80] transition-all duration-150"></div></div>
+        </div>
+        <div class="bg-black/60 border border-green-900/50 rounded p-2">
+          <div class="flex justify-between text-[10px] opacity-70 mb-1"><span>EXTERNAL 3/5</span><span id="extA">0/3</span></div>
+          <div class="h-1.5 bg-green-950 rounded overflow-hidden"><div id="extBarA" class="h-full w-0 bg-cyan-400 shadow-[0_0_10px_#22d3ee] transition-all duration-150"></div></div>
+        </div>
+      </div>
+
+      <div class="mt-5 space-y-2">
+        <label class="text-[10px] opacity-60 tracking-widest">TRANSMIT PAYLOAD</label>
+        <div class="flex gap-2">
+          <input id="msgInput" maxlength="64" placeholder="TYPE MESSAGE..." class="flex-1 bg-black/80 border border-green-800/70 rounded px-3 py-2.5 text-green-200 placeholder-green-800 focus:outline-none focus:border-green-500 focus:shadow-[0_0_15px_rgba(34,197,94,0.2)] text-sm tracking-wide">
+          <button id="sendBtn" class="px-4 py-2.5 bg-green-950 border border-green-600 rounded hover:bg-green-900 active:scale-95 transition text-sm tracking-widest whitespace-nowrap shadow-[inset_0_0_10px_rgba(34,197,94,0.1)]">SEND</button>
+        </div>
+        <div class="text-[10px] opacity-50 h-8 overflow-hidden break-all" id="tritLogA">— idle —</div>
+      </div>
+    </div>
+
+    <!-- BRIDGE -->
+    <div class="flex flex-col items-center justify-center py-4 lg:py-16">
+      <div class="text-[11px] tracking-[0.3em] opacity-60 mb-3">QUANTUM ENTANGLEMENT BRIDGE</div>
+      <div class="relative w-full">
+        <canvas id="bridgeCanvas" width="380" height="180" class="w-full h-[180px]"></canvas>
+        <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div id="fusionIndicator" class="px-3 py-1 rounded-full border text-[10px] tracking-widest transition-all duration-300 opacity-0 scale-90" style="border-color:#a855f7; color:#d8b4fe; background:rgba(168,85,247,0.1); box-shadow:0 0 20px rgba(168,85,247,0.3)">OBSERVER FUSION</div>
+        </div>
+      </div>
+      
+      <div class="grid grid-cols-2 gap-4 w-full max-w-[320px] mt-4">
+        <div class="bg-black/70 border border-green-900/40 rounded-lg p-2.5 text-center">
+          <div class="text-[10px] opacity-50">DISTANCE</div>
+          <div class="text-amber-300 text-sm tracking-wider">IRRELEVANT</div>
+        </div>
+        <div class="bg-black/70 border border-green-900/40 rounded-lg p-2.5 text-center">
+          <div class="text-[10px] opacity-50">LATENCY</div>
+          <div id="latency" class="text-cyan-300 text-sm tracking-wider">0.000ms</div>
+        </div>
+      </div>
+
+      <div class="mt-5 flex items-center gap-3 text-[10px]">
+        <div class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full" style="background:#a855f7; box-shadow:0 0 8px #a855f7"></span>0:0</div>
+        <div class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full" style="background:#22d3ee; box-shadow:0 0 8px #22d3ee"></span>1:1</div>
+        <div class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full" style="background:#facc15; box-shadow:0 0 8px #facc15"></span>0:1 FUSION</div>
+      </div>
+    </div>
+
+    <!-- ANSIBLE B -->
+    <div id="panelB" class="ansible-panel scanlines relative border border-cyan-500/20 rounded-2xl p-5">
+      <div class="flex items-center justify-between mb-3">
+        <h2 class="text-cyan-300 tracking-[0.25em] text-lg">ANSIBLE B</h2>
+        <div class="flex items-center gap-2 text-[10px] px-2 py-1 rounded border border-cyan-900 bg-cyan-950/30">
+          <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse"></span> RX NODE
+        </div>
+      </div>
+
+      <div class="relative w-[260px] h-[260px] mx-auto">
+        <canvas id="toroidB" width="260" height="260" class="absolute inset-0"></canvas>
+        <div id="obsB1" class="observer" style="top:8px; left:50%; transform:translateX(-50%)"></div>
+        <div id="obsB2" class="observer" style="bottom:8px; left:50%; transform:translateX(-50%)"></div>
+        <div class="gate" style="top:50%; left:12px; transform:translateY(-50%)"></div>
+        <div class="gate" style="top:12px; left:50%; transform:translateX(-50%)"></div>
+        <div class="gate" style="top:50%; right:12px; transform:translateY(-50%)"></div>
+        <div class="gate" style="bottom:12px; left:50%; transform:translateX(-50%)"></div>
+        <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div class="text-center">
+            <div class="text-[10px] opacity-50 tracking-widest">TERNARY</div>
+            <div id="stateB" class="trit text-5xl font-bold tracking-wider" style="color:#a855f7; text-shadow:0 0 20px currentColor">0:0</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3 mt-4">
+        <div class="bg-black/60 border border-cyan-900/40 rounded p-2">
+          <div class="flex justify-between text-[10px] opacity-70 mb-1"><span>INTERNAL 2/5</span><span id="intB">0/2</span></div>
+          <div class="h-1.5 bg-green-950 rounded overflow-hidden"><div id="intBarB" class="h-full w-0 bg-green-400 shadow-[0_0_10px_#4ade80] transition-all duration-150"></div></div>
+        </div>
+        <div class="bg-black/60 border border-cyan-900/40 rounded p-2">
+          <div class="flex justify-between text-[10px] opacity-70 mb-1"><span>EXTERNAL 3/5</span><span id="extB">0/3</span></div>
+          <div class="h-1.5 bg-green-950 rounded overflow-hidden"><div id="extBarB" class="h-full w-0 bg-cyan-400 shadow-[0_0_10px_#22d3ee] transition-all duration-150"></div></div>
+        </div>
+      </div>
+
+      <div class="mt-5 space-y-2">
+        <label class="text-[10px] opacity-60 tracking-widest">RECEIVED BUFFER</label>
+        <div id="receivedText" class="min-h-[46px] bg-black/80 border border-cyan-900/60 rounded px-3 py-2.5 text-cyan-200 tracking-wide flex items-center">— standby —</div>
+        <div class="text-[10px] opacity-50 h-8 overflow-hidden break-all" id="tritLogB">— awaiting entanglement —</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Explanation -->
+  <div class="mt-10 max-w-4xl mx-auto">
+    <div class="border border-green-900/30 rounded-xl bg-black/50 backdrop-blur p-4 text-[11px] leading-relaxed opacity-80">
+      <div class="flex flex-wrap gap-x-6 gap-y-1 justify-center text-center">
+        <span><span class="text-green-300">4 gatekeepers</span> control flow (2 internal, 3 external timing)</span>
+        <span>•</span>
+        <span><span class="text-amber-300">2 observers</span> remain fixed, fuse on 0:1 state</span>
+        <span>•</span>
+        <span><span class="text-cyan-300">instant channel</span> because pair shares same observer wavefunction</span>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer class="relative z-10 border-t border-green-900/20 mt-8 py-4 text-center text-[10px] opacity-50 tracking-widest">
+  TERNARY TOROID ENGINE • 0:0 = PURPLE • 1:1 = CYAN • 0:1 = GOLD (FUSION)
+</footer>
+
+<script>
+const stateA = document.getElementById('stateA');
+const stateB = document.getElementById('stateB');
+const intA = document.getElementById('intA'), extA = document.getElementById('extA');
+const intB = document.getElementById('intB'), extB = document.getElementById('extB');
+const intBarA = document.getElementById('intBarA'), extBarA = document.getElementById('extBarA');
+const intBarB = document.getElementById('intBarB'), extBarB = document.getElementById('extBarB');
+const panelA = document.getElementById('panelA'), panelB = document.getElementById('panelB');
+const obsA1 = document.getElementById('obsA1'), obsA2 = document.getElementById('obsA2');
+const obsB1 = document.getElementById('obsB1'), obsB2 = document.getElementById('obsB2');
+const fusionIndicator = document.getElementById('fusionIndicator');
+const tritLogA = document.getElementById('tritLogA');
+const tritLogB = document.getElementById('tritLogB');
+const receivedText = document.getElementById('receivedText');
+const latencyEl = document.getElementById('latency');
+const msgInput = document.getElementById('msgInput');
+const sendBtn = document.getElementById('sendBtn');
+
+const ctxA = document.getElementById('toroidA').getContext('2d');
+const ctxB = document.getElementById('toroidB').getContext('2d');
+const bridgeCtx = document.getElementById('bridgeCanvas').getContext('2d');
+
+let cycle = 0;
+let currentTernary = 0; // 0=0:0, 1=1:1, 2=0:1
+let isTransmitting = false;
+let phaseLock = false;
+let transmitQueue = [];
+let receiveBuffer = [];
+let fusionPulse = false;
+
+const stateMap = {0:'0:0', 1:'1:1', 2:'0:1'};
+const stateColor = {0:'#a855f7', 1:'#22d3ee', 2:'#facc15'};
+
+function textToTrits(str){
+  const trits = [];
+  for(let i=0;i<str.length;i++){
+    const code = str.charCodeAt(i);
+    const base3 = code.toString(3).padStart(6,'0');
+    for(const ch of base3) trits.push(parseInt(ch));
+  }
+  return trits;
+}
+function tritsToText(trits){
+  let out = '';
+  for(let i=0;i<trits.length;i+=6){
+    const chunk = trits.slice(i,i+6);
+    if(chunk.length<6) break;
+    const base3 = chunk.join('');
+    const code = parseInt(base3,3);
+    out += String.fromCharCode(code);
+  }
+  return out;
+}
+
+function drawToroid(ctx, time, ternary, locked){
+  const w = ctx.canvas.width, h = ctx.canvas.height, cx=w/2, cy=h/2;
+  ctx.clearRect(0,0,w,h);
+  const col = stateColor[ternary];
+  const hue = ternary===0?270:ternary===1?190:45;
+  const rot = time*0.0004 * (locked?2.2:1);
+  
+  ctx.save(); ctx.translate(cx,cy);
+  // outer field
+  for(let i=0;i<3;i++){
+    const r = 88 - i*14;
+    ctx.beginPath();
+    ctx.ellipse(0,0, r, r*0.62, rot*(i%2? -0.5:0.7), 0, Math.PI*2);
+    ctx.strokeStyle = `hsla(${hue},85%,${60-i*5}%,${locked?0.35:0.18})`;
+    ctx.lineWidth = 1.5;
+    ctx.shadowBlur = locked?25:12;
+    ctx.shadowColor = col;
+    ctx.stroke();
+  }
+  // particle ring
+  const count = 48;
+  for(let p=0;p<count;p++){
+    const a = (p/count)*Math.PI*2 + rot*1.5;
+    const r = 70 + Math.sin(a*3 + time*0.001)*4;
+    const x = Math.cos(a)*r; const y = Math.sin(a)*r*0.6;
+    const alpha = 0.25 + 0.5*((Math.sin(a*2 + time*0.002)+1)/2);
+    ctx.beginPath(); ctx.arc(x,y, locked?2:1.3,0,Math.PI*2);
+    ctx.fillStyle = `hsla(${hue},100%,70%,${alpha})`;
+    ctx.shadowBlur = 8; ctx.shadowColor = col;
+    ctx.fill();
+  }
+  // core
+  ctx.beginPath(); ctx.arc(0,0,11,0,Math.PI*2);
+  const g = ctx.createRadialGradient(0,0,0,22);
+  g.addColorStop(0, col); g.addColorStop(0.4, col+'aa'); g.addColorStop(1,'transparent');
+  ctx.fillStyle = g; ctx.shadowBlur = locked?40:22; ctx.shadowColor = col; ctx.fill();
+  ctx.restore();
+}
+
+function drawBridge(time){
+  const ctx = bridgeCtx, w=ctx.canvas.width, h=ctx.canvas.height;
+  ctx.clearRect(0,0,w,h);
+  const midY = h/2;
+  // main entanglement beam
+  ctx.save();
+  const grad = ctx.createLinearGradient(30,0,w-30,0);
+  const baseCol = stateColor[currentTernary];
+  grad.addColorStop(0,'transparent');
+  grad.addColorStop(0.2, baseCol+'44');
+  grad.addColorStop(0.5, phaseLock? '#facc15' : baseCol+'cc');
+  grad.addColorStop(0.8, baseCol+'44');
+  grad.addColorStop(1,'transparent');
+  ctx.strokeStyle = grad;
+  ctx.lineWidth = phaseLock?3.5:2;
+  ctx.shadowBlur = phaseLock?35:18;
+  ctx.shadowColor = fusionPulse?'#facc15':baseCol;
+  ctx.beginPath();
+  ctx.moveTo(20,midY);
+  const wave = fusionPulse?28:14;
+  ctx.bezierCurveTo(w*0.25, midY - wave, w*0.75, midY + wave, w-20, midY);
+  ctx.stroke();
+  
+  // secondary counter-beam
+  ctx.globalAlpha = 0.5;
+  ctx.beginPath();
+  ctx.moveTo(20,midY);
+  ctx.bezierCurveTo(w*0.25, midY + wave, w*0.75, midY - wave, w-20, midY);
+  ctx.strokeStyle = '#22d3ee44';
+  ctx.lineWidth = 1; ctx.shadowBlur=10; ctx.stroke();
+  ctx.restore();
+
+  // traveling photons
+  const particles = isTransmitting?36:14;
+  for(let i=0;i<particles;i++){
+    const t = ((time*0.04 + i*(1000/particles))%1000)/1000;
+    const x = 20 + t*(w-40);
+    const y = midY + Math.sin(t*Math.PI*2 + (phaseLock?time*0.002:0)) * (fusionPulse?22:12) * Math.sin(t*Math.PI);
+    ctx.beginPath(); ctx.arc(x,y, isTransmitting?2.2:1.4,0,Math.PI*2);
+    ctx.fillStyle = currentTernary===2? 'rgba(250,204,21,0.95)' : currentTernary===1? 'rgba(34,211,238,0.85)':'rgba(168,85,247,0.85)';
+    ctx.shadowBlur = 12; ctx.shadowColor = ctx.fillStyle; ctx.fill();
+  }
+}
+
+function updateDisplays(){
+  const txt = stateMap[currentTernary];
+  const col = stateColor[currentTernary];
+  stateA.textContent = txt; stateB.textContent = txt;
+  stateA.style.color = col; stateB.style.color = col;
+  stateA.style.textShadow = `0 0 20px ${col}`; stateB.style.textShadow = `0 0 20px ${col}`;
+  
+  const fused = currentTernary===2;
+  [obsA1,obsA2,obsB1,obsB2].forEach(o=>o.classList.toggle('fused', fused));
+  fusionIndicator.style.opacity = fused?'1':'0';
+  fusionIndicator.style.transform = fused?'scale(1)':'scale(0.9)';
+  fusionPulse = fused;
+
+  // timing
+  const intStep = cycle<2 ? cycle+1 : 0;
+  const extStep = cycle>=2 ? cycle-1 : 0;
+  intA.textContent = `${intStep}/2`; extA.textContent = `${extStep}/3`;
+  intB.textContent = `${intStep}/2`; extB.textContent = `${extStep}/3`;
+  intBarA.style.width = `${(intStep/2)*100}%`; intBarB.style.width = `${(intStep/2)*100}%`;
+  extBarA.style.width = `${(extStep/3)*100}%`; extBarB.style.width = `${(extStep/3)*100}%`;
+
+  // phase lock styling
+  const lockShadow = phaseLock ? '0 0 35px rgba(250,204,21,0.25), inset 0 0 25px rgba(250,204,21,0.08)' : '';
+  const lockBorderA = phaseLock ? 'rgba(250,204,21,0.6)' : 'rgba(34,197,94,0.3)';
+  const lockBorderB = phaseLock ? 'rgba(250,204,21,0.6)' : 'rgba(6,182,212,0.2)';
+  panelA.style.boxShadow = lockShadow; panelB.style.boxShadow = lockShadow;
+  panelA.style.borderColor = lockBorderA; panelB.style.borderColor = lockBorderB;
+  panelA.classList.toggle('phase-lock', phaseLock); panelB.classList.toggle('phase-lock', phaseLock);
+  
+  latencyEl.textContent = isTransmitting ? '0.000ms' : '0.000ms';
+  latencyEl.className = isTransmitting ? 'text-amber-300 text-sm tracking-wider' : 'text-cyan-300 text-sm tracking-wider';
+}
+
+function engineTick(){
+  cycle = (cycle+1)%5;
+  
+  if(isTransmitting){
+    if(transmitQueue.length>0){
+      currentTernary = transmitQueue.shift();
+      receiveBuffer.push(currentTernary);
+      tritLogB.textContent = receiveBuffer.map(t=>t===2?'2':t).join(' ');
+    } else {
+      isTransmitting = false;
+      const decoded = tritsToText(receiveBuffer);
+      receivedText.textContent = decoded || '— empty —';
+      receivedText.classList.add('fusion-flash');
+      setTimeout(()=>receivedText.classList.remove('fusion-flash'),400);
+      tritLogA.textContent = '— transmission complete —';
+      setTimeout(()=>{ phaseLock=false; }, 900);
+      currentTernary = [0,2,1,2][cycle%4];
+    }
+  } else {
+    // idle natural cycle: 0:0 -> 0:1 -> 1:1 -> 0:1
+    const idleSeq = [0,2,1,2,0];
+    currentTernary = idleSeq[cycle];
+  }
+  updateDisplays();
+}
+
+let last = performance.now();
+function animate(now){
+  drawToroid(ctxA, now, currentTernary, phaseLock);
+  drawToroid(ctxB, now, currentTernary, phaseLock);
+  drawBridge(now);
+  requestAnimationFrame(animate);
+}
+
+sendBtn.onclick = ()=>{
+  const msg = msgInput.value.trim();
+  if(!msg || isTransmitting) return;
+  transmitQueue = textToTrits(msg);
+  receiveBuffer = [];
+  isTransmitting = true;
+  phaseLock = true;
+  tritLogA.textContent = transmitQueue.map(t=>t===2?'2':t).join(' ');
+  tritLogB.textContent = 'receiving...';
+  receivedText.textContent = 'decoding entanglement...';
+  // visual kick
+  panelA.style.transform = 'scale(1.01)'; setTimeout(()=>panelA.style.transform='',150);
+};
+
+msgInput.addEventListener('keydown', e=>{ if(e.key==='Enter') sendBtn.click(); });
+
+// start
+updateDisplays();
+setInterval(engineTick, 210);
+requestAnimationFrame(animate);
+
+// demo autoplay
+setTimeout(()=>{
+  msgInput.value = 'HELLO ANSIBLE';
+  sendBtn.click();
+}, 1200);
+</script>
+</body>
+</html>

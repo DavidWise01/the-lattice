@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TriPod Brain × Lattice Cortex</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root { color-scheme: dark; }
+html,body{height:100%;}
+body { font-family: 'Inter', system-ui, -apple-system; background: #000; overscroll-behavior: none; }
+.mono { font-family: 'JetBrains Mono', monospace; }
+.grid-bg { background-image: radial-gradient(rgba(255,255,255,0.06) 1px, transparent 1px); background-size: 18px 18px; }
+.pod-committing { animation: podp 0.8s cubic-bezier(.2,.8,.2,1); }
+@keyframes podc {
+  0% { box-shadow: 0 0 rgba(245,158,11,0.7); border-color: rgba(245,158,11,0.8); }
+  100% { box-shadow: 0 0 0 16px rgba(245,158,11,0); border-color: rgba(63,63,70,1); }
+}
+@keyframes podc {
+  0% { box-shadow: 0 0 rgba(245,158,11,0.7) }
+  70% { box-shadow: 0 0 0 10px rgba(245,158,11,0) }
+  100% { box-shadow: 0 0 rgba(245,158,11,0) }
+}
+.pod-committing { animation: podc 0.8s ease-out; }
+.seed-active { border-color: rgb(245 158 11 / 0.6) !important; background: rgba(245,158,11,0.08) !important; }
+.no-scrollbar::-webkit-scrollbar{display:none}
+.no-scrollbar{ -ms-overflow-style:none; scrollbar-width:none; }
+</style>
+</head>
+<body class="bg-black text-zinc-200 antialiased selection:bg-amber-500/30 selection:text-amber-100">
+<div class="flex flex-col lg:flex-row h-screen w-screen overflow-hidden">
+
+  <!-- LEFT: TriPod Brain -->
+  <section class="relative w-full lg:w-1/2 h-[50vh] lg:h-screen flex flex-col border-b lg:border-b-0 lg:border-r border-zinc-800 bg-[#050507]">
+    <header class="flex items-center justify-between px-4 h-[48px] border-b border-zinc-800 bg-black/80 backdrop-blur z-20">
+      <div class="flex items-center gap-2.5">
+        <div class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse shadow-[0_0_8px_rgba(245,158,11,0.8)]"></div>
+        <h1 class="mono text-[12px] tracking-[0.18em] uppercase font-medium text-zinc-300">TriPod Brain — Memory</h1>
+      </div>
+      <div class="flex items-center gap-2.5">
+        <span class="mono text-[10px] text-zinc-500 hidden sm:block">SEEDED CROSS</span>
+        <span id="left-status" class="mono text-[10px] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/20">IDLE</span>
+      </div>
+    </header>
+
+    <div class="flex-1 relative overflow-hidden">
+      <div class="absolute inset-0 grid-bg opacity-[0.35]"></div>
+      <div class="absolute inset-0 bg-gradient-to-b from-amber-500/[0.03] via-transparent to-transparent pointer-events-none"></div>
+      
+      <!-- Tripod Core Area -->
+      <div class="relative h-[62%] lg:h-[65%] border-b border-zinc-900/80">
+        <svg class="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 400 280" preserveAspectRatio="xMidYMid meet">
+          <defs>
+            <linearGradient id="tripod-line" x1="0" x2="1">
+              <stop offset="0%" stop-color="rgba(113,113,122,0.2)"/>
+              <stop offset="50%" stop-color="rgba(245,158,11,0.55)"/>
+              <stop offset="100%" stop-color="rgba(113,113,122,0.2)"/>
+            </linearGradient>
+          </defs>
+          <g stroke="url(#tripod-line)" stroke-width="1" fill="none" opacity="0.7">
+            <path d="M 70 140 C 125 140, 160 140, 200 140"/>
+            <path d="M 200 55 C 200 95, 200 120, 200 140"/>
+            <path d="M 330 140 C 275 140, 240 140, 200 140"/>
+          </g>
+          <g stroke="rgba(245,158,11,0.15)" stroke-width="0.5" fill="none">
+            <circle cx="200" cy="140" r="70" />
+            <circle cx="200" cy="140" r="45" />
+          </g>
+        </svg>
+
+        <!-- POD A -->
+        <div id="pod-a" class="pod absolute left-[4%] sm:left-[8%] top-[50%] -translate-y-1/2 w-[102px] sm:w-[120px] lg:w-[132px] p-2.5 rounded-xl bg-zinc-950/90 border border-zinc-800 backdrop-blur-md shadow-[inset_0_1px_0_0_rgba(255,255,255,0.03)]">
+          <div class="flex items-center justify-between">
+            <span class="mono text-[10px] text-zinc-500 tracking-wide">POD A</span>
+            <span class="w-1 h-1 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(16,185,129,0.6)]"></span>
+          </div>
+          <div class="mono text-[14px] mt-1.5 tracking-[0.2em] text-amber-300/90">+nxw</div>
+          <div class="pod-bars mt-2.5 h-[24px] flex items-end gap-[2px]"></div>
+        </div>
+
+        <!-- POD B -->
+        <div id="pod-b" class="pod absolute left-1/2 top-[12%] -translate-x-1/2 w-[102px] sm:w-[120px] lg:w-[132px] p-2.5 rounded-xl bg-zinc-950/90 border border-zinc-800 backdrop-blur-md">
+          <div class="flex items-center justify-between">
+            <span class="mono text-[10px] text-zinc-500 tracking-wide">POD B</span>
+            <span class="w-1 h-1 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(16,185,129,0.6)]"></span>
+          </div>
+          <div class="mono text-[14px] mt-1.5 tracking-[0.2em] text-amber-300/90">-nxw</div>
+          <div class="pod-bars mt-2.5 h-[24px] flex items-end gap-[2px]"></div>
+        </div>
+
+        <!-- POD C -->
+        <div id="pod-c" class="pod absolute right-[4%] sm:right-[8%] top-[50%] -translate-y-1/2 w-[102px] sm:w-[120px] lg:w-[132px] p-2.5 rounded-xl bg-zinc-950/90 border border-zinc-800 backdrop-blur-md">
+          <div class="flex items-center justify-between">
+            <span class="mono text-[10px] text-zinc-500 tracking-wide">POD C</span>
+            <span class="w-1 h-1 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(16,185,129,0.6)]"></span>
+          </div>
+          <div class="mono text-[14px] mt-1.5 tracking-[0.2em] text-amber-300/90">±nxw</div>
+          <div class="pod-bars mt-2.5 h-[24px] flex items-end gap-[2px]"></div>
+        </div>
+
+        <!-- CORE -->
+        <div id="tripod-core" class="absolute left-1/2 top-[48%] -translate-x-1/2 -translate-y-1/2">
+          <div class="relative">
+            <div class="absolute -inset-6 rounded-full bg-amber-500/10 blur-3xl"></div>
+            <div class="relative w-[132px] h-[132px] sm:w-[148px] sm:h-[148px] rounded-full bg-[#070708]/90 border border-amber-500/25 flex flex-col items-center justify-center backdrop-blur-xl shadow-[0_0_60px_rgba(245,158,11,0.08),inset_0_1px_0_rgba(255,255,255,0.05)]">
+              <div class="mono text-[9px] uppercase tracking-[0.2em] text-zinc-500 mb-1">SEED</div>
+              <div id="core-seed" class="mono text-[26px] leading-none tracking-[0.18em] text-amber-100">990990</div>
+              <div id="core-sub" class="mono text-[10px] mt-1.5 text-zinc-600">9.9.0.9.9.0</div>
+              <div class="absolute bottom-3 w-16 h-px bg-gradient-to-r from-transparent via-amber-500/60 to-transparent"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Seeded Cross Lattice -->
+      <div class="relative h-[38%] lg:h-[35%] p-3 sm:p-4 flex flex-col">
+        <div class="flex items-center justify-between mb-2.5">
+          <div class="mono text-[11px] uppercase tracking-[0.18em] text-zinc-500">Seeded Cross Lattice</div>
+          <div class="mono text-[10px] text-zinc-600">990990 → 011011</div>
+        </div>
+        <div id="seed-list" class="grid grid-cols-5 lg:grid-cols-10 gap-1.5 sm:gap-2 overflow-y-auto no-scrollbar"></div>
+        <div class="mt-auto pt-3 flex items-center gap-2">
+          <button id="commit-btn" class="mono text-[11px] px-3.5 py-1.5 rounded-md bg-amber-500 text-black font-medium tracking-wide hover:bg-amber-400 active:bg-amber-500/90 transition shadow-[0_0_20px_rgba(245,158,11,0.2)]">COMMIT LEAF</button>
+          <button id="prune-btn" class="mono text-[11px] px-3.5 py-1.5 rounded-md bg-zinc-900 text-zinc-300 hover:bg-zinc-800 border border-zinc-800 transition">PRUNE</button>
+          <div class="ml-auto mono text-[10px] text-zinc-600 hidden sm:block">- + x.x.x.x pattern</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- RIGHT: Lattice Cortex -->
+  <section class="relative w-full lg:w-1/2 h-[50vh] lg:h-screen flex flex-col bg-black">
+    <header class="flex items-center justify-between px-4 h-[48px] border-b border-zinc-800 bg-zinc-950/70 backdrop-blur z-20">
+      <div class="flex items-center gap-2.5">
+        <div class="w-1.5 h-1.5 rounded-full bg-white/80 animate-pulse"></div>
+        <h1 class="mono text-[12px] tracking-[0.18em] uppercase font-medium text-zinc-300">Lattice Cortex — Solar Sail</h1>
+      </div>
+      <div class="flex items-center gap-2.5">
+        <span class="mono text-[10px] text-zinc-500">COORD</span>
+        <span id="coord-display" class="mono text-[11px] px-2 py-0.5 rounded bg-zinc-900 text-amber-300 border border-zinc-800 min-w-[72px] text-center">0.0.0.0</span>
+      </div>
+    </header>
+
+    <div class="flex-1 relative overflow-hidden">
+      <canvas id="lattice" class="absolute inset-0 w-full h-full"></canvas>
+      
+      <!-- Overlays -->
+      <div class="pointer-events-none absolute inset-0">
+        <div class="absolute top-3 right-3 mono text-[10px] text-zinc-500 tracking-widest">+NXW FLOW</div>
+        <div class="absolute bottom-3 left-3 mono text-[10px] text-zinc-500 tracking-widest">-NXW FLOW</div>
+        <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+          <div class="w-[220px] h-[220px] rounded-full border border-amber-500/5"></div>
+          <div class="absolute inset-0 flex items-center justify-center">
+            <div class="w-[140px] h-[140px] rounded-full border border-amber-500/[0.07] animate-pulse"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom info -->
+      <div class="absolute bottom-0 inset-x-0 p-3 flex items-center justify-between bg-gradient-to-t from-black via-black/80 to-transparent">
+        <div class="mono text-[10px] text-zinc-600 tracking-wide">10 STACKS • BGA LATTICE • 0.0.0.0 → 9.9.9.9</div>
+        <div class="flex items-center gap-2">
+          <span id="pulse-count" class="mono text-[10px] text-zinc-500">000</span>
+          <span id="pulse-status" class="mono text-[10px] px-2 py-0.5 rounded bg-zinc-900 border border-zinc-800 text-zinc-500">STANDBY</span>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+(() => {
+  const seeds = ["990990","880880","770770","660660","550550","440440","330330","220220","110110","011011"];
+  let activeSeed = 0;
+  let pulseCount = 0;
+
+  const $ = (id) => document.getElementById(id);
+  const coreSeed = $('core-seed');
+  const coreSub = $('core-sub');
+  const seedList = $('seed-list');
+  const leftStatus = $('left-status');
+  const coordDisplay = $('coord-display');
+  const pulseStatus = $('pulse-status');
+  const pulseCountEl = $('pulse-count');
+
+  function formatSeed(s){ return s.split('').join('.'); }
+
+  function renderSeeds(){
+    seedList.innerHTML = seeds.map((s,i)=>{
+      const active = i===activeSeed;
+      return `<button data-idx="${i}" class="seed-btn text-left p-2 rounded-lg border transition-all ${active?'border-amber-500/50 bg-amber-500/10':'border-zinc-800 bg-zinc-950/60 hover:bg-zinc-900'}">
+        <div class="mono text-[13px] leading-none tracking-widest ${active?'text-amber-200':'text-zinc-300'}">${s}</div>
+        <div class="mono text-[9px] mt-1 ${active?'text-amber-400/70':'text-zinc-600'}">${formatSeed(s)}</div>
+      </button>`;
+    }).join('');
+    seedList.querySelectorAll('button').forEach(b=> b.onclick = ()=> selectSeed(+b.dataset.idx));
+  }
+
+  function selectSeed(i){
+    activeSeed = i;
+    coreSeed.textContent = seeds[i];
+    coreSub.textContent = formatSeed(seeds[i]);
+    renderSeeds();
+    // gentle flash pods
+    document.querySelectorAll('.pod').forEach(p=>{
+      p.style.borderColor = 'rgba(245,158,11,0.4)';
+      setTimeout(()=> p.style.borderColor='', 300);
+    });
+  }
+
+  function animatePods(){
+    document.querySelectorAll('.pod-bars').forEach(bars=>{
+      bars.innerHTML = Array.from({length:14},()=>`<div class="w-[3px] rounded-full bg-zinc-700/80" style="height:${3+Math.random()*22}px"></div>`).join('');
+    });
+  }
+  setInterval(animatePods, 900);
+  animatePods();
+
+  // Canvas lattice
+  const canvas = $('lattice');
+  const ctx = canvas.getContext('2d');
+  let dpr = 1;
+  let pulse = null;
+
+  function resize(){
+    const r = canvas.getBoundingClientRect();
+    dpr = Math.min(window.devicePixelRatio||1, 2);
+    canvas.width = r.width * dpr;
+    canvas.height = r.height * dpr;
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  function nodePos(x,y,layer,w,h,spacing){
+    const ox = layer * 3.0;
+    const oy = layer * -1.6;
+    const cx = w/2 + ox;
+    const cy = h/2 + oy + 6;
+    const px = cx + (x - y) * spacing * 0.68;
+    const py = cy + (x + y - 9) * spacing * 0.335;
+    return {x:px, y:py};
+  }
+
+  function draw(now){
+    const w = canvas.clientWidth, h = canvas.clientHeight;
+    ctx.clearRect(0,0,w,h);
+
+    // vignette
+    const g = ctx.createRadialGradient(w/2,h/2, Math.min(w,h)*0.1, w/2,h/2, Math.max(w,h)*0.7);
+    g.addColorStop(0,'rgba(0,0,0,0)');
+    g.addColorStop(1,'rgba(0,0,0,0.7)');
+    ctx.fillStyle = g;
+    ctx.fillRect(0,0,w,h);
+
+    const spacing = Math.min(w,h) * 0.058;
+    // layers back to front
+    for(let layer=0; layer<10; layer++){
+      const alpha = 0.055 + (layer/9)*0.22;
+      ctx.globalAlpha = 1;
+      ctx.lineWidth = 0.7;
+      ctx.strokeStyle = `rgba(255,255,255,${alpha})`;
+      // connections
+      for(let y=0;y<10;y++){
+        for(let x=0;x<10;x++){
+          const md = Math.abs(x-4.5)+Math.abs(y-4.5);
+          if(md>6.1) continue; // diamond sail shape
+          const p = nodePos(x,y,layer,w,h,spacing);
+          if(x<9 && Math.abs(x+1-4.5)+Math.abs(y-4.5) <=6.1){
+            const p2 = nodePos(x+1,y,layer,w,h,spacing);
+            ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(p2.x,p2.y); ctx.stroke();
+          }
+          if(y<9 && Math.abs(x-4.5)+Math.abs(y+1-4.5) <=6.1){
+            const p2 = nodePos(x,y+1,layer,w,h,spacing);
+            ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(p2.x,p2.y); ctx.stroke();
+          }
+        }
+      }
+      // nodes
+      for(let y=0;y<10;y++){
+        for(let x=0;x<10;x++){
+          const md = Math.abs(x-4.5)+Math.abs(y-4.5);
+          if(md>6.1) continue;
+          const p = nodePos(x,y,layer,w,h,spacing);
+          const isEdge = md>5.5;
+          ctx.globalAlpha = alpha* (layer===9?1:0.85);
+          ctx.fillStyle = isEdge ? '#d4d4d8' : '#f59e0b';
+          ctx.shadowBlur = layer>7 ? (isEdge?0:7) : 0;
+          ctx.shadowColor = '#f59e0b';
+          ctx.beginPath();
+          ctx.arc(p.x,p.y, layer===9 ? 1.7 : 1.15, 0, Math.PI*2);
+          ctx.fill();
+          ctx.shadowBlur = 0;
+        }
+      }
+    }
+    ctx.globalAlpha = 1;
+
+    // pulse
+    if(pulse){
+      const elapsed = now - pulse.t0;
+      const t = Math.min(elapsed / pulse.dur, 1);
+      const ease = 1 - Math.pow(1-t, 2.2);
+      const prog = pulse.phase === 'out' ? ease : 1 - ease;
+      
+      const idx = prog * 9;
+      const base = Math.floor(idx);
+      const lerp = idx - base;
+      const cx = Math.min(base,8), nx = Math.min(base+1,9);
+      
+      // update coord
+      const c = Math.round(prog*9);
+      coordDisplay.textContent = `${c}.${c}.${c}.${c}`;
+
+      // draw pulse across layers with depth trail
+      for(let layer=9; layer>=0; layer--){
+        const layerDelay = (9-layer)*0.055;
+        const lp = Math.max(0, Math.min(1, prog - (pulse.phase==='out'?layerDelay:-layerDelay*0.5)));
+        const li = lp*9;
+        const lb = Math.floor(li), ll = li - lb;
+        const p1 = nodePos(Math.min(lb,9), Math.min(lb,9), layer, w,h,spacing);
+        const p2 = nodePos(Math.min(lb+1,9), Math.min(lb+1,9), layer, w,h,spacing);
+        const px = p1.x + (p2.x-p1.x)*ll;
+        const py = p1.y + (p2.y-p1.y)*ll;
+        const a = 1 - (9-layer)*0.085;
+        if(a<=0) continue;
+        ctx.globalAlpha = a;
+        ctx.fillStyle = '#fbbf24';
+        ctx.shadowColor = '#f59e0b';
+        ctx.shadowBlur = 18 * a;
+        ctx.beginPath();
+        ctx.arc(px,py, 3.8 + (layer===9?1.2:0), 0, Math.PI*2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+        // core
+        ctx.globalAlpha = a*0.9;
+        ctx.fillStyle = '#fff';
+        ctx.beginPath(); ctx.arc(px,py,1.4,0,Math.PI*2); ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+
+      if(t>=1){
+        if(pulse.phase==='out'){
+          pulse.phase='in';
+          pulse.t0 = now;
+        }else{
+          pulse = null;
+          pulseStatus.textContent = 'STANDBY';
+          pulseStatus.className = 'mono text-[10px] px-2 py-0.5 rounded bg-zinc-900 border border-zinc-800 text-zinc-500';
+          leftStatus.textContent = 'IDLE';
+          leftStatus.className = 'mono text-[10px] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/20';
+          coordDisplay.textContent = '0.0.0.0';
+        }
+      }
+    }
+
+    requestAnimationFrame(draw);
+  }
+  requestAnimationFrame(draw);
+
+  function startPulse(seed){
+    pulse = { t0: performance.now(), dur: 1650, phase:'out', seed };
+    pulseCount = (pulseCount+1)%1000;
+    pulseCountEl.textContent = String(pulseCount).padStart(3,'0');
+    pulseStatus.textContent = 'PULSING';
+    pulseStatus.className = 'mono text-[10px] px-2 py-0.5 rounded bg-amber-500/10 border border-amber-500/30 text-amber-300';
+    coordDisplay.textContent = '0.0.0.0';
+  }
+
+  function commitLeaf(){
+    leftStatus.textContent = 'COMMIT';
+    leftStatus.className = 'mono text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-200 border border-amber-500/40';
+    document.querySelectorAll('.pod').forEach(p=>{
+      p.classList.remove('pod-committing'); void p.offsetWidth; p.classList.add('pod-committing');
+    });
+    const core = $('tripod-core');
+    core.style.transform = 'translate(-50%,-50%) scale(1.03)';
+    setTimeout(()=> core.style.transform='translate(-50%,-50%) scale(1)', 220);
+    
+    startPulse(seeds[activeSeed]);
+
+    setTimeout(()=>{
+      leftStatus.textContent = 'SYNC';
+      leftStatus.className = 'mono text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-300 border border-emerald-500/20';
+    }, 700);
+  }
+
+  $('commit-btn').onclick = commitLeaf;
+  $('prune-btn').onclick = ()=>{
+    activeSeed = (activeSeed + 1) % seeds.length;
+    selectSeed(activeSeed);
+  };
+
+  // init
+  renderSeeds();
+  selectSeed(0);
+
+  // idle auto-pulse every 9s to show liveness
+  setInterval(()=>{
+    if(!pulse && Math.random() < 0.35){
+      selectSeed((activeSeed+1)%seeds.length);
+      commitLeaf();
+    }
+  }, 9000);
+
+  // click canvas to ping
+  canvas.addEventListener('click', ()=>{
+    if(!pulse) commitLeaf();
+  });
+})();
+</script>
+</body>
+</html>

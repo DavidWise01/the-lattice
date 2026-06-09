@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Recursive Memory Swarm — 100-Agent System</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#0a0e0f; --panel:#11161a; --panel2:#0f1417; --ink:#c9d1d9; --muted:#7a8894;
+  --border:#1e2a30; --blue:#4d80ff; --amber:#ffaa3b; --red:#ff4d6d; --green:#2dd4bf;
+}
+* { box-sizing:border-box; }
+html,body { height:100%; }
+body {
+  margin:0; background:radial-gradient(1200px 800px at 80% -10%, #142030 0%, transparent 60%), var(--bg);
+  color:var(--ink); font-family:"JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size:14px; line-height:1.5; -webkit-font-smoothing:antialiased;
+}
+.wrap { max-width:1440px; margin:0 auto; padding:22px; }
+header { display:flex; align-items:center; justify-content:space-between; gap:16px; padding-bottom:14px; border-bottom:1px solid var(--border); margin-bottom:20px; }
+.brand { display:flex; align-items:center; gap:12px; }
+.dot { width:10px; height:10px; border-radius:50%; background:var(--blue); box-shadow:0 0 14px #4d80ffaa; }
+h1 { margin:0; font-size:16px; letter-spacing:1.4px; font-weight:600; color:#dbe6ff; }
+.sub { color:var(--muted); font-size:11px; letter-spacing:.6px; }
+
+.grid { display:grid; grid-template-columns:520px 1fr; gap:20px; }
+@media (max-width:1100px){ .grid{ grid-template-columns:1fr; } }
+
+.panel {
+  background:linear-gradient(180deg, var(--panel), var(--panel2));
+  border:1px solid var(--border); border-radius:16px; padding:16px;
+  box-shadow:0 10px 30px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.02);
+}
+.panel-head { display:flex; align-items:center; justify-content:space-between; font-size:11px; color:var(--muted); letter-spacing:.6px; margin-bottom:10px; text-transform:uppercase; }
+
+#lattice { display:grid; grid-template-columns:repeat(10,1fr); gap:6px; padding:12px; background:#070b0d; border:1px solid var(--border); border-radius:12px; }
+.cell {
+  width:100%; aspect-ratio:1; background:#0c1316; border:1px solid #142028; border-radius:7px;
+  transition:transform .12s ease, background .15s ease, box-shadow .15s ease, border-color .15s ease, opacity .15s;
+  opacity:.85;
+}
+.cell.hold { background:var(--blue); border-color:#6f9dff; box-shadow:0 0 14px #4d80ff55, inset 0 0 8px rgba(255,255,255,.15); transform:translateY(-1px); }
+.cell.reject { background:#1a0f14; border-color:#3a1a24; box-shadow:inset 0 0 6px rgba(0,0,0,.6); }
+.cell.reject.active { background:var(--red); border-color:#ff7a92; box-shadow:0 0 12px #ff4d6d44; }
+
+.vote-bar { height:8px; background:#061015; border:1px solid var(--border); border-radius:8px; overflow:hidden; margin:12px 2px 6px; }
+#voteFill { height:100%; width:0%; background:linear-gradient(90deg, #2b59ff, #7aa2ff); transition:width .25s ease; box-shadow:0 0 12px #4d80ff55 inset; }
+.vote-stats { display:flex; justify-content:space-between; font-size:11px; color:var(--muted); padding:0 2px; }
+.vote-stats strong { color:#dbe6ff; }
+
+.telemetry { margin-top:14px; }
+.tel-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:12px; }
+.tel { background:#080d10; border:1px solid var(--border); border-radius:10px; padding:10px; text-align:center; }
+.tel label { display:block; font-size:10px; color:var(--muted); letter-spacing:.5px; margin-bottom:4px; text-transform:uppercase; }
+.tel .val { font-size:18px; font-weight:600; color:var(--amber); }
+
+#spark { width:100%; height:64px; background:#080d10; border:1px solid var(--border); border-radius:10px; }
+
+.controls { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-top:10px; }
+.controls label { font-size:11px; color:var(--muted); display:flex; align-items:center; gap:8px; }
+input[type="range"] { accent-color:var(--blue); }
+
+button {
+  background:#121c24; color:#dbe6ff; border:1px solid #203140; border-radius:10px; padding:9px 12px;
+  font-family:inherit; font-size:12px; letter-spacing:.4px; cursor:pointer; transition:.15s; user-select:none;
+}
+button:hover { transform:translateY(-1px); border-color:#2c4660; box-shadow:0 6px 16px rgba(0,0,0,.25); }
+button:disabled { opacity:.45; cursor:not-allowed; transform:none; }
+button.primary { background:var(--blue); border-color:#6f9dff; color:#051226; font-weight:600; }
+button.amber { background:var(--amber); border-color:#ffc067; color:#1c1102; font-weight:600; }
+button.ghost { background:transparent; }
+button.danger { background:#220f15; border-color:#3a1a24; color:#ffb3c1; }
+.small { padding:6px 9px; font-size:11px; border-radius:8px; }
+
+.tabs { display:flex; gap:6px; padding:6px; background:#080d10; border:1px solid var(--border); border-radius:12px; margin-bottom:14px; }
+.tab-btn { flex:1; background:transparent; border:1px solid transparent; color:var(--muted); padding:10px; border-radius:8px; }
+.tab-btn.active { background:#112031; color:#dbe6ff; border-color:#1f3042; box-shadow:inset 0 0 0 1px #00000055, 0 0 0 1px #00000022; }
+
+.pane { display:none; }
+.pane.active { display:block; }
+
+.input, textarea {
+  width:100%; background:#080d10; color:var(--ink); border:1px solid var(--border); border-radius:12px;
+  padding:12px 12px; font-family:inherit; font-size:13px; outline:none; transition:.15s;
+}
+.input:focus, textarea:focus { border-color:#2a4b7a; box-shadow:0 0 0 3px #4d80ff18; }
+textarea { min-height:132px; resize:vertical; line-height:1.6; }
+
+.row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+
+.vector { display:grid; grid-template-columns:repeat(5,1fr); gap:8px; margin:12px 0 4px; }
+.vbox { background:#080d10; border:1px solid var(--border); border-radius:10px; padding:8px; text-align:center; }
+.vbox label { display:block; font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; margin-bottom:4px; }
+.vbox .v { font-size:20px; font-weight:600; }
+.v0 .v{ color:#5a6a78; } .v1 .v{ color:var(--amber); } .v2 .v{ color:var(--blue); text-shadow:0 0 10px #4d80ff55; }
+
+.result {
+  margin-top:12px; padding:14px; background:#070b0e; border:1px dashed #21313d; border-radius:12px; display:flex; align-items:center; justify-content:space-between; gap:12px;
+}
+.result .title { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.6px; }
+.result .big { font-size:26px; font-weight:700; letter-spacing:.5px; }
+.result.hold { border-color:#2a4b7a; box-shadow:0 0 0 1px #4d80ff22 inset; }
+.result.hold .big { color:var(--blue); text-shadow:0 0 14px #4d80ff44; }
+.result.reject { border-color:#3a1a24; }
+.result.reject .big { color:var(--red); }
+
+.history { margin-top:14px; max-height:240px; overflow:auto; background:#070b0e; border:1px solid var(--border); border-radius:12px; }
+.hitem { display:grid; grid-template-columns:1fr auto; gap:8px; padding:10px 12px; border-bottom:1px solid #10181f; font-size:12px; }
+.hitem:last-child{ border-bottom:none; }
+.hitem .txt { color:#cbd5e1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.hitem .meta { color:var(--muted); font-size:11px; }
+.hitem.hold { box-shadow:inset 3px 0 0 var(--blue); }
+.hitem.reject { box-shadow:inset 3px 0 0 var(--red); }
+
+.section-title { font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:.7px; margin:16px 0 8px; }
+
+.pillars-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(260px,1fr)); gap:12px; }
+.pillar { background:#080d10; border:1px solid var(--border); border-radius:12px; padding:12px; }
+.p-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:8px; }
+.p-name { font-weight:600; letter-spacing:.6px; text-transform:uppercase; font-size:12px; color:#dbe6ff; }
+.p-badge { font-size:10px; padding:3px 7px; border-radius:999px; border:1px solid #1e2a36; color:var(--muted); background:#0b131a; }
+.p-badge.hold { color:#9ec0ff; border-color:#25406f; background:#0d1828; }
+.p-badge.reject { color:#ffb4c2; border-color:#3a1a24; background:#1a0f14; }
+.pillar .row label { width:64px; color:var(--muted); font-size:11px; }
+.pillar input[type=range]{ flex:1; }
+.p-actions { display:flex; gap:6px; margin-top:8px; }
+
+.unity { margin-top:14px; padding:14px; background:#070b0e; border:1px solid var(--border); border-radius:12px; }
+.unity-top { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+.unity-bar { height:10px; background:#05090c; border:1px solid #14202a; border-radius:999px; overflow:hidden; }
+.unity-fill { height:100%; width:0%; background:linear-gradient(90deg, #2b59ff, #2dd4bf); box-shadow:0 0 16px #2dd4bf33 inset; transition:width .35s; }
+.unity-stats { display:flex; gap:16px; margin-top:8px; font-size:11px; color:var(--muted); }
+.unity-stats strong { color:#dbe6ff; }
+
+.slider5 { display:grid; grid-template-columns:repeat(5,1fr); gap:8px; margin:12px 0; }
+.sbox { background:#080d10; border:1px solid var(--border); border-radius:10px; padding:10px; text-align:center; }
+.sbox label{ display:block; font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; margin-bottom:6px; }
+.sbox input{ width:100%; }
+.sval { font-size:12px; color:var(--amber); margin-top:4px; }
+
+.winrate { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-top:10px; }
+.wcard { background:#080d10; border:1px solid var(--border); border-radius:10px; padding:10px; text-align:center; }
+.wcard label{ display:block; font-size:10px; color:var(--muted); text-transform:uppercase; }
+.wcard .v{ font-size:18px; font-weight:700; color:#dbe6ff; margin-top:4px; }
+.wcard.win .v{ color:var(--green); } .wcard.loss .v{ color:var(--red); }
+
+.hint { color:var(--muted); font-size:11px; }
+.kbd { padding:2px 6px; border:1px solid #2a3a48; background:#0b131a; border-radius:6px; font-size:11px; color:#a9b8c7; }
+
+.footer { margin-top:16px; display:flex; justify-content:space-between; color:var(--muted); font-size:11px; }
+a { color:#8ab0ff; text-decoration:none; } a:hover{ text-decoration:underline; }
+::-webkit-scrollbar{ width:10px; height:10px; } ::-webkit-scrollbar-thumb{ background:#1a2530; border-radius:8px; border:2px solid #0a0e0f; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <div class="dot"></div>
+      <div>
+        <h1>RECURSIVE MEMORY SWARM</h1>
+        <div class="sub">100 agents • 5D • kNN-6 • HOLD basin [2,2,2,*,*] • 66/100 threshold</div>
+      </div>
+    </div>
+    <div class="hint">Local-only • persists in <span class="kbd">localStorage</span></div>
+  </header>
+
+  <div class="grid">
+    <!-- LEFT: Lattice + Telemetry -->
+    <section>
+      <div class="panel">
+        <div class="panel-head">Lattice • live votes <span id="liveStatus" class="hint"></span></div>
+        <div id="lattice"></div>
+        <div class="vote-bar"><div id="voteFill"></div></div>
+        <div class="vote-stats"><div><strong id="holdCount">0</strong> HOLD</div><div><strong id="rejectCount">100</strong> REJECT</div><div>Decision: <strong id="decisionText">—</strong></div></div>
+      </div>
+
+      <div class="panel telemetry">
+        <div class="tel-grid">
+          <div class="tel"><label>Agents</label><div class="val">100</div></div>
+          <div class="tel"><label>Mem / Agent</label><div class="val" id="memCount">9</div></div>
+          <div class="tel"><label>k</label><div class="val">6</div></div>
+          <div class="tel"><label>Speed</label><div class="val"><span id="speedVal">12</span>ms</div></div>
+        </div>
+        <canvas id="spark" width="800" height="64"></canvas>
+        <div class="controls">
+          <label>SPEED <input id="speed" type="range" min="2" max="60" value="12"></label>
+          <button id="exportBtn" class="ghost">EXPORT JSON</button>
+          <button id="importBtn" class="ghost">IMPORT</button>
+          <input id="importFile" type="file" accept=".json" hidden>
+          <button id="resetBtn" class="danger">RESET ALL</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- RIGHT: Tabs -->
+    <section>
+      <div class="tabs">
+        <button class="tab-btn active" data-tab="ideas">1 • IDEAS HOLD FILTER</button>
+        <button class="tab-btn" data-tab="pillars">2 • 12-PILLAR DASHBOARD</button>
+        <button class="tab-btn" data-tab="trading">3 • TRADING SWARM</button>
+      </div>
+
+      <!-- IDEAS -->
+      <div class="pane active" id="pane-ideas">
+        <div class="panel">
+          <div class="panel-head">Idea Input • auto-encode to 5D</div>
+          <textarea id="ideaInput" placeholder="Describe your idea... The swarm encodes: novelty, feasibility, alignment, energy, upside (0–2 each)."></textarea>
+          <div class="vector" id="ideaVector"></div>
+          <div class="row">
+            <button id="voteIdea" class="primary">SWARM VOTE</button>
+            <button id="acceptIdea" class="amber">ACCEPT → Teach HOLD</button>
+            <button id="rejectIdea" class="danger">REJECT → Teach NO</button>
+            <button id="learnWeb" class="ghost" title="Copy a prompt to analyze with Meta AI">Learn from Web</button>
+          </div>
+          <div id="ideaResult" class="result">
+            <div>
+              <div class="title">Last Decision</div>
+              <div class="big" id="ideaDecision">—</div>
+            </div>
+            <div class="hint" id="ideaMeta">Enter an idea to begin</div>
+          </div>
+          <div class="section-title">History</div>
+          <div id="ideaHistory" class="history"></div>
+        </div>
+      </div>
+
+      <!-- PILLARS -->
+      <div class="pane" id="pane-pillars">
+        <div class="panel">
+          <div class="panel-head">12 Pillars • each has its own 100-agent swarm</div>
+          <div class="pillars-grid" id="pillarsGrid"></div>
+
+          <div class="unity">
+            <div class="unity-top">
+              <div><strong>UNITY</strong> <span class="hint">— target [2,2,2] on first 3 dims for all pillars</span></div>
+              <div class="hint">Weakest: <strong id="weakestPillar">—</strong></div>
+            </div>
+            <div class="unity-bar"><div class="unity-fill" id="unityFill"></div></div>
+            <div class="unity-stats">
+              <div>Progress: <strong id="unityPct">0%</strong></div>
+              <div>Total points: <strong id="unityPoints">0</strong>/72</div>
+              <div>Aligned pillars: <strong id="alignedCount">0</strong>/12</div>
+            </div>
+            <div class="row" style="margin-top:10px">
+              <button id="logDay" class="primary">LOG TODAY</button>
+              <button id="checkAll" class="ghost">CHECK ALL PILLARS</button>
+            </div>
+          </div>
+
+          <div class="section-title">Daily Log</div>
+          <div id="pillarHistory" class="history"></div>
+        </div>
+      </div>
+
+      <!-- TRADING -->
+      <div class="pane" id="pane-trading">
+        <div class="panel">
+          <div class="panel-head">Trading Decision • encode 5D signal</div>
+          <div class="row">
+            <input id="ticker" class="input" placeholder="Ticker / Setup name (e.g., NVDA breakout retest)" style="flex:1">
+            <button id="autoAnalyze" class="ghost">Auto-analyze text</button>
+          </div>
+          <textarea id="tradeNotes" placeholder="Paste thesis, levels, context... (used for auto-analyze)"></textarea>
+
+          <div class="slider5" id="tradeSliders">
+            <!-- injected -->
+          </div>
+
+          <div class="row">
+            <button id="voteTrade" class="primary">SWARM VOTE</button>
+            <button id="markWin" class="amber">MARK WIN → Teach HOLD</button>
+            <button id="markLoss" class="danger">MARK LOSS → Teach REJECT</button>
+          </div>
+
+          <div id="tradeResult" class="result">
+            <div>
+              <div class="title">Trade Decision</div>
+              <div class="big" id="tradeDecision">—</div>
+            </div>
+            <div class="hint" id="tradeMeta">Set 5 dims then vote</div>
+          </div>
+
+          <div class="winrate">
+            <div class="wcard"><label>Trades</label><div class="v" id="tradesTotal">0</div></div>
+            <div class="wcard win"><label>Wins</label><div class="v" id="tradesWins">0</div></div>
+            <div class="wcard loss"><label>Losses</label><div class="v" id="tradesLosses">0</div></div>
+            <div class="wcard"><label>Win Rate</label><div class="v" id="tradesWR">0%</div></div>
+          </div>
+
+          <div class="section-title">Trade History</div>
+          <div id="tradeHistory" class="history"></div>
+        </div>
+      </div>
+
+      <div class="footer">
+        <div>Built for recursive memory • HOLD basin is sacred</div>
+        <div><span class="kbd">⌘/Ctrl+Enter</span> to vote</div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<script>
+/* =========================
+   Recursive Memory Core
+   ========================= */
+const AGENTS = 100, K = 6, THRESHOLD = 66;
+const HOLD_SEED = [
+  [2,2,2,0,0],[2,2,2,0,1],[2,2,2,0,2],
+  [2,2,2,1,0],[2,2,2,1,1],[2,2,2,1,2],
+  [2,2,2,2,0],[2,2,2,2,1],[2,2,2,2,2],
+];
+
+function dist2(a,b){ let s=0; for(let i=0;i<5;i++){ const d=a[i]-b[i]; s+=d*d; } return s; }
+function makeAgent(){ return { memories: HOLD_SEED.map(v=>({v:[...v], hold:true})) }; }
+function makeSwarm(){ return Array.from({length:AGENTS}, makeAgent); }
+
+function retrieve(agent, vec){
+  // HOLD basin override
+  if(vec[0]===2 && vec[1]===2 && vec[2]===2) return true;
+  const mems = agent.memories;
+  if(!mems.length) return false;
+  // k-NN
+  const nearest = mems.map(m=>({d:dist2(m.v,vec), hold:m.hold}))
+    .sort((a,b)=>a.d-b.d).slice(0, Math.min(K, mems.length));
+  const holds = nearest.reduce((c,n)=>c+(n.hold?1:0),0);
+  return holds >= Math.ceil(nearest.length/2);
+}
+function improve(agent, vec, hold){
+  agent.memories.push({v:[...vec], hold:!!hold});
+  if(agent.memories.length>400) agent.memories.splice(0, agent.memories.length-400);
+}
+
+/* =========================
+   Persistence
+   ========================= */
+const LS = {
+  get(k, d=null){ try{ const v=localStorage.getItem('rms_'+k); return v?JSON.parse(v):d; }catch{ return d; } },
+  set(k,v){ localStorage.setItem('rms_'+k, JSON.stringify(v)); },
+  del(k){ localStorage.removeItem('rms_'+k); }
+};
+
+/* =========================
+   State
+   ========================= */
+const PILLARS12 = ['math','health','finance','energy','comm','transport','food','edu','gov','art','defense','spirit'];
+
+const state = {
+  speed: Number(LS.get('speed',12)),
+  votes: LS.get('votes', []),
+  swarms: {
+    ideas: null,
+    trading: null,
+    pillars: {}
+  },
+  history: {
+    ideas: LS.get('hist_ideas', []),
+    trades: LS.get('hist_trades', []),
+    pillars: LS.get('hist_pillars', []),
+  },
+  ui: { tab:'ideas', currentIdeaVec:[0,0,0,0,0], currentTradeVec:[1,1,2,1,1] },
+  pillarVals: LS.get('pillar_vals', {}),
+};
+
+function loadSwarm(key){
+  const raw = LS.get(key, null);
+  if(raw) return raw.map(mems=>({memories:mems}));
+  return makeSwarm();
+}
+function saveSwarm(key, swarm){ LS.set(key, swarm.map(a=>a.memories)); }
+
+state.swarms.ideas = loadSwarm('swarm_ideas');
+state.swarms.trading = loadSwarm('swarm_trading');
+PILLARS12.forEach(p=> state.swarms.pillars[p] = loadSwarm('swarm_pillar_'+p));
+
+// default pillar values
+PILLARS12.forEach(p=>{ if(!state.pillarVals[p]) state.pillarVals[p]=[1,1,1]; });
+
+/* =========================
+   Lattice UI
+   ========================= */
+const latticeEl = document.getElementById('lattice');
+function initLattice(){
+  latticeEl.innerHTML='';
+  for(let i=0;i<AGENTS;i++){
+    const c=document.createElement('div'); c.className='cell'; c.dataset.i=i;
+    latticeEl.appendChild(c);
+  }
+}
+initLattice();
+
+const holdCountEl = document.getElementById('holdCount');
+const rejectCountEl = document.getElementById('rejectCount');
+const decisionTextEl = document.getElementById('decisionText');
+const voteFillEl = document.getElementById('voteFill');
+const liveStatusEl = document.getElementById('liveStatus');
+const memCountEl = document.getElementById('memCount');
+const speedEl = document.getElementById('speed');
+const speedValEl = document.getElementById('speedVal');
+speedEl.value = state.speed; speedValEl.textContent = state.speed;
+speedEl.addEventListener('input', ()=>{ state.speed = Number(speedEl.value); speedValEl.textContent = state.speed; LS.set('speed', state.speed); });
+
+function avgMem(swarm){ const total = swarm.reduce((s,a)=>s+a.memories.length,0); return Math.round(total/swarm.length); }
+
+function updateMemCount(){
+  const tab = state.ui.tab;
+  let swarm = state.swarms.ideas;
+  if(tab==='trading') swarm = state.swarms.trading;
+  if(tab==='pillars') swarm = state.swarms.pillars['math']; // show sample
+  memCountEl.textContent = avgMem(swarm);
+}
+
+async function runSwarm(swarm, vec, onProgress){
+  const cells = Array.from(latticeEl.children);
+  let holds=0;
+  liveStatusEl.textContent = '• voting...';
+  // reset visuals quickly
+  cells.forEach(c=>{ c.className='cell'; c.style.opacity='0.7'; });
+  for(let i=0;i<AGENTS;i++){
+    const vote = retrieve(swarm[i], vec);
+    if(vote) holds++;
+    const cell = cells[i];
+    cell.classList.add(vote ? 'hold' : 'reject');
+    if(!vote) cell.classList.add('active');
+    cell.style.opacity='1';
+    holdCountEl.textContent = holds;
+    rejectCountEl.textContent = (i+1 - holds);
+    voteFillEl.style.width = ((holds/(i+1))*100).toFixed(1)+'%';
+    if(onProgress) onProgress(i, vote);
+    await new Promise(r=>setTimeout(r, state.speed));
+    cell.style.opacity='0.9';
+  }
+  const decision = holds >= THRESHOLD;
+  decisionTextEl.textContent = decision ? 'HOLD' : 'REJECT';
+  decisionTextEl.style.color = decision ? 'var(--blue)' : 'var(--red)';
+  voteFillEl.style.width = (holds)+'%';
+  liveStatusEl.textContent = '• done';
+  state.votes.unshift(holds); if(state.votes.length>200) state.votes.pop();
+  LS.set('votes', state.votes);
+  drawSpark();
+  return {holds, decision};
+}
+
+/* Sparkline */
+function drawSpark(){
+  const c = document.getElementById('spark'); const ctx = c.getContext('2d');
+  const w=c.width,h=c.height; ctx.clearRect(0,0,w,h);
+  // grid
+  ctx.strokeStyle='#13202a'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(0,h*0.66); ctx.lineTo(w,h*0.66); ctx.stroke();
+  // line
+  const data = state.votes.slice(0,120).reverse();
+  if(data.length<2) return;
+  ctx.beginPath();
+  ctx.strokeStyle='#4d80ff'; ctx.lineWidth=2;
+  data.forEach((v,i)=>{
+    const x = (i/(data.length-1))* (w-8) +4;
+    const y = h - (v/100)*(h-12) -6;
+    if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  });
+  ctx.stroke();
+  // threshold line
+  ctx.strokeStyle='#ffaa3b55'; ctx.setLineDash([3,3]);
+  ctx.beginPath(); const ty = h - (THRESHOLD/100)*(h-12)-6; ctx.moveTo(0,ty); ctx.lineTo(w,ty); ctx.stroke(); ctx.setLineDash([]);
+}
+
+/* =========================
+   IDEAS TAB
+   ========================= */
+const ideaInput = document.getElementById('ideaInput');
+const ideaVectorEl = document.getElementById('ideaVector');
+const voteIdeaBtn = document.getElementById('voteIdea');
+const acceptIdeaBtn = document.getElementById('acceptIdea');
+const rejectIdeaBtn = document.getElementById('rejectIdea');
+const learnWebBtn = document.getElementById('learnWeb');
+const ideaDecisionEl = document.getElementById('ideaDecision');
+const ideaMetaEl = document.getElementById('ideaMeta');
+const ideaHistoryEl = document.getElementById('ideaHistory');
+
+const KW = {
+  novelty:['new','novel','unique','first','original','invent','breakthrough','unseen'],
+  feasPos:['easy','simple','possible','build','prototype','mvp','doable','feasible','ship'],
+  feasNeg:['hard','impossible',"can't",'cannot','difficult','complex','blocked','never'],
+  align:['important','mission','goal','purpose','core','vision','strategic','must','priority'],
+  energyPos:['quick','fast','light','lean','simple','small'],
+  energyNeg:['massive','huge','slow','heavy','complex','enterprise'],
+  upside:['huge','10x','breakthrough','massive','billion','scale','disrupt','gamechanger','revolution','asymmetric']
+};
+function countHits(text, arr){ return arr.reduce((c,w)=>c + (text.includes(w)?1:0), 0); }
+function encodeIdea(text){
+  const t = (text||'').toLowerCase();
+  const nov = Math.min(2, Math.floor(countHits(t, KW.novelty)/2));
+  const fp = countHits(t, KW.feasPos), fn = countHits(t, KW.feasNeg);
+  const feas = fp - fn; const feasScore = feas<=0?0: feas===1?1:2;
+  const ali = Math.min(2, Math.floor(countHits(t, KW.align)/2));
+  const ep = countHits(t, KW.energyPos), en = countHits(t, KW.energyNeg);
+  const ener = ep - en; const enerScore = ener<=-1?0: ener===0?1:2;
+  const up = Math.min(2, Math.floor(countHits(t, KW.upside)/1.5));
+  return [nov, feasScore, ali, enerScore, up];
+}
+function renderVector(el, vec, labels=['NOV','FEA','ALI','ENE','UPS']){
+  el.innerHTML='';
+  vec.forEach((v,i)=>{
+    const div=document.createElement('div'); div.className='vbox v'+v;
+    div.innerHTML=`<label>${labels[i]}</label><div class="v">${v}</div>`;
+    el.appendChild(div);
+  });
+}
+function updateIdeaVec(){ state.ui.currentIdeaVec = encodeIdea(ideaInput.value); renderVector(ideaVectorEl, state.ui.currentIdeaVec); }
+ideaInput.addEventListener('input', updateIdeaVec);
+updateIdeaVec();
+
+async function voteIdea(){
+  voteIdeaBtn.disabled=true;
+  const vec = state.ui.currentIdeaVec;
+  const {holds, decision} = await runSwarm(state.swarms.ideas, vec);
+  ideaDecisionEl.textContent = decision ? 'HOLD' : 'REJECT';
+  document.getElementById('ideaResult').className = 'result ' + (decision?'hold':'reject');
+  ideaMetaEl.textContent = `${holds}/100 agents • [${vec.join(',')}]`;
+  voteIdeaBtn.disabled=false;
+  updateMemCount();
+}
+voteIdeaBtn.addEventListener('click', voteIdea);
+ideaInput.addEventListener('keydown', (e)=>{ if((e.metaKey||e.ctrlKey) && e.key==='Enter') voteIdea(); });
+
+function teachIdea(hold){
+  const text = ideaInput.value.trim(); if(!text) return;
+  const vec = state.ui.currentIdeaVec.slice();
+  state.swarms.ideas.forEach(a=> improve(a, vec, hold));
+  saveSwarm('swarm_ideas', state.swarms.ideas);
+  state.history.ideas.unshift({ts:Date.now(), text, vec, hold, votes:state.votes[0]||0});
+  if(state.history.ideas.length>200) state.history.ideas.pop();
+  LS.set('hist_ideas', state.history.ideas);
+  renderIdeaHistory();
+  updateMemCount();
+  ideaMetaEl.textContent = `Taught ${hold?'HOLD':'REJECT'} • memories saved`;
+}
+acceptIdeaBtn.addEventListener('click', ()=>teachIdea(true));
+rejectIdeaBtn.addEventListener('click', ()=>teachIdea(false));
+
+function renderIdeaHistory(){
+  ideaHistoryEl.innerHTML='';
+  state.history.ideas.slice(0,50).forEach(h=>{
+    const div=document.createElement('div'); div.className='hitem '+(h.hold?'hold':'reject');
+    const d = new Date(h.ts).toLocaleString();
+    div.innerHTML=`<div class="txt">${h.text.replace(/</g,'&lt;')}</div><div class="meta">[${h.vec.join(',')}] • ${h.votes||0}/100 • ${d}</div>`;
+    ideaHistoryEl.appendChild(div);
+  });
+}
+renderIdeaHistory();
+
+learnWebBtn.addEventListener('click', ()=>{
+  const idea = ideaInput.value.trim() || 'Your idea here';
+  const prompt = `You are scoring an idea for a Recursive Memory Swarm (5 dims 0-2). Return STRICT JSON only.\n\nIDEA:\n${idea}\n\nScore these dimensions 0,1,2:\n- novelty: new/unique/first?\n- feasibility: easy to build/ship?\n- alignment: fits mission/priority?\n- energy: quick/light vs massive?\n- upside: huge/10x/asymmetric?\n\nReturn: {"novelty":0-2,"feasibility":0-2,"alignment":0-2,"energy":0-2,"upside":0-2,"reason":"<15 words"}`;
+  navigator.clipboard.writeText(prompt).then(()=>{ ideaMetaEl.textContent='Prompt copied — paste into Meta AI, then paste scores back manually if desired.'; });
+});
+
+/* =========================
+   PILLARS TAB
+   ========================= */
+const pillarsGrid = document.getElementById('pillarsGrid');
+const unityFill = document.getElementById('unityFill');
+const unityPct = document.getElementById('unityPct');
+const unityPoints = document.getElementById('unityPoints');
+const alignedCountEl = document.getElementById('alignedCount');
+const weakestPillarEl = document.getElementById('weakestPillar');
+const pillarHistoryEl = document.getElementById('pillarHistory');
+
+function pillarVector(p){ const [a,b,c]=state.pillarVals[p]; return [a,b,c,2,2]; }
+
+function renderPillars(){
+  pillarsGrid.innerHTML='';
+  PILLARS12.forEach(p=>{
+    const vals = state.pillarVals[p];
+    const card = document.createElement('div'); card.className='pillar'; card.dataset.p=p;
+    card.innerHTML = `
+      <div class="p-head">
+        <div class="p-name">${p}</div>
+        <div class="p-badge" id="badge-${p}">IDLE</div>
+      </div>
+      <div class="row"><label>Clarity</label><input type="range" min="0" max="2" step="1" value="${vals[0]}" data-dim="0"><span class="kbd" id="v-${p}-0">${vals[0]}</span></div>
+      <div class="row"><label>Action</label><input type="range" min="0" max="2" step="1" value="${vals[1]}" data-dim="1"><span class="kbd" id="v-${p}-1">${vals[1]}</span></div>
+      <div class="row"><label>Result</label><input type="range" min="0" max="2" step="1" value="${vals[2]}" data-dim="2"><span class="kbd" id="v-${p}-2">${vals[2]}</span></div>
+      <div class="p-actions">
+        <button class="small primary" data-act="check">CHECK</button>
+        <button class="small amber" data-act="align">ALIGN</button>
+        <button class="small danger" data-act="misalign">MISALIGN</button>
+      </div>
+    `;
+    pillarsGrid.appendChild(card);
+  });
+  pillarsGrid.querySelectorAll('input[type=range]').forEach(inp=>{
+    inp.addEventListener('input', (e)=>{
+      const card = e.target.closest('.pillar'); const p = card.dataset.p; const dim = Number(e.target.dataset.dim);
+      state.pillarVals[p][dim] = Number(e.target.value);
+      document.getElementById(`v-${p}-${dim}`).textContent = e.target.value;
+      LS.set('pillar_vals', state.pillarVals);
+      computeUnity();
+    });
+  });
+  pillarsGrid.querySelectorAll('button').forEach(btn=>{
+    btn.addEventListener('click', async (e)=>{
+      const card = e.target.closest('.pillar'); const p = card.dataset.p; const act = e.target.dataset.act;
+      const vec = pillarVector(p);
+      if(act==='check'){
+        const badge = document.getElementById('badge-'+p);
+        badge.textContent='VOTING'; badge.className='p-badge';
+        const {holds, decision} = await runSwarm(state.swarms.pillars[p], vec);
+        badge.textContent = decision ? `HOLD ${holds}` : `NO ${holds}`;
+        badge.className = 'p-badge ' + (decision?'hold':'reject');
+        updateMemCount();
+      } else if(act==='align' || act==='misalign'){
+        const hold = act==='align';
+        state.swarms.pillars[p].forEach(a=> improve(a, vec, hold));
+        saveSwarm('swarm_pillar_'+p, state.swarms.pillars[p]);
+        const badge = document.getElementById('badge-'+p);
+        badge.textContent = hold?'TAUGHT HOLD':'TAUGHT NO';
+        badge.className='p-badge '+(hold?'hold':'reject');
+        computeUnity();
+      }
+    });
+  });
+  computeUnity();
+}
+renderPillars();
+
+function computeUnity(){
+  let points=0, aligned=0, weakest='—', wScore=999;
+  PILLARS12.forEach(p=>{
+    const [a,b,c]=state.pillarVals[p]; const s=a+b+c; points+=s;
+    if(a===2 && b===2 && c===2) aligned++;
+    if(s < wScore){ wScore=s; weakest=p; }
+  });
+  const pct = Math.round((points/72)*100);
+  unityFill.style.width = pct+'%';
+  unityPct.textContent = pct+'%';
+  unityPoints.textContent = points;
+  alignedCountEl.textContent = aligned;
+  weakestPillarEl.textContent = weakest.toUpperCase();
+}
+
+document.getElementById('checkAll').addEventListener('click', async ()=>{
+  for(const p of PILLARS12){
+    const vec = pillarVector(p);
+    const badge = document.getElementById('badge-'+p);
+    badge.textContent='VOTING';
+    const {holds, decision} = await runSwarm(state.swarms.pillars[p], vec);
+    badge.textContent = decision ? `HOLD ${holds}` : `NO ${holds}`;
+    badge.className = 'p-badge ' + (decision?'hold':'reject');
+  }
+});
+
+document.getElementById('logDay').addEventListener('click', ()=>{
+  const snap = { ts:Date.now(), vals: JSON.parse(JSON.stringify(state.pillarVals)) };
+  state.history.pillars.unshift(snap);
+  if(state.history.pillars.length>365) state.history.pillars.pop();
+  LS.set('hist_pillars', state.history.pillars);
+  renderPillarHistory();
+});
+
+function renderPillarHistory(){
+  pillarHistoryEl.innerHTML='';
+  state.history.pillars.slice(0,60).forEach(h=>{
+    const d = new Date(h.ts).toLocaleString();
+    const pts = Object.values(h.vals).reduce((s,[a,b,c])=>s+a+b+c,0);
+    const div=document.createElement('div'); div.className='hitem';
+    div.innerHTML=`<div class="txt">Daily log • ${pts}/72 points</div><div class="meta">${d}</div>`;
+    pillarHistoryEl.appendChild(div);
+  });
+}
+renderPillarHistory();
+
+/* =========================
+   TRADING TAB
+   ========================= */
+const tickerEl = document.getElementById('ticker');
+const tradeNotesEl = document.getElementById('tradeNotes');
+const tradeSlidersEl = document.getElementById('tradeSliders');
+const voteTradeBtn = document.getElementById('voteTrade');
+const markWinBtn = document.getElementById('markWin');
+const markLossBtn = document.getElementById('markLoss');
+const tradeDecisionEl = document.getElementById('tradeDecision');
+const tradeMetaEl = document.getElementById('tradeMeta');
+const tradeHistoryEl = document.getElementById('tradeHistory');
+const tradesTotalEl = document.getElementById('tradesTotal');
+const tradesWinsEl = document.getElementById('tradesWins');
+const tradesLossesEl = document.getElementById('tradesLosses');
+const tradesWREl = document.getElementById('tradesWR');
+
+const TRADE_LABELS = ['TREND','VOLUME','RISK','SETUP','EXIT'];
+function renderTradeSliders(){
+  tradeSlidersEl.innerHTML='';
+  state.ui.currentTradeVec.forEach((v,i)=>{
+    const box=document.createElement('div'); box.className='sbox';
+    box.innerHTML=`<label>${TRADE_LABELS[i]}</label><input type="range" min="0" max="2" step="1" value="${v}" data-i="${i}"><div class="sval" id="tsval${i}">${v}</div>`;
+    tradeSlidersEl.appendChild(box);
+  });
+  tradeSlidersEl.querySelectorAll('input').forEach(inp=>{
+    inp.addEventListener('input', e=>{
+      const i=Number(e.target.dataset.i); state.ui.currentTradeVec[i]=Number(e.target.value);
+      document.getElementById('tsval'+i).textContent = e.target.value;
+    });
+  });
+}
+renderTradeSliders();
+
+document.getElementById('autoAnalyze').addEventListener('click', ()=>{
+  const t = (tickerEl.value + ' ' + tradeNotesEl.value).toLowerCase();
+  const score = (pos,neg)=>{ const p=pos.some(w=>t.includes(w)), n=neg.some(w=>t.includes(w)); return p&&!n?2 : p&&n?1 : n?0:1; };
+  const trend = score(['up','bull','breakout','higher high','hh','hl'], ['down','bear','breakdown','lower low']);
+  const vol = score(['volume','spike','expansion','unusual'], ['low vol','dry']);
+  const risk = t.includes('tight')||t.includes('small stop')||t.includes('low risk') ? 2 : t.includes('wide')||t.includes('risky') ? 0 : 1;
+  const setup = score(['clean','a+','perfect','retest','confirm'], ['choppy','no setup']);
+  const exit = score(['2r','3r','target','runner'], ['scalp','no plan']);
+  state.ui.currentTradeVec = [trend,vol,risk,setup,exit];
+  renderTradeSliders();
+  tradeMetaEl.textContent = 'Auto-filled from text — adjust if needed';
+});
+
+async function voteTrade(){
+  voteTradeBtn.disabled=true;
+  const vec = state.ui.currentTradeVec.slice();
+  const {holds, decision} = await runSwarm(state.swarms.trading, vec);
+  tradeDecisionEl.textContent = decision ? 'TAKE TRADE' : 'SKIP';
+  document.getElementById('tradeResult').className = 'result ' + (decision?'hold':'reject');
+  tradeMetaEl.textContent = `${holds}/100 • [${vec.join(',')}] • ${tickerEl.value||'—'}`;
+  voteTradeBtn.disabled=false;
+  updateMemCount();
+}
+voteTradeBtn.addEventListener('click', voteTrade);
+tradeNotesEl.addEventListener('keydown', (e)=>{ if((e.metaKey||e.ctrlKey) && e.key==='Enter') voteTrade(); });
+
+function teachTrade(win){
+  const vec = state.ui.currentTradeVec.slice();
+  const hold = !!win; // HOLD = take/winning setup
+  state.swarms.trading.forEach(a=> improve(a, vec, hold));
+  saveSwarm('swarm_trading', state.swarms.trading);
+  const rec = { ts:Date.now(), ticker:tickerEl.value||'', vec, win:hold, notes:tradeNotesEl.value.slice(0,240) };
+  state.history.trades.unshift(rec);
+  if(state.history.trades.length>500) state.history.trades.pop();
+  LS.set('hist_trades', state.history.trades);
+  renderTradeHistory();
+  tradeMetaEl.textContent = `Taught ${hold?'WIN/HOLD':'LOSS/REJECT'} • saved`;
+  updateTradeStats();
+}
+markWinBtn.addEventListener('click', ()=>teachTrade(true));
+markLossBtn.addEventListener('click', ()=>teachTrade(false));
+
+function updateTradeStats(){
+  const total = state.history.trades.length;
+  const wins = state.history.trades.filter(t=>t.win).length;
+  const losses = total - wins;
+  const wr = total ? Math.round((wins/total)*100) : 0;
+  tradesTotalEl.textContent = total;
+  tradesWinsEl.textContent = wins;
+  tradesLossesEl.textContent = losses;
+  tradesWREl.textContent = wr + '%';
+}
+function renderTradeHistory(){
+  tradeHistoryEl.innerHTML='';
+  state.history.trades.slice(0,80).forEach(h=>{
+    const d = new Date(h.ts).toLocaleDateString();
+    const div=document.createElement('div'); div.className='hitem '+(h.win?'hold':'reject');
+    div.innerHTML=`<div class="txt">${(h.ticker||'—').toUpperCase()} • [${h.vec.join(',')}] • ${h.notes.replace(/</g,'&lt;')}</div><div class="meta">${h.win?'WIN':'LOSS'} • ${d}</div>`;
+    tradeHistoryEl.appendChild(div);
+  });
+  updateTradeStats();
+}
+renderTradeHistory();
+
+/* Seed trading swarm with a few classic winners if fresh */
+(function seedTrading(){
+  const raw = LS.get('swarm_trading', null);
+  if(!raw){
+    const s = state.swarms.trading;
+    const wins = [[2,2,2],[2,2,1,2,2],[2,1,2,2,2],[2,2,2,1,2]];
+    wins.forEach(v=> s.forEach(a=> improve(a,v,true)));
+    const losses = [[0,0,0,0,0],[0,1,0,0,1],[1,0,0,1,0]];
+    losses.forEach(v=> s.forEach(a=> improve(a,v,false)));
+    saveSwarm('swarm_trading', s);
+  }
+})();
+
+/* =========================
+   Tabs
+   ========================= */
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    const tab = btn.dataset.tab;
+    state.ui.tab = tab;
+    document.querySelectorAll('.pane').forEach(p=>p.classList.remove('active'));
+    document.getElementById('pane-'+tab).classList.add('active');
+    updateMemCount();
+  });
+});
+
+/* =========================
+   Export / Import / Reset
+   ========================= */
+document.getElementById('exportBtn').addEventListener('click', ()=>{
+  const data = {
+    version:1,
+    speed:state.speed,
+    votes:state.votes,
+    swarms:{
+      ideas: state.swarms.ideas.map(a=>a.memories),
+      trading: state.swarms.trading.map(a=>a.memories),
+      pillars: Object.fromEntries(PILLARS12.map(p=>[p, state.swarms.pillars[p].map(a=>a.memories)]))
+    },
+    history: state.history,
+    pillarVals: state.pillarVals,
+  };
+  const blob = new Blob([JSON.stringify(data)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download=`rms_backup_${new Date().toISOString().slice(0,10)}.json`; a.click();
+  URL.revokeObjectURL(url);
+});
+document.getElementById('importBtn').addEventListener('click', ()=> document.getElementById('importFile').click());
+document.getElementById('importFile').addEventListener('change', async (e)=>{
+  const file = e.target.files[0]; if(!file) return;
+  const text = await file.text();
+  try{
+    const data = JSON.parse(text);
+    if(data.swarms){
+      LS.set('swarm_ideas', data.swarms.ideas);
+      LS.set('swarm_trading', data.swarms.trading);
+      Object.entries(data.swarms.pillars||{}).forEach(([p,m])=> LS.set('swarm_pillar_'+p, m));
+    }
+    if(data.history){ LS.set('hist_ideas', data.history.ideas||[]); LS.set('hist_trades', data.history.trades||[]); LS.set('hist_pillars', data.history.pillars||[]); }
+    if(data.pillarVals) LS.set('pillar_vals', data.pillarVals);
+    if(data.votes) LS.set('votes', data.votes);
+    if(data.speed) LS.set('speed', data.speed);
+    location.reload();
+  }catch(err){ alert('Invalid file'); }
+});
+document.getElementById('resetBtn').addEventListener('click', ()=>{
+  if(!confirm('Reset ALL memories and history?')) return;
+  Object.keys(localStorage).forEach(k=>{ if(k.startsWith('rms_')) localStorage.removeItem(k); });
+  location.reload();
+});
+
+/* =========================
+   Init
+   ========================= */
+function init(){
+  drawSpark();
+  updateMemCount();
+  // initial vector renders
+  renderVector(ideaVectorEl, state.ui.currentIdeaVec);
+}
+init();
+</script>
+</body>
+</html>

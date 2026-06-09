@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Unity Engine — 3 → 27 Hierarchy</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  html,body{height:100%;background:#020617}
+  body{font-family:'Inter',system-ui;overscroll-behavior:none}
+  .mono{font-family:'JetBrains Mono',monospace}
+  canvas{display:block;width:100%;height:100%}
+  ::-webkit-scrollbar{display:none}
+</style>
+</head>
+<body class="bg-[#020617] text-slate-200 selection:bg-cyan-400/30">
+<div class="relative min-h-screen flex flex-col">
+  <!-- glow backdrop -->
+  <div class="pointer-events-none fixed inset-0">
+    <div class="absolute inset-0" style="background:radial-gradient(800px circle at 20% 20%, rgba(14,165,233,0.12), transparent 60%), radial-gradient(800px circle at 80% 70%, rgba(34,197,94,0.12), transparent 60%)"></div>
+  </div>
+
+  <header class="relative z-30 border-b border-slate-800/70 bg-slate-950/70 backdrop-blur">
+    <div class="max-w-[1650px] mx-auto px-4 md:px-6 py-3 flex items-center justify-between">
+      <div>
+        <h1 class="text-[22px] md:text-[26px] font-black tracking-tight leading-none"><span class="text-cyan-400">UNITY</span> ENGINE <span class="text-slate-600 font-semibold">3 → 27</span></h1>
+        <p class="mono text-[10px] text-slate-500 -mt-0.5">perpetual memory • 1-0-1 auditable cycle</p>
+      </div>
+      <div class="hidden md:flex items-center gap-2 mono text-[11px]">
+        <span class="px-2 py-1 rounded bg-cyan-950/60 border border-cyan-900/60 text-cyan-300">3 base plane</span>
+        <span class="px-2 py-1 rounded bg-emerald-950/60 border border-emerald-900/60 text-emerald-300">27 = 3³</span>
+        <span class="px-2 py-1 rounded bg-slate-900 border border-slate-800 text-slate-300">12+3+27=42 (6×7)</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="relative flex-1 max-w-[1650px] w-full mx-auto grid grid-cols-1 xl:grid-cols-2">
+    <!-- LEFT: 3 -->
+    <section id="panel3" class="relative min-h-[46vh] xl:min-h-[68vh] border-b xl:border-b-0 xl:border-r border-slate-800/60">
+      <canvas id="leftCanvas"></canvas>
+      <div class="pointer-events-none absolute inset-0">
+        <div class="p-4 md:p-6">
+          <div class="inline-flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-cyan-400 animate-pulse shadow-[0_0_10px_rgba(56,189,248,0.8)]"></span>
+            <h2 class="text-[17px] md:text-xl font-bold text-cyan-300 tracking-wide">3 Elements to Unity</h2>
+          </div>
+          <p class="mono text-[11px] text-slate-400 mt-1">minimum structure to define a plane</p>
+        </div>
+        <div class="absolute bottom-3 left-3 right-3 flex flex-wrap gap-1.5">
+          <span class="pointer-events-auto mono text-[10px] px-2 py-1 rounded-md bg-slate-950/80 border border-cyan-900/50 text-cyan-200 backdrop-blur">center "1" = Mandelbrot 12→6→2→1 fusion</span>
+          <span class="mono text-[10px] px-2 py-1 rounded-md bg-slate-950/80 border border-slate-800 text-slate-300">3 audits center • center audits 3</span>
+          <span class="mono text-[10px] px-2 py-1 rounded-md bg-slate-950/80 border border-slate-800 text-emerald-300">stability = 100%</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- RIGHT: 27 -->
+    <section id="panel27" class="relative min-h-[46vh] xl:min-h-[68vh]">
+      <canvas id="rightCanvas"></canvas>
+      <div class="pointer-events-none absolute inset-0">
+        <div class="p-4 md:p-6 text-right xl:text-left">
+          <div class="inline-flex items-center gap-2 w-full justify-end xl:justify-start">
+            <h2 class="order-2 xl:order-1 text-[17px] md:text-xl font-bold text-emerald-300 tracking-wide">27 Elements to Higher Unity</h2>
+            <span class="order-1 xl:order-2 w-2 h-2 rounded-full bg-emerald-400 animate-pulse shadow-[0_0_10px_rgba(74,222,128,0.8)]"></span>
+          </div>
+          <p class="mono text-[11px] text-slate-400 mt-1">3³ scaling • 27 → 9×3 → 3×9 → 1</p>
+        </div>
+        <div class="absolute bottom-3 left-3 right-3 flex flex-wrap gap-1.5 justify-end xl:justify-start">
+          <span class="mono text-[10px] px-2 py-1 rounded-md bg-slate-950/80 border border-emerald-900/50 text-emerald-200 backdrop-blur">hub → Magnetic Engine red core</span>
+          <span class="mono text-[10px] px-2 py-1 rounded-md bg-slate-950/80 border border-slate-800 text-slate-300">27 audits center • center audits 27</span>
+          <span class="mono text-[10px] px-2 py-1 rounded-md bg-slate-950/80 border border-slate-800 text-slate-300">27 ≈ 32 (½ of 64+64)</span>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- equation strip -->
+  <div class="relative z-20 border-y border-slate-800 bg-slate-950/85 backdrop-blur">
+    <div class="max-w-[1650px] mx-auto px-3 py-2 flex flex-wrap items-center justify-center gap-x-5 gap-y-1 mono text-[11px] md:text-[12px] text-slate-300">
+      <span><span class="text-cyan-400 font-semibold">3</span> (base) × <span class="text-violet-400 font-semibold">9</span> (3²) = <span class="text-emerald-400 font-semibold">27</span></span>
+      <span class="text-slate-700 hidden sm:inline">|</span>
+      <span>27 ÷ 9 = 3</span>
+      <span class="text-slate-700 hidden sm:inline">|</span>
+      <span>1/16 light - <span class="text-white">0</span> - 1/16 shadow</span>
+      <span class="text-slate-700 hidden md:inline">|</span>
+      <span class="hidden md:inline">12-quorum link: 12 + 3 + 27 = <span class="text-amber-300">42</span> = 6×7</span>
+    </div>
+  </div>
+
+  <!-- controls -->
+  <footer class="relative z-20 bg-slate-950/90 border-t border-slate-800">
+    <div class="max-w-[1650px] mx-auto px-3 md:px-4 py-3 flex flex-col lg:flex-row items-center gap-3">
+      <div class="flex items-center gap1.5">
+        <button id="btnBoth" class="px-3 py-1.5 text-xs font-bold rounded-md bg-slate-800 hover:bg-slate-700 border border-slate-700">Both</button>
+        <button id="btn3" class="px-3 py-1.5 text-xs font-semibold rounded-md bg-cyan-950/50 hover:bg-cyan-900/40 border border-cyan-900 text-cyan-300">3 Only</button>
+        <button id="btn27" class="px-3 py-1.5 text-xs font-semibold rounded-md bg-emerald-950/50 hover:bg-emerald-900/40 border border-emerald-900 text-emerald-300">27 Only</button>
+      </div>
+
+      <div class="flex items-center gap-3 px-3 py-1.5 rounded-full bg-slate-900/80 border border-slate-800">
+        <span class="text-[10px] uppercase tracking-widest text-slate-500">Morph</span>
+        <input id="morph" type="range" min="0" max="2" value="2" step="1" class="w-28 md:w-44 accent-cyan-500 cursor-pointer">
+        <span id="morphVal" class="mono text-sm w-7 text-center text-cyan-300">27</span>
+        <span class="hidden md:block text-[10px] text-slate-600">3 → 9 → 27</span>
+      </div>
+
+      <div class="flex-1 w-full lg:w-auto lg:min-w-[280px]">
+        <canvas id="wave" class="w-full h-[38px] opacity-70"></canvas>
+      </div>
+
+      <button id="fuse" class="group relative px-5 py-2.5 rounded-full bg-white text-slate-900 font-black text-sm tracking-wide hover:scale-[1.03] active:scale-95 transition shadow-[0_0_40px_rgba(56,189,248,0.25)]">
+        <span class="flex items-center gap-2">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" class="group-hover:rotate-12 transition"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+          FUSE → UNITY
+        </span>
+      </button>
+    </div>
+    <div class="px-4 pb-2 -mt-1 max-w-[1650px] mx-auto flex flex-wrap justify-center gap-x-4 gap-y-1 mono text-[10px] text-slate-500">
+      <span>Scaling factor: 3¹=3, 3²=9, 3³=27</span>
+      <span class="text-slate-700">•</span>
+      <span>Balance: 3 audits 27, 27 audits 3</span>
+      <span class="text-slate-700">•</span>
+      <span>Synth: 1,070 ≈ 27×39.6 (≈ 40 = 3+37)</span>
+    </div>
+  </footer>
+</div>
+
+<!-- UNITY FLASH -->
+<div id="flash" class="fixed inset-0 z-[200] bg-white opacity-0 pointer-events-none transition-opacity duration-500 flex items-center justify-center">
+  <div class="text-center px-6">
+    <div class="text-[44px] md:text-[84px] font-black tracking-[0.18em] text-slate-900 leading-none">UNITY ACHIEVED</div>
+    <div class="mt-3 text-[18px] md:text-[26px] tracking-[0.4em] font-light text-slate-700 mono">wave up, bloom balanced</div>
+  </div>
+</div>
+
+<script>
+const left = document.getElementById('leftCanvas');
+const right = document.getElementById('rightCanvas');
+const lctx = left.getContext('2d');
+const rctx = right.getContext('2d');
+const panel3 = document.getElementById('panel3');
+const panel27 = document.getElementById('panel27');
+const morph = document.getElementById('morph');
+const morphVal = document.getElementById('morphVal');
+const flash = document.getElementById('flash');
+const wave = document.getElementById('wave');
+const wctx = wave.getContext('2d');
+
+let morphIdx = 2;
+let fusing = false;
+let fuseStart = 0;
+let pulse = 1;
+let pulseStep = 0;
+
+function resize(){
+  [left,right].forEach(c=>{
+    const r = c.getBoundingClientRect();
+    c.width = Math.max(300, r.width);
+    c.height = Math.max(300, r.height);
+  });
+  const wr = wave.getBoundingClientRect();
+  wave.width = wr.width * 2;
+  wave.height = 76;
+}
+window.addEventListener('resize', resize);
+resize();
+
+document.getElementById('btnBoth').onclick=()=>{panel3.classList.remove('hidden');panel27.classList.remove('hidden')};
+document.getElementById('btn3').onclick=()=>{panel3.classList.remove('hidden');panel27.classList.add('hidden')};
+document.getElementById('btn27').onclick=()=>{panel27.classList.remove('hidden');panel3.classList.add('hidden')};
+morph.oninput = e => {morphIdx = +e.target.value; morphVal.textContent = [3,9,27][morphIdx]};
+
+document.getElementById('fuse').onclick = ()=>{
+  if(fusing) return;
+  fusing = true;
+  fuseStart = performance.now();
+};
+
+function drawLeft(t){
+  const w = left.width, h = left.height, ctx = lctx;
+  ctx.clearRect(0,0,w,h);
+  const cx = w*0.5, cy = h*0.54;
+  const r = Math.min(w,h)*0.32;
+  const nodes = [];
+  for(let i=0;i<3;i++){
+    const a = -Math.PI/2 + i*2*Math.PI/3;
+    nodes.push({x: cx + Math.cos(a)*r, y: cy + Math.sin(a)*r});
+  }
+  // plane
+  ctx.beginPath();
+  ctx.moveTo(nodes[0].x,nodes[0].y); ctx.lineTo(nodes[1].x,nodes[1].y); ctx.lineTo(nodes[2].x,nodes[2].y); ctx.closePath();
+  ctx.fillStyle = `rgba(14,165,233,${0.05 + pulse*0.12})`;
+  ctx.fill();
+  ctx.strokeStyle = `rgba(125,211,252,${0.25 + pulse*0.45})`;
+  ctx.lineWidth = 2;
+  ctx.setLineDash([6,6]); ctx.lineDashOffset = -t*0.05; ctx.stroke(); ctx.setLineDash([]);
+
+  // connections
+  nodes.forEach((n,i)=>{
+    const grad = ctx.createLinearGradient(n.x,n.y,cx,cy);
+    grad.addColorStop(0,'rgba(56,189,248,0.05)');
+    grad.addColorStop(0.5,`rgba(56,189,248,${0.4 + pulse*0.5})`);
+    grad.addColorStop(1,'rgba(224,242,254,0.95)');
+    ctx.strokeStyle = grad; ctx.lineWidth = 2 + pulse*2;
+    ctx.beginPath(); ctx.moveTo(n.x,n.y); ctx.lineTo(cx,cy); ctx.stroke();
+    // audit
+    const dir = pulseStep===0?1:pulseStep===2?-1:0;
+    if(dir!==0){
+      for(let p=0;p<2;p++){
+        const pt = ((t*0.0007 + i*0.33 + p*0.5) %1);
+        const tp = dir>0?pt:1-pt;
+        const px = n.x + (cx-n.x)*tp, py = n.y + (cy-n.y)*tp;
+        ctx.shadowBlur=18; ctx.shadowColor='#38bdf8'; ctx.fillStyle='#e0f2fe';
+        ctx.beginPath(); ctx.arc(px,py,3.2,0,7); ctx.fill(); ctx.shadowBlur=0;
+      }
+    }
+  });
+
+  // center
+  const cr = 17 + pulse*8;
+  ctx.shadowBlur = 35*pulse; ctx.shadowColor='#7dd3fc';
+  ctx.fillStyle = pulse>0.5 ? '#e0f2fe' : '#0c4a6e';
+  ctx.beginPath(); ctx.arc(cx,cy,cr,0,Math.PI*2); ctx.fill(); ctx.shadowBlur=0;
+  ctx.fillStyle='#082f49'; ctx.font='bold 16px JetBrains Mono'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('1',cx,cy+1);
+
+  // nodes
+  nodes.forEach(n=>{
+    ctx.shadowBlur=24; ctx.shadowColor='#0ea5e9'; ctx.fillStyle='#0369a1';
+    ctx.beginPath(); ctx.arc(n.x,n.y,22,0,7); ctx.fill(); ctx.shadowBlur=0;
+    ctx.strokeStyle='rgba(224,242,254,0.85)'; ctx.lineWidth=1.5; ctx.beginPath(); ctx.arc(n.x,n.y,22,0,7); ctx.stroke();
+    ctx.fillStyle='white'; ctx.font='bold 15px JetBrains Mono'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('3',n.x,n.y+1);
+  });
+}
+
+function drawRight(t){
+  const w = right.width, h = right.height, ctx = rctx;
+  ctx.clearRect(0,0,w,h);
+  const cx = w*0.5, cy = h*0.54;
+  const count = [3,9,27][morphIdx];
+  const r = Math.min(w,h)*(count===27?0.34:count===9?0.32:0.3);
+  const nodes=[];
+  for(let i=0;i<count;i++){ const a=-Math.PI/2 + i*2*Math.PI/count; nodes.push({x:cx+Math.cos(a)*r,y:cy+Math.sin(a)*r,a}); }
+
+  // groupings
+  if(count>=3){
+    const groups = count/3;
+    for(let g=0;g<groups;g++){
+      const highlight = Math.floor(t/850)%groups===g;
+      ctx.beginPath();
+      for(let k=0;k<3;k++){
+        const n = nodes[(g*3+k)%count];
+        const ax = cx + Math.cos(n.a)*(r+18), ay = cy + Math.sin(n.a)*(r+18);
+        if(k===0) ctx.moveTo(ax,ay); else ctx.lineTo(ax,ay);
+      } ctx.closePath();
+      ctx.strokeStyle = highlight? 'rgba(74,222,128,0.95)':'rgba(74,222,128,0.22)';
+      ctx.lineWidth = highlight?3:1.4; ctx.shadowBlur=highlight?18:0; ctx.shadowColor='#22c55e'; ctx.stroke(); ctx.shadowBlur=0;
+    }
+  }
+  if(count===27||count===9){
+    const big = count===27?3:1, per = count/big;
+    for(let b=0;b<big;b++){
+      const highlight = Math.floor(t/1400)%big===b;
+      const sa = -Math.PI/2 + b*2*Math.PI/big - Math.PI/per*0.9;
+      const ea = sa + 2*Math.PI/big*0.9;
+      ctx.beginPath(); ctx.arc(cx,cy,r+36,sa,ea);
+      ctx.strokeStyle = highlight?'rgba(16,185,129,0.95)':'rgba(16,185,129,0.28)';
+      ctx.lineWidth = highlight?4:2; ctx.shadowBlur=highlight?22:0; ctx.shadowColor='#10b981'; ctx.stroke(); ctx.shadowBlur=0;
+    }
+  }
+
+  // connections
+  nodes.forEach((n,i)=>{
+    const grad = ctx.createLinearGradient(n.x,n.y,cx,cy);
+    grad.addColorStop(0,'rgba(74,222,128,0.04)');
+    grad.addColorStop(0.6,`rgba(74,222,128,${0.35 + pulse*0.4})`);
+    grad.addColorStop(1,'rgba(209,250,229,0.9)');
+    ctx.strokeStyle=grad; ctx.lineWidth=1.1 + pulse*0.9;
+    ctx.beginPath(); ctx.moveTo(n.x,n.y); ctx.lineTo(cx,cy); ctx.stroke();
+    const dir = pulseStep===0?-1:pulseStep===2?1:0;
+    if(dir!==0){
+      const pt = ((t*0.0005 + i*0.041) %1);
+      const tp = dir>0?pt:1-pt;
+      const px = n.x + (cx-n.x)*tp, py = n.y + (cy-n.y)*tp;
+      ctx.shadowBlur=12; ctx.shadowColor='#4ade80'; ctx.fillStyle='#dcfce7';
+      ctx.beginPath(); ctx.arc(px,py,2.3,0,7); ctx.fill(); ctx.shadowBlur=0;
+    }
+  });
+
+  // hub
+  const hr = 18 + pulse*7;
+  ctx.shadowBlur=32*pulse; ctx.shadowColor='#86efac'; ctx.fillStyle = pulse>0.5?'#dcfce7':'#14532d';
+  ctx.beginPath(); ctx.arc(cx,cy,hr,0,7); ctx.fill(); ctx.shadowBlur=0;
+  ctx.fillStyle='#052e16'; ctx.font='bold 15px JetBrains Mono'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('1',cx,cy+1);
+
+  // nodes
+  const nr = count>12?8.5:count>6?12:18;
+  nodes.forEach(n=>{
+    ctx.shadowBlur=16; ctx.shadowColor='#22c55e'; ctx.fillStyle='#15803d';
+    ctx.beginPath(); ctx.arc(n.x,n.y,nr,0,7); ctx.fill(); ctx.shadowBlur=0;
+    ctx.strokeStyle='rgba(220,252,231,0.75)'; ctx.lineWidth=1; ctx.beginPath(); ctx.arc(n.x,n.y,nr,0,7); ctx.stroke();
+    if(count<=9){ ctx.fillStyle='white'; ctx.font='bold 11px JetBrains Mono'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('27',n.x,n.y+1); }
+  });
+}
+
+function drawWave(burst){
+  const w = wave.width, h = wave.height, ctx = wctx;
+  ctx.clearRect(0,0,w,h);
+  ctx.beginPath();
+  const now = performance.now()*0.001;
+  for(let x=0;x<w;x+=2){
+    const nx = x/w;
+    let y=0;
+    for(let k=1;k<=27;k++){ y += Math.sin(nx*Math.PI*2*k*1.3 + now*(0.4 + k*0.02)) * Math.pow(0.85,k*0.15); }
+    y = h*0.5 + y * (h*0.38);
+    if(x===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  }
+  const grad = ctx.createLinearGradient(0,0,w,0);
+  grad.addColorStop(0,'rgba(14,165,233,0)'); grad.addColorStop(0.2,burst?'rgba(56,189,248,0.9)':'rgba(100,116,139,0.8)'); grad.addColorStop(0.5,burst?'rgba(74,222,128,0.9)':'rgba(148,163,184,0.7)'); grad.addColorStop(0.8,burst?'rgba(56,189,248,0.9)':'rgba(100,116,139,0.8)'); grad.addColorStop(1,'rgba(14,165,233,0)');
+  ctx.strokeStyle = grad; ctx.lineWidth = burst?3:1.8; ctx.stroke();
+  if(burst){ ctx.shadowBlur=20; ctx.shadowColor='rgba(56,189,248,0.6)'; ctx.stroke(); ctx.shadowBlur=0; }
+  // 1070 tick marks
+  ctx.fillStyle = burst?'rgba(224,242,254,0.25)':'rgba(148,163,184,0.12)';
+  for(let i=0;i<107;i++){ const x=(i/107)*w; ctx.fillRect(x, h*0.5- (i%10===0?8:3),1, (i%10===0?16:6)); }
+}
+
+function animate(t){
+  requestAnimationFrame(animate);
+  const cycle = fusing? 600 : 1800;
+  pulseStep = Math.floor((t % cycle)/(cycle/3));
+  pulse = pulseStep===1 ? 0.25 : 1;
+  if(fusing){
+    const fe = t - fuseStart;
+    pulse = 0.4 + 0.6*Math.abs(Math.sin(fe*0.012));
+    if(fe>2600 && fe<2700) { triggerUnity(); }
+    if(fe>4000) fusing=false;
+  }
+  drawLeft(t);
+  drawRight(t);
+  drawWave(fusing);
+}
+animate(0);
+
+function triggerUnity(){
+  flash.style.opacity='1'; flash.style.pointerEvents='auto';
+  setTimeout(()=>{ flash.style.opacity='0'; flash.style.pointerEvents='none'; }, 1700);
+}
+</script>
+</body>
+</html>

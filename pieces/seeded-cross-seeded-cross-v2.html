@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Playables SDK -->
+<script>// Playables SDK v1.0.0
+// Game lifecycle bridge: rAF-based game-ready detection + event communication
+(function() {
+  'use strict';
+
+  // Idempotency: skip if already initialized (e.g., server-side injection
+  // followed by client-side inject-javascript via the Bloks webview component).
+  if (window.playablesSDK) return;
+
+  var HANDLER_NAME = 'playablesGameEventHandler';
+  var ANDROID_BRIDGE_NAME = '_MetaPlayablesBridge';
+  var RAF_FRAME_THRESHOLD = 3;
+
+  var gameReadySent = false;
+  var firstInteractionSent = false;
+  var errorSent = false;
+  var frameCount = 0;
+  var originalRAF = window.requestAnimationFrame;
+
+  // --- Transport Layer ---
+
+  function hasIOSBridge() {
+    return !!(window.webkit &&
+              window.webkit.messageHandlers &&
+              window.webkit.messageHandlers[HANDLER_NAME]);
+  }
+
+  function hasAndroidBridge() {
+    return !!(window[ANDROID_BRIDGE_NAME] &&
+              typeof window[ANDROID_BRIDGE_NAME].postEvent === 'function');
+  }
+
+  function isInIframe() {
+    return !!(window.parent && window.parent !== window);
+  }
+
+  function sendEvent(eventName, payload) {
+    var message = {
+      type: eventName,
+      payload: payload || {},
+      timestamp: Date.now()
+    };
+
+    if (hasIOSBridge()) {
+      try {
+        window.webkit.messageHandlers[HANDLER_NAME].postMessage(message);
+      } catch (e) { /* ignore */ }
+      return;
+    }
+
+    if (hasAndroidBridge()) {
+    try {
+      var p = payload || {};
+      p.__secureToken = window.__fbAndroidBridgeAuthToken || '';
+      window[ANDROID_BRIDGE_NAME].postEvent(
+        eventName,
+        JSON.stringify(p)
+      );
+    } catch (e) { /* ignore */ }
+    return;
+  }
+
+    if (isInIframe()) {
+      try {
+        window.parent.postMessage(message, '*');
+      } catch (e) { /* ignore */ }
+      return;
+    }
+  }
+
+  // --- rAF Game-Ready Detection ---
+
+  function onFrame() {
+    if (gameReadySent) return;
+
+    frameCount++;
+    if (frameCount >= RAF_FRAME_THRESHOLD) {
+      gameReadySent = true;
+      sendEvent('game_ready', {
+        frame_count: frameCount,
+        detected_at: Date.now()
+      });
+      return;
+    }
+
+    originalRAF.call(window, onFrame);
+  }
+
+  if (originalRAF) {
+    window.requestAnimationFrame = function(callback) {
+      if (!gameReadySent) {
+        return originalRAF.call(window, function(timestamp) {
+          frameCount++;
+          if (frameCount >= RAF_FRAME_THRESHOLD && !gameReadySent) {
+            gameReadySent = true;
+            sendEvent('game_ready', {
+              frame_count: frameCount,
+              detected_at: Date.now()
+            });
+          }
+          callback(timestamp);
+        });
+      }
+      return originalRAF.call(window, callback);
+    };
+  }
+
+  // --- First User Interaction Detection ---
+
+  function setupFirstInteractionDetection() {
+    var events = ['touchstart', 'mousedown', 'keydown'];
+
+    function onFirstInteraction() {
+      if (firstInteractionSent) return;
+      firstInteractionSent = true;
+      sendEvent('user_interaction_start', null);
+
+      for (var i = 0; i < events.length; i++) {
+        document.removeEventListener(events[i], onFirstInteraction, true);
+      }
+    }
+
+    for (var i = 0; i < events.length; i++) {
+      document.addEventListener(events[i], onFirstInteraction, true);
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setupFirstInteractionDetection);
+  } else {
+    setupFirstInteractionDetection();
+  }
+
+  // --- Auto Error Capture ---
+
+  window.addEventListener('error', function(event) {
+    if (errorSent) return;
+    errorSent = true;
+    sendEvent('error', {
+      message: event.message || 'Unknown error',
+      source: event.filename || '',
+      lineno: event.lineno || 0,
+      colno: event.colno || 0,
+      auto_captured: true
+    });
+  });
+
+  window.addEventListener('unhandledrejection', function(event) {
+    if (errorSent) return;
+    errorSent = true;
+    var reason = event.reason;
+    sendEvent('error', {
+      message: (reason instanceof Error) ? reason.message : String(reason),
+      type: 'unhandled_promise_rejection',
+      auto_captured: true
+    });
+  });
+
+  // --- Public API ---
+
+  window.playablesSDK = {
+    complete: function(score) {
+      sendEvent('game_ended', {
+        score: score,
+        completed: true
+      });
+    },
+
+    error: function(message) {
+      if (errorSent) return;
+      errorSent = true;
+      sendEvent('error', {
+        message: message || 'Unknown error',
+        auto_captured: false
+      });
+    },
+
+    sendEvent: function(eventName, payload) {
+      if (!eventName || typeof eventName !== 'string') return;
+      sendEvent(eventName, payload);
+    }
+  };
+
+  // Kick off rAF detection in case no game code calls rAF immediately
+  if (originalRAF) {
+    originalRAF.call(window, onFrame);
+  }
+})();</script>
+<script>window.Intl=window.Intl||{};Intl.t=function(s){return(Intl._locale&&Intl._locale[s])||s;};</script>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Infinite Scope — P2P -+0001 Playground</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root { color-scheme: dark; }
+  html, body { height: 100%; }
+  body { font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial; background:#020408; }
+  .mono { font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  .grid-bg {
+    background:
+      radial-gradient(1200px 800px at 50% 45%, rgba(6,182,212,0.12), transparent 60%),
+      linear-gradient(transparent 0 0),
+      repeating-linear-gradient(0deg, rgba(8,145,178,0.18) 0 1px, transparent 1px 48px),
+      repeating-linear-gradient(90deg, rgba(8,145,178,0.18) 0 1px, transparent 1px 48px);
+    background-color: #020608;
+  }
+  .grid-bg::after{
+    content:""; position:absolute; inset:0;
+    background: radial-gradient(600px 400px at 50% 50%, transparent 40%, rgba(0,0,0,0.7) 80%);
+    pointer-events:none;
+  }
+  .neon { box-shadow: 0 0 20px rgba(34,211,238,.35), inset 0 0 12px rgba(34,211,238,.15); }
+  .neon-strong { box-shadow: 0 0 40px rgba(34,211,238,.55), 0 0 80px rgba(34,211,238,.25); }
+  .glow-text { text-shadow: 0 0 10px rgba(103,232,249,.8), 0 0 20px rgba(34,211,238,.5); }
+  .scrollbar::-webkit-scrollbar{height:8px;width:8px}
+  .scrollbar::-webkit-scrollbar-thumb{background:#0e2a36;border-radius:8px}
+  @keyframes float { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-3px) } }
+</style>
+</head>
+<body class="min-h-screen flex flex-col text-cyan-100 selection:bg-cyan-300/30 selection:text-cyan-50">
+  <!-- Canon -->
+  <div class="w-full sticky top-0 z-40 border-b border-cyan-900/40 bg-black/70 backdrop-blur supports-[backdrop-filter]:bg-black/50">
+    <div class="mx-auto max-w-[1400px] px-3 py-2 flex items-center justify-center">
+      <div class="mono text-[11px] sm:text-xs tracking-[0.35em] text-cyan-300/90">= canon = read only = 1 = 0 = 1 =</div>
+    </div>
+  </div>
+
+  <!-- Header / Controls -->
+  <header class="w-full border-b border-cyan-950/60 bg-[#030b11]/70 backdrop-blur">
+    <div class="mx-auto max-w-[1400px] px-3 py-3 flex flex-col gap-3">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 rounded-full border border-cyan-400/40 grid place-items-center neon">
+            <div class="w-2 h-2 rounded-full bg-cyan-300 animate-pulse"></div>
+          </div>
+          <div>
+            <div class="text-base sm:text-lg font-semibold tracking-wide">INFINITE SCOPE</div>
+            <div class="mono text-[10px] text-cyan-400/70 -mt-1">playground • dark neon grid</div>
+          </div>
+        </div>
+        <div class="hidden sm:flex items-center gap-2 text-[11px] mono text-cyan-300/70">
+          <span class="px-2 py-1 rounded border border-cyan-900/50 bg-cyan-950/30">core 00</span>
+          <span class="px-2 py-1 rounded border border-cyan-900/50 bg-cyan-950/30">4 forks</span>
+          <span class="px-2 py-1 rounded border border-cyan-900/50 bg-cyan-950/30">8-dir walks</span>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2">
+        <button id="walkLinear" class="px-3 py-1.5 rounded-full bg-cyan-950/50 border border-cyan-800/70 hover:bg-cyan-900/60 text-cyan-100 text-xs mono transition">Walk Linear</button>
+        <button id="walkLattice" class="px-3 py-1.5 rounded-full bg-cyan-950/50 border border-cyan-800/70 hover:bg-cyan-900/60 text-cyan-100 text-xs mono transition">Walk Lattice x8</button>
+        <button id="addFork" class="px-3 py-1.5 rounded-full bg-violet-950/40 border border-violet-800/60 hover:bg-violet-900/50 text-violet-200 text-xs mono transition">Add Fork</button>
+        <button id="reset" class="px-3 py-1.5 rounded-full bg-cyan-950/30 border border-cyan-900/60 hover:bg-cyan-900/40 text-cyan-200/80 text-xs mono transition">Reset to 00</button>
+
+        <div class="w-px h-6 bg-cyan-900/40 mx-1 hidden sm:block"></div>
+
+        <button id="p2pToggle" class="group px-3 py-1.5 rounded-full bg-[#06141a] border border-cyan-700/60 hover:border-cyan-400 text-cyan-200 text-xs mono transition flex items-center gap-2">
+          <span class="w-1.5 h-1.5 rounded-full bg-cyan-400/70 group-[.on]:bg-cyan-300 group-[.on]:shadow-[0_0_8px_2px_rgba(34,211,238,0.8)]"></span>
+          P2P Mode: -+0001
+        </button>
+        <div id="p2pInfo" class="mono text-[11px] px-2.5 py-1 rounded-full border border-cyan-900/50 bg-black/40 text-cyan-300/80">Peers: 0 | Max distance from 00: 0</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Playground -->
+  <main class="flex-1 relative">
+    <div id="playground" class="absolute inset-0 overflow-hidden select-none touch-none">
+      <div id="grid" class="grid-bg absolute inset-0"></div>
+      <svg id="connections" class="absolute inset-0 w-full h-full pointer-events-none"></svg>
+
+      <!-- Core 00 -->
+      <div id="core" class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-20 pointer-events-none">
+        <div class="relative">
+          <!-- glow ring -->
+          <div class="w-28 h-28 sm:w-32 sm:h-32 rounded-full border border-cyan-400/40 bg-cyan-500/5 neon-strong grid place-items-center animate-[float_4s_ease-in-out_infinite]">
+            <div class="w-20 h-20 sm:w-24 sm:h-24 rounded-full border border-cyan-300/30 bg-[#03141c]/60 grid place-items-center backdrop-blur">
+              <div class="text-center">
+                <div class="mono text-2xl sm:text-3xl font-semibold glow-text text-cyan-100">00</div>
+                <div class="mono text-[9px] tracking-widest text-cyan-300/70">CORE</div>
+              </div>
+            </div>
+          </div>
+          <!-- 8 direction ticks -->
+          <svg class="absolute inset-0 w-28 h-28 sm:w-32 sm:h-32 -z-10" viewBox="0 0 128 128">
+            <g stroke="rgba(34,211,238,0.35)" stroke-width="1">
+              <line x1="64" y1="6" x2="64" y2="18"/><line x1="64" y1="110" x2="64" y2="122"/>
+              <line x1="6" y1="64" x2="18" y2="64"/><line x1="110" y1="64" x2="122" y2="64"/>
+              <line x1="19" y1="19" x2="28" y2="28"/><line x1="100" y1="100" x2="109" y2="109"/>
+              <line x1="19" y1="109" x2="28" y2="100"/><line x1="100" y1="28" x2="109" y2="19"/>
+            </g>
+          </svg>
+          <!-- 32-bit interior locked box -->
+          <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+            <div class="w-8 h-8 rounded-[6px] border border-amber-500/70 bg-amber-950/30 backdrop-blur grid place-items-center shadow-[0_0_14px_rgba(245,158,11,0.35)]">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgb(251,191,36)" stroke-width="2" stroke-linecap="round"><rect x="3" y="11" width="18" height="10" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            </div>
+          </div>
+          <div class="absolute -bottom-7 left-1/2 -translate-x-1/2 whitespace-nowrap mono text-[10px] text-amber-300/80">32-bit interior — theirs</div>
+        </div>
+      </div>
+
+      <!-- Dynamic layers -->
+      <div id="nodes" class="absolute inset-0 z-10"></div>
+      <div id="particles" class="absolute inset-0 z-30 pointer-events-none"></div>
+
+      <!-- P2P tooltip -->
+      <div id="p2pTooltip" class="hidden absolute left-3 bottom-3 sm:left-4 sm:bottom-4 z-30 max-w-[90vw]">
+        <div class="px-3 py-2 rounded-lg border border-cyan-800/60 bg-[#041019]/85 backdrop-blur text-[12px] leading-snug mono text-cyan-200/90 shadow-[0_0_20px_rgba(0,0,0,0.5)]">
+          Peer-to-peer is -+0001 in infinite — no center, just neighbors
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="border-t border-cyan-950/60 bg-black/60">
+    <div class="mx-auto max-w-[1400px] px-3 py-2 text-center mono text-[11px] text-cyan-700/70">David Wise — root.ai — 2026-04-22</div>
+  </footer>
+
+<script>
+(() => {
+  const playground = document.getElementById('playground');
+  const connections = document.getElementById('connections');
+  const nodes = document.getElementById('nodes');
+  const particles = document.getElementById('particles');
+  const p2pToggle = document.getElementById('p2pToggle');
+  const p2pInfo = document.getElementById('p2pInfo');
+  const p2pTooltip = document.getElementById('p2pTooltip');
+
+  const walkLinearBtn = document.getElementById('walkLinear');
+  const walkLatticeBtn = document.getElementById('walkLattice');
+  const addForkBtn = document.getElementById('addFork');
+  const resetBtn = document.getElementById('reset');
+
+  const gridSize = 48;
+  let center = { x: 0, y: 0 };
+  let p2pMode = false;
+  let peers = [];
+  let walker = { gx: 0, gy: 0 };
+
+  // walker dot
+  const walkerDot = document.createElement('div');
+  walkerDot.className = 'absolute w-3 h-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-fuchsia-400 shadow-[0_0_14px_3px_rgba(217,70,239,0.75)] z-[25] transition-[left,top] duration-500 ease-out';
+  walkerDot.style.left = '50%'; walkerDot.style.top = '50%';
+  playground.appendChild(walkerDot);
+
+  function updateCenter() {
+    const r = playground.getBoundingClientRect();
+    center.x = r.width / 2;
+    center.y = r.height / 2;
+    updateWalker();
+    peers.forEach(p => {
+      p.x = center.x + p.gx * gridSize;
+      p.y = center.y + p.gy * gridSize;
+      const el = nodes.querySelector(`[data-id="${p.id}"]`);
+      if (el) { el.style.left = p.x + 'px'; el.style.top = p.y + 'px'; }
+    });
+    drawBase();
+  }
+
+  function fmt(n){ return (n>=0?'+':'-') + String(Math.abs(n)).padStart(4,'0'); }
+
+  function drawBase(){
+    connections.innerHTML = '';
+    // 4 forks quadrants (diagonal dashed)
+    const forks = [[-1,-1],[1,-1],[-1,1],[1,1]];
+    forks.forEach(([fx,fy])=>{
+      const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+      line.setAttribute('x1', center.x); line.setAttribute('y1', center.y);
+      line.setAttribute('x2', center.x + fx*2000); line.setAttribute('y2', center.y + fy*2000);
+      line.setAttribute('stroke', 'rgba(34,211,238,0.13)');
+      line.setAttribute('stroke-width', '1');
+      line.setAttribute('stroke-dasharray', '4 8');
+      connections.appendChild(line);
+    });
+    // peer mesh
+    peers.forEach(p=>{
+      const nearest = peers.filter(q=>q!==p)
+        .map(q=>({q, d: Math.hypot(p.gx-q.gx, p.gy-q.gy)}))
+        .sort((a,b)=>a.d-b.d).slice(0,3);
+      nearest.forEach(({q,d})=>{
+        if(d>6) return;
+        const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+        line.setAttribute('x1', p.x); line.setAttribute('y1', p.y);
+        line.setAttribute('x2', q.x); line.setAttribute('y2', q.y);
+        line.setAttribute('stroke', 'rgba(34,211,238,0.5)');
+        line.setAttribute('stroke-width', '1');
+        line.style.filter = 'drop-shadow(0 0 4px rgba(34,211,238,0.55))';
+        connections.appendChild(line);
+      });
+    });
+  }
+
+  function updateWalker(){
+    walkerDot.style.left = (center.x + walker.gx * gridSize) + 'px';
+    walkerDot.style.top  = (center.y + walker.gy * gridSize) + 'px';
+  }
+
+  function pulseWalker(){
+    walkerDot.animate([{transform:'translate(-50%,-50%) scale(1)'},{transform:'translate(-50%,-50%) scale(1.6)'},{transform:'translate(-50%,-50%) scale(1)'}],{duration:380, easing:'ease-out'});
+  }
+
+  walkLinearBtn.addEventListener('click', ()=>{
+    walker.gx += 1; // east linear step
+    updateWalker(); pulseWalker();
+  });
+
+  walkLatticeBtn.addEventListener('click', ()=>{
+    const dirs = [[1,0],[1,1],[0,1],[-1,1],[-1,0],[-1,-1],[0,-1],[1,-1]];
+    dirs.forEach(([dx,dy],i)=>{
+      const sx = center.x + walker.gx*gridSize;
+      const sy = center.y + walker.gy*gridSize;
+      const ex = center.x + (walker.gx+dx)*gridSize;
+      const ey = center.y + (walker.gy+dy)*gridSize;
+      const dot = document.createElement('div');
+      dot.className = 'absolute w-2 h-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-cyan-300 shadow-[0_0_10px_2px_rgba(34,211,238,0.8)]';
+      dot.style.left = sx+'px'; dot.style.top = sy+'px';
+      playground.appendChild(dot);
+      dot.animate([{left:sx+'px',top:sy+'px',opacity:1},{left:ex+'px',top:ey+'px',opacity:0.2}],{duration:500+ i*40, easing:'cubic-bezier(.2,.8,.2,1)',fill:'forwards'}).onfinish=()=>dot.remove();
+    });
+  });
+
+  addForkBtn.addEventListener('click', ()=>{
+    const quadrants = [[1,1],[-1,1],[-1,-1],[1,-1]];
+    const q = quadrants[Math.floor(Math.random()*4)];
+    const dist = 4 + Math.floor(Math.random()*3);
+    const gx = q[0]*dist + Math.round((Math.random()-0.5)*2);
+    const gy = q[1]*dist + Math.round((Math.random()-0.5)*2);
+    const x = center.x + gx*gridSize;
+    const y = center.y + gy*gridSize;
+    const el = document.createElement('div');
+    el.className = 'absolute -translate-x-1/2 -translate-y-1/2';
+    el.style.left = x+'px'; el.style.top = y+'px';
+    el.innerHTML = `<div class="grid place-items-center">
+      <div class="w-0 h-0 border-l-[7px] border-r-[7px] border-b-[12px] border-l-transparent border-r-transparent border-b-violet-400/90 drop-shadow-[0_0_10px_rgba(167,139,250,0.9)]"></div>
+      <div class="mono text-[9px] mt-1 px-1 py-0.5 rounded bg-violet-950/60 border border-violet-800/50 text-violet-200">fork</div>
+    </div>`;
+    nodes.appendChild(el);
+    el.animate([{opacity:0, transform:'translate(-50%,-10px)'},{opacity:1, transform:'translate(-50%,0)'}],{duration:300});
+  });
+
+  resetBtn.addEventListener('click', ()=>{
+    walker = {gx:0, gy:0}; updateWalker(); pulseWalker();
+  });
+
+  // P2P
+  p2pToggle.addEventListener('click', ()=>{
+    p2pMode = !p2pMode;
+    p2pToggle.classList.toggle('on', p2pMode);
+    p2pToggle.classList.toggle('border-cyan-400', p2pMode);
+    p2pToggle.classList.toggle('bg-cyan-500/15', p2pMode);
+    p2pTooltip.classList.toggle('hidden', !p2pMode);
+    playground.style.cursor = p2pMode ? 'crosshair' : 'default';
+    document.querySelectorAll('.peer.active').forEach(p=>p.classList.remove('active'));
+  });
+
+  playground.addEventListener('click', (e)=>{
+    if(!p2pMode) return;
+    if(e.target.closest('.peer') || e.target.closest('button')) return;
+    const r = playground.getBoundingClientRect();
+    const x = e.clientX - r.left;
+    const y = e.clientY - r.top;
+    const gx = Math.round((x - center.x)/gridSize);
+    const gy = Math.round((y - center.y)/gridSize);
+    // no encroachment on 32-bit interior
+    if (Math.abs(gx) < 2 && Math.abs(gy) < 2) {
+      // bump animation on core
+      const core = document.getElementById('core');
+      core.animate([{transform:'translate(-50%,-50%) scale(1)'},{transform:'translate(-50%,-50%) scale(0.96)'},{transform:'translate(-50%,-50%) scale(1)'}],{duration:220});
+      return;
+    }
+    createPeer(gx, gy);
+  });
+
+  function createPeer(gx, gy){
+    const id = 'p'+Math.random().toString(36).slice(2);
+    const x = center.x + gx*gridSize;
+    const y = center.y + gy*gridSize;
+    const peer = { id, gx, gy, x, y };
+    peers.push(peer);
+
+    const el = document.createElement('div');
+    el.className = 'peer absolute -translate-x-1/2 -translate-y-1/2 select-none';
+    el.style.left = x+'px'; el.style.top = y+'px';
+    el.dataset.id = id;
+    el.innerHTML = `
+      <div class="relative group">
+        <div class="w-7 h-7 rounded-full bg-[#07151d]/80 border border-cyan-400/80 grid place-items-center
+                    shadow-[0_0_14px_2px_rgba(34,211,238,0.65)] group-hover:shadow-[0_0_22px_4px_rgba(34,211,238,0.9)] transition">
+          <div class="absolute w-7 h-7 rounded-full border border-cyan-300/20 animate-ping"></div>
+          <div class="w-2 h-2 rounded-full bg-cyan-200"></div>
+        </div>
+        <div class="absolute top-[30px] left-1/2 -translate-x-1/2 mono text-[10px] leading-tight px-1.5 py-0.5 rounded
+                    bg-black/75 border border-cyan-900/60 text-cyan-200 whitespace-nowrap pointer-events-none">
+          ${fmt(gx)}, ${fmt(gy)}
+        </div>
+        <div class="actions absolute -top-12 left-1/2 -translate-x-1/2 hidden gap-1.5 bg-[#031018]/95 backdrop-blur
+                    border border-cyan-800/70 rounded-full p-1 shadow-xl">
+          <button data-act="+1" class="px-2.5 py-1 text-[11px] mono rounded-full bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-700/50 text-cyan-100">+0001</button>
+          <button data-act="-1" class="px-2.5 py-1 text-[11px] mono rounded-full bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-900/50 text-cyan-200/80">-0001</button>
+        </div>
+      </div>
+    `;
+    nodes.appendChild(el);
+
+    const actions = el.querySelector('.actions');
+    el.addEventListener('click', (ev)=>{
+      ev.stopPropagation();
+      if(!p2pMode) return;
+      const isActive = el.classList.contains('active');
+      document.querySelectorAll('.peer.active').forEach(p=>{p.classList.remove('active'); p.querySelector('.actions').classList.add('hidden');});
+      if(!isActive){ el.classList.add('active'); actions.classList.remove('hidden'); }
+    });
+
+    el.querySelectorAll('button').forEach(btn=>{
+      btn.addEventListener('click', (ev)=>{
+        ev.stopPropagation();
+        const act = btn.dataset.act;
+        stepPeer(peer, act === '+1' ? 1 : -1);
+        el.classList.remove('active'); actions.classList.add('hidden');
+      });
+    });
+
+    // entrance
+    el.style.opacity = '0'; el.style.transform = 'translate(-50%,-50%) scale(.6)';
+    requestAnimationFrame(()=>{
+      el.style.transition = 'transform .35s cubic-bezier(.2,.8,.2,1), opacity .35s';
+      el.style.opacity = '1'; el.style.transform = 'translate(-50%,-50%) scale(1)';
+    });
+
+    drawBase(); updateCounter();
+  }
+
+  function stepPeer(peer, dir){
+    const d = Math.hypot(peer.gx, peer.gy) || 0.0001;
+    let newDist = Math.max(2, Math.round(d) + dir); // keep outside interior
+    const ang = Math.atan2(peer.gy, peer.gx);
+    const newGx = Math.round(Math.cos(ang) * newDist);
+    const newGy = Math.round(Math.sin(ang) * newDist);
+    if (Math.abs(newGx) < 2 && Math.abs(newGy) < 2) return;
+
+    animateHop(peer.x, peer.y, center.x + newGx*gridSize, center.y + newGy*gridSize);
+
+    peer.gx = newGx; peer.gy = newGy;
+    peer.x = center.x + newGx*gridSize;
+    peer.y = center.y + newGy*gridSize;
+
+    const el = nodes.querySelector(`[data-id="${peer.id}"]`);
+    if(el){
+      el.style.left = peer.x+'px'; el.style.top = peer.y+'px';
+      el.querySelector('.mono').textContent = `${fmt(newGx)}, ${fmt(newGy)}`;
+    }
+    drawBase(); updateCounter();
+  }
+
+  function animateHop(x1,y1,x2,y2){
+    const p = document.createElement('div');
+    p.className = 'absolute w-2 h-2 rounded-full bg-cyan-200 shadow-[0_0_12px_3px_rgba(103,232,249,0.9)]';
+    p.style.left = x1+'px'; p.style.top = y1+'px'; p.style.transform='translate(-50%,-50%)';
+    particles.appendChild(p);
+    const anim = p.animate([{left:x1+'px', top:y1+'px', opacity:1, offset:0},{left:x2+'px', top:y2+'px', opacity:0.85, offset:1}],{duration:460, easing:'cubic-bezier(.2,.8,.2,1)'});
+    anim.onfinish = ()=> p.remove();
+  }
+
+  function updateCounter(){
+    const maxDist = peers.reduce((m,p)=>Math.max(m, Math.hypot(p.gx,p.gy)), 0);
+    p2pInfo.textContent = `Peers: ${peers.length} | Max distance from 00: ${Math.round(maxDist)}`;
+  }
+
+  // init
+  const ro = new ResizeObserver(()=> updateCenter());
+  ro.observe(playground);
+  window.addEventListener('orientationchange', ()=> setTimeout(updateCenter, 200));
+  updateCenter();
+
+  // seed a couple demo peers for vibe (can be removed)
+  setTimeout(()=>{ createPeer(3, -2); createPeer(-4, 1); createPeer(5, 3); }, 200);
+})();
+</script>
+</body>
+</html>

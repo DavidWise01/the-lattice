@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>META JUDGE FEDERATION · 16 SWARMS</title>
+<style>
+:root{
+  --bg:#050607;
+  --panel:#0a0e13;
+  --panel2:#0d141b;
+  --text:#cbd5e1;
+  --muted:#64748b;
+  --blue:#3b82f6;
+  --green:#10b981;
+  --amber:#f59e0b;
+  --purple:#a855f7;
+  --cyan:#06b6d4;
+  --red:#ef4444;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;
+  background: radial-gradient(1200px 800px at 50% -200px,#0b121a 0%,#050607 60%);
+  color:var(--text);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  overflow-x:hidden;
+}
+.app{ padding:14px; max-width:1400px; margin:0 auto; }
+header{
+  text-align:center;
+  font-weight:700;
+  letter-spacing:2px;
+  padding:12px 8px 18px;
+  color:#a5f3fc;
+  text-shadow:0 0 12px #06b6d488, 0 0 24px #06b6d433;
+  font-size:18px;
+  border-bottom:1px solid #12202c;
+  margin-bottom:14px;
+}
+.judges-grid{
+  display:grid;
+  gap:14px;
+  grid-template-columns: repeat(auto-fit, minmax(300px,1fr));
+}
+.judge-panel{
+  background:linear-gradient(180deg, var(--panel) 0%, var(--panel2) 100%);
+  border:1px solid #1e293b;
+  border-radius:14px;
+  padding:12px;
+  box-shadow:0 0 0 1px #0f172a inset, 0 10px 30px -15px #000;
+  position:relative;
+  overflow:hidden;
+}
+.judge-panel::after{
+  content:"";
+  position:absolute; inset:-1px;
+  background: radial-gradient(400px 120px at 50% -50px, currentColor 0%, transparent 60%);
+  opacity:0.07;
+  pointer-events:none;
+}
+.judge-panel[data-judge="A"]{ color:var(--blue); }
+.judge-panel[data-judge="B"]{ color:var(--green); }
+.judge-panel[data-judge="C"]{ color:var(--amber); }
+.judge-panel[data-judge="D"]{ color:var(--purple); }
+.judge-panel h2{
+  margin:4px 0 10px;
+  font-size:15px;
+  letter-spacing:1.5px;
+}
+.swarms-container{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+.swarm{
+  background:#060a0f;
+  border:1px solid #132231;
+  border-radius:10px;
+  padding:8px;
+}
+.swarm-label{
+  font-size:10px;
+  color:var(--muted);
+  margin-bottom:6px;
+  letter-spacing:1px;
+}
+.grid5{
+  display:grid;
+  grid-template-columns:repeat(5,1fr);
+  gap:3px;
+}
+.cell{
+  aspect-ratio:1;
+  width:100%;
+  background:#0a121a;
+  border-radius:4px;
+  transition: background-color .18s linear, box-shadow .18s;
+  box-shadow: inset 0 0 0 1px #0f1c27;
+}
+.cell.flash{
+  box-shadow:0 0 10px currentColor, inset 0 0 0 1px currentColor;
+}
+.judge-stats{
+  margin-top:10px;
+  display:grid;
+  grid-template-columns: repeat(3,auto);
+  gap:12px;
+  font-size:11px;
+  color:#94a3b8;
+}
+.judge-stats span{
+  color:#e2e8f0;
+  font-weight:600;
+}
+.meta-panel{
+  margin-top:16px;
+  background:linear-gradient(180deg,#071018 0%,#050b11 100%);
+  border:1px solid #123040;
+  border-radius:16px;
+  padding:14px;
+  display:grid;
+  grid-template-columns: 340px 1fr;
+  gap:16px;
+  box-shadow:0 0 40px -20px #0891b240 inset;
+}
+@media (max-width:900px){
+  .meta-panel{ grid-template-columns:1fr; }
+}
+.meta-info h2{
+  margin:4px 0 12px;
+  font-size:16px;
+  letter-spacing:1.5px;
+  color:var(--cyan);
+  text-shadow:0 0 10px #06b6d488;
+}
+.meta-info > div{
+  margin:6px 0;
+  font-size:12.5px;
+  color:#9fb4c7;
+}
+.meta-info span{
+  color:#e2e8f0;
+  font-weight:700;
+}
+.meta-canvas-wrap{
+  position:relative;
+  width:100%;
+  height:320px;
+  background: radial-gradient(600px 200px at 50% 0%, #08212e 0%, transparent 70%);
+  border:1px solid #0e2a3a;
+  border-radius:12px;
+  overflow:hidden;
+}
+#metaCanvas{
+  width:100%;
+  height:100%;
+  display:block;
+}
+.controls{
+  margin-top:14px;
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  align-items:center;
+  background:#070c12;
+  border:1px solid #132231;
+  padding:10px;
+  border-radius:12px;
+}
+.controls input{
+  flex:1 1 280px;
+  background:#020409;
+  border:1px solid #1e293b;
+  color:#e2e8f0;
+  padding:10px 12px;
+  border-radius:10px;
+  outline:none;
+  font-family:inherit;
+}
+.controls input:focus{ border-color:#0ea5e9; box-shadow:0 0 0 3px #0ea5e933; }
+button{
+  background:#0b1722;
+  border:1px solid #1d3043;
+  color:#cfefff;
+  padding:10px 14px;
+  border-radius:10px;
+  cursor:pointer;
+  font-weight:700;
+  letter-spacing:1px;
+  transition:transform .05s, background .2s, box-shadow .2s;
+}
+button:hover{ background:#0e1f2e; box-shadow:0 0 14px #0ea5e933; }
+button:active{ transform:translateY(1px); }
+button.active{
+  background:#083344;
+  border-color:#0ea5e9;
+  color:#ecfeff;
+  box-shadow:0 0 18px #06b6d466;
+}
+#globalStats{
+  margin-left:auto;
+  font-size:11px;
+  color:#7dd3fc;
+  opacity:.9;
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>META JUDGE FEDERATION · 16 SWARMS · 4 JUDGES · 1 META</header>
+  <div id="judgesGrid" class="judges-grid"></div>
+
+  <div class="meta-panel">
+    <div class="meta-info">
+      <h2>META-JUDGE</h2>
+      <div>Global Root: <span id="globalRoot">00000000</span></div>
+      <div>Total Consensus: <span id="totalConsensus">0/4</span></div>
+      <div>Sync Rate: <span id="syncRate">0%</span></div>
+      <div>Divergence: <span id="divergence">0%</span></div>
+      <div>Total Holds: <span id="totalHolds">0</span>/400</div>
+    </div>
+    <div class="meta-canvas-wrap">
+      <canvas id="metaCanvas"></canvas>
+    </div>
+  </div>
+
+  <div class="controls">
+    <input id="probeInput" placeholder="Enter probe text… e.g., What is consciousness?" />
+    <button id="probeBtn">PROBE ALL</button>
+    <button id="autoBtn">AUTO: OFF</button>
+    <div id="globalStats">16 swarms × 25 instances = 400 cells · 60fps</div>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+// ---- utils ----
+function simpleHash(str){
+  let h = 5381;
+  for(let i=0;i<str.length;i++){ h = ((h<<5)+h) + str.charCodeAt(i); h = h>>>0; }
+  return h.toString(16).padStart(8,'0');
+}
+function encodeText(txt){
+  const vec = new Array(16).fill(0);
+  const s = txt && txt.length ? txt : ' ';
+  for(let i=0;i<16;i++){
+    const code = s.charCodeAt(i % s.length) || 0;
+    vec[i] = (code % 256) / 255;
+  }
+  return vec;
+}
+
+// ---- core classes ----
+class LinearPredictor{
+  constructor(dim=16){
+    this.w = new Array(dim).fill(0).map(()=> (Math.random()*0.2-0.1));
+    this.b = 0;
+  }
+  predict(x){
+    let s = this.b;
+    for(let i=0;i<x.length;i++) s += this.w[i]*x[i];
+    return 1/(1+Math.exp(-s));
+  }
+  learn(x,target,lr=0.05){
+    const p = this.predict(x);
+    const err = target - p;
+    for(let i=0;i<this.w.length;i++) this.w[i] += lr * err * x[i];
+    this.b += lr * err;
+  }
+}
+class RecursiveMemory{
+  constructor(limit=64){ this.leaves=[]; this.limit=limit; }
+  add(entry){ this.leaves.push(simpleHash(JSON.stringify(entry))); if(this.leaves.length>this.limit) this.leaves.shift(); }
+  getRoot(){
+    if(this.leaves.length===0) return '00000000';
+    let level = this.leaves.slice();
+    while(level.length>1){
+      const next=[];
+      for(let i=0;i<level.length;i+=2){
+        const a = level[i];
+        const b = level[i+1] || a;
+        next.push(simpleHash(a+b));
+      }
+      level = next;
+    }
+    return level[0];
+  }
+  size(){ return this.leaves.length; }
+}
+class SwarmInstance{
+  constructor(id){
+    this.id=id;
+    this.predictor=new LinearPredictor(16);
+    this.memory=new RecursiveMemory();
+    this.pillars = Array(12).fill(0).map(()=>Math.random());
+    this.lastHold = true;
+  }
+  probe(vec){
+    const p = this.predictor.predict(vec);
+    const hold = p > 0.5;
+    this.lastHold = hold;
+    const sum = vec.reduce((a,b)=>a+b,0);
+    const trueLabel = sum > 8 ? 1 : 0;
+    this.predictor.learn(vec, trueLabel);
+    this.memory.add({ v:vec.slice(0,4), hold, t:Date.now() });
+    for(let i=0;i<this.pillars.length;i++) this.pillars[i] = 0.99*this.pillars[i] + 0.01*Math.random();
+    return hold;
+  }
+  getRoot(){ return this.memory.getRoot(); }
+}
+class Swarm{
+  constructor(id, judge){
+    this.id=id;
+    this.judge=judge;
+    this.instances = Array(25).fill(0).map((_,i)=> new SwarmInstance(i));
+    this.lastHoldCount = 0;
+    this.root = '00000000';
+  }
+  probe(vec){
+    let holds=0;
+    for(const inst of this.instances){ if(inst.probe(vec)) holds++; }
+    this.lastHoldCount = holds;
+    const concat = this.instances.map(i=>i.getRoot()).join('');
+    this.root = simpleHash(concat).substring(0,8);
+    return holds;
+  }
+}
+class Judge{
+  constructor(id,color){
+    this.id=id;
+    this.color=color;
+    this.swarms=[];
+    this.roots={};
+    this.root='00000000';
+    this.consensus=0;
+  }
+  receiveRoot(swarmId, root){ this.roots[swarmId]=root; }
+  mediate(){
+    const roots = Object.values(this.roots);
+    if(roots.length<4) return;
+    const freq={};
+    roots.forEach(r=> freq[r]=(freq[r]||0)+1);
+    let maxRoot=null, maxCount=0;
+    for(const [r,c] of Object.entries(freq)){ if(c>maxCount){maxCount=c; maxRoot=r;} }
+    this.consensus = maxCount;
+    if(maxCount>=2){ this.root = maxRoot; }
+    else { this.root = simpleHash(roots.join('')).substring(0,8); }
+  }
+}
+class MetaJudge{
+  constructor(){ this.roots={}; this.root='00000000'; this.consensus=0; }
+  receiveRoot(id,root){ this.roots[id]=root; }
+  mediate(){
+    const roots = Object.values(this.roots);
+    if(roots.length<4) return;
+    const freq={};
+    roots.forEach(r=> freq[r]=(freq[r]||0)+1);
+    let maxRoot=null, maxCount=0;
+    for(const [r,c] of Object.entries(freq)){ if(c>maxCount){maxCount=c; maxRoot=r;} }
+    this.consensus = maxCount;
+    if(maxCount>=2){ this.root = maxRoot; }
+    else { this.root = simpleHash(roots.join('')).substring(0,8); }
+  }
+}
+
+// ---- setup DOM ----
+const judgesData = [
+  {id:'A', color:'#3b82f6'},
+  {id:'B', color:'#10b981'},
+  {id:'C', color:'#f59e0b'},
+  {id:'D', color:'#a855f7'},
+];
+const judgesGrid = document.getElementById('judgesGrid');
+const judges = [];
+const swarms = [];
+const meta = new MetaJudge();
+
+judgesData.forEach(jd=>{
+  const judge = new Judge(jd.id, jd.color);
+  judges.push(judge);
+  const panel = document.createElement('div');
+  panel.className='judge-panel';
+  panel.dataset.judge=jd.id;
+  panel.innerHTML = `
+    <h2>JUDGE ${jd.id}</h2>
+    <div class="swarms-container"></div>
+    <div class="judge-stats">
+      <div>Merkle: <span class="root">--------</span></div>
+      <div>Consensus: <span class="cons">0/4</span></div>
+      <div>Holds: <span class="holds">0</span></div>
+    </div>
+  `;
+  judgesGrid.appendChild(panel);
+  const container = panel.querySelector('.swarms-container');
+  for(let i=1;i<=4;i++){
+    const swarmId = jd.id + i;
+    const swarm = new Swarm(swarmId, judge);
+    judge.swarms.push(swarm);
+    swarms.push(swarm);
+    const swarmDiv = document.createElement('div');
+    swarmDiv.className='swarm';
+    swarmDiv.dataset.id = swarmId;
+    swarmDiv.innerHTML = `<div class="swarm-label">${swarmId}</div><div class="grid5"></div>`;
+    container.appendChild(swarmDiv);
+    const grid = swarmDiv.querySelector('.grid5');
+    for(let c=0;c<25;c++){
+      const cell = document.createElement('div');
+      cell.className='cell';
+      cell.style.color = jd.color;
+      grid.appendChild(cell);
+    }
+  }
+});
+
+// ---- canvas setup ----
+const canvas = document.getElementById('metaCanvas');
+let ctx, logicalW=800, logicalH=320, metaPos={x:400,y:250}, cortexNodes=[];
+function resize(){
+  const rect = canvas.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  canvas.width = rect.width * dpr;
+  canvas.height = rect.height * dpr;
+  ctx = canvas.getContext('2d');
+  ctx.scale(dpr,dpr);
+  logicalW = rect.width;
+  logicalH = rect.height;
+  metaPos = {x: logicalW/2, y: logicalH - 70};
+  cortexNodes = [
+    {x: metaPos.x - 90, y: metaPos.y - 60},
+    {x: metaPos.x + 90, y: metaPos.y - 60},
+    {x: metaPos.x, y: metaPos.y - 115}
+  ];
+}
+window.addEventListener('resize', resize);
+resize();
+
+function getJudgePosByIndex(i){
+  return { x: logicalW * (0.15 + i*0.2333), y: 58 };
+}
+
+// ---- visualization updates ----
+function updateSwarmGrid(swarm){
+  const div = document.querySelector(`.swarm[data-id="${swarm.id}"] .grid5`);
+  if(!div) return;
+  const cells = div.children;
+  for(let i=0;i<swarm.instances.length;i++){
+    const inst = swarm.instances[i];
+    const cell = cells[i];
+    cell.style.backgroundColor = inst.lastHold ? swarm.judge.color : '#3a0a0a';
+    cell.classList.add('flash');
+    setTimeout(()=>cell.classList.remove('flash'), 220);
+  }
+}
+function updateJudgePanel(judge){
+  const panel = document.querySelector(`.judge-panel[data-judge="${judge.id}"]`);
+  panel.querySelector('.root').textContent = judge.root;
+  panel.querySelector('.cons').textContent = judge.consensus + '/4';
+  const holds = judge.swarms.reduce((a,s)=>a+s.lastHoldCount,0);
+  panel.querySelector('.holds').textContent = holds;
+  panel.style.boxShadow = `0 0 0 1px #0f172a inset, 0 0 22px ${judge.color}55`;
+}
+function updateMetaPanel(){
+  document.getElementById('globalRoot').textContent = meta.root;
+  document.getElementById('totalConsensus').textContent = meta.consensus + '/4';
+  const sync = Math.round((meta.consensus/4)*100);
+  document.getElementById('syncRate').textContent = sync + '%';
+  const uniq = new Set(judges.map(j=>j.root)).size;
+  const div = uniq <=1 ? 0 : Math.round(((uniq-1)/3)*100);
+  document.getElementById('divergence').textContent = div + '%';
+}
+
+// ---- pulses ----
+const particles = [];
+function createPulseJudgeToMeta(judge){
+  const idx = judges.findIndex(j=>j.id===judge.id);
+  const src = getJudgePosByIndex(idx);
+  particles.push({x:src.x, y:src.y, tx:metaPos.x, ty:metaPos.y, progress:0, color:judge.color});
+}
+function createPulseMetaToJudge(judge){
+  const idx = judges.findIndex(j=>j.id===judge.id);
+  const dst = getJudgePosByIndex(idx);
+  particles.push({x:metaPos.x, y:metaPos.y, tx:dst.x, ty:dst.y, progress:0, color:'#06b6d4'});
+}
+
+// ---- main probe ----
+function runProbe(text){
+  const vec = encodeText(text);
+  // reset
+  judges.forEach(j=> j.roots = {});
+  let totalHolds = 0;
+  swarms.forEach(swarm=>{
+    const holds = swarm.probe(vec);
+    totalHolds += holds;
+    updateSwarmGrid(swarm);
+    swarm.judge.receiveRoot(swarm.id, swarm.root);
+  });
+  judges.forEach(j=>{
+    j.mediate();
+    updateJudgePanel(j);
+    createPulseJudgeToMeta(j);
+  });
+  meta.roots = {};
+  judges.forEach(j=> meta.receiveRoot(j.id, j.root));
+  meta.mediate();
+  updateMetaPanel();
+  judges.forEach(j=> createPulseMetaToJudge(j));
+  document.getElementById('totalHolds').textContent = totalHolds;
+}
+
+// ---- animation loop ----
+let cortexAngle = 0;
+function animate(){
+  requestAnimationFrame(animate);
+  ctx.clearRect(0,0,logicalW,logicalH);
+
+  // judge nodes and faint links
+  judges.forEach((j,i)=>{
+    const pos = getJudgePosByIndex(i);
+    ctx.strokeStyle = j.color + '22';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(pos.x, pos.y);
+    ctx.lineTo(metaPos.x, metaPos.y);
+    ctx.stroke();
+
+    ctx.fillStyle = j.color;
+    ctx.shadowColor = j.color;
+    ctx.shadowBlur = 14;
+    ctx.beginPath();
+    ctx.arc(pos.x, pos.y, 9, 0, Math.PI*2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+  });
+
+  // meta node
+  ctx.fillStyle = '#06b6d4';
+  ctx.shadowColor = '#06b6d4';
+  ctx.shadowBlur = 22;
+  ctx.beginPath();
+  ctx.arc(metaPos.x, metaPos.y, 14, 0, Math.PI*2);
+  ctx.fill();
+  ctx.shadowBlur = 0;
+
+  // cortex triple
+  cortexAngle += 0.016;
+  cortexNodes.forEach(n=>{
+    ctx.save();
+    ctx.translate(n.x, n.y);
+    ctx.strokeStyle = '#06b6d4aa';
+    ctx.lineWidth = 2;
+    ctx.setLineDash([6,7]);
+    ctx.lineDashOffset = -cortexAngle*40;
+    ctx.beginPath(); ctx.arc(0,0,30,0,Math.PI*2); ctx.stroke();
+    ctx.setLineDash([4,10]);
+    ctx.lineDashOffset = cortexAngle*55;
+    ctx.beginPath(); ctx.arc(0,0,20,0,Math.PI*2); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = '#06b6d4';
+    ctx.shadowColor = '#06b6d4';
+    ctx.shadowBlur = 14;
+    ctx.beginPath(); ctx.arc(0,0,7,0,Math.PI*2); ctx.fill();
+    ctx.shadowBlur=0;
+    ctx.restore();
+
+    ctx.strokeStyle = '#0891b455';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(n.x, n.y);
+    ctx.lineTo(metaPos.x, metaPos.y-12);
+    ctx.stroke();
+  });
+
+  // particles
+  for(let i=particles.length-1;i>=0;i--){
+    const p = particles[i];
+    p.progress += 0.019;
+    if(p.progress >= 1){ particles.splice(i,1); continue; }
+    const x = p.x + (p.tx - p.x) * p.progress;
+    const y = p.y + (p.ty - p.y) * p.progress;
+    ctx.fillStyle = p.color;
+    ctx.shadowColor = p.color;
+    ctx.shadowBlur = 14;
+    ctx.beginPath();
+    ctx.arc(x, y, 4.5, 0, Math.PI*2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+  }
+}
+animate();
+
+// ---- controls ----
+const probeInput = document.getElementById('probeInput');
+const probeBtn = document.getElementById('probeBtn');
+const autoBtn = document.getElementById('autoBtn');
+const questions = [
+  "What is consciousness?",
+  "Does free will exist?",
+  "Is reality a simulation?",
+  "What is the nature of truth?",
+  "Can machines think?",
+  "What defines identity?",
+  "Is the universe finite?",
+  "Do morals evolve?",
+  "What is time?",
+  "Is knowledge justified belief?"
+];
+probeBtn.addEventListener('click', ()=>{
+  const txt = probeInput.value.trim() || questions[Math.floor(Math.random()*questions.length)];
+  probeInput.value = txt;
+  runProbe(txt);
+});
+probeInput.addEventListener('keydown', e=>{
+  if(e.key==='Enter') probeBtn.click();
+});
+let autoId = null;
+autoBtn.addEventListener('click', ()=>{
+  if(autoId){
+    clearInterval(autoId); autoId=null;
+    autoBtn.classList.remove('active'); autoBtn.textContent='AUTO: OFF';
+  }else{
+    autoBtn.classList.add('active'); autoBtn.textContent='AUTO: ON';
+    autoId = setInterval(()=>{
+      const q = questions[Math.floor(Math.random()*questions.length)];
+      probeInput.value = q;
+      runProbe(q);
+    }, 2000);
+  }
+});
+
+// initial probe
+runProbe("INIT SEED: federated triple cortex meta-judge");
+</script>
+</body>
+</html>

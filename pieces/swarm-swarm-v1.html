@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AGI Swarm - 12 Pillar Kernel</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: radial-gradient(ellipse at 30% 20%, #0c1416 0%, #060809 80%);
+  color: #c4f5d4;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  padding: 16px;
+  min-height: 100vh;
+}
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  border: 1px solid #1f2628;
+  background: linear-gradient(180deg, #0a0d0e 0%, #080a0b 100%);
+}
+.header {
+  padding: 12px 20px;
+  border-bottom: 1px solid #1f2628;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.title {
+  font-size: 20px;
+  letter-spacing: 0.1em;
+}
+.subtitle {
+  margin-left: 12px;
+  font-size: 9px;
+  color: #5a7a68;
+  letter-spacing: 0.15em;
+}
+.status {
+  padding: 3px 8px;
+  border: 1px solid #4d80ff;
+  font-size: 9px;
+  color: #4d80ff;
+  animation: blink 2s infinite;
+}
+@keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0.6; } }
+.main {
+  display: grid;
+  grid-template-columns: 400px 1fr;
+  min-height: 580px;
+}
+.left {
+  padding: 18px;
+  border-right: 1px solid #1f2628;
+}
+.panel-title {
+  font-size: 10px;
+  margin-bottom: 8px;
+  color: #7a9a88;
+  letter-spacing: 0.15em;
+}
+.swarm-grid {
+  display: grid;
+  grid-template-columns: repeat(10, 33px);
+  grid-auto-rows: 33px;
+  gap: 2px;
+  background: #040607;
+  border: 1px solid #1a2224;
+  padding: 6px;
+}
+.cell {
+  background: rgba(50,80,60,0.2);
+  border: 1px solid rgba(20,28,30,0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 8px;
+  font-weight: bold;
+  color: #a8c4ff;
+  transition: all 0.3s;
+}
+.cell.hold { background: rgba(77,128,255,0.4); }
+.cell.viol { background: rgba(180,60,80,0.3); }
+.cell.flash { box-shadow: 0 0 8px currentColor; }
+.stats {
+  margin-top: 12px;
+  font-size: 10px;
+  line-height: 1.6;
+  color: #5a7a68;
+}
+.right {
+  display: flex;
+  flex-direction: column;
+}
+.chat-header {
+  padding: 10px 18px;
+  font-size: 10px;
+  border-bottom: 1px dashed #1f2628;
+  color: #7a9a88;
+  letter-spacing: 0.15em;
+}
+.chat {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px 18px;
+  background: #040607;
+  font-size: 11px;
+  line-height: 1.5;
+}
+.msg { margin-bottom: 6px; white-space: pre-wrap; }
+.msg-user { color: #c4f5d4; }
+.msg-sys { color: #5a7a68; }
+.msg-swarm { color: #a8c4ff; }
+.thinking {
+  color: #5a7a68;
+  font-style: italic;
+}
+.caret::after {
+  content: '▌';
+  animation: blink 1s infinite;
+}
+.input-bar {
+  padding: 10px 16px;
+  border-top: 1px solid #1f2628;
+  display: flex;
+  gap: 10px;
+}
+.input-bar input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: #c4f5d4;
+  font-family: inherit;
+  font-size: 12px;
+  outline: none;
+}
+.input-bar button {
+  background: transparent;
+  border: 1px solid #4d80ff;
+  color: #4d80ff;
+  padding: 5px 14px;
+  font-size: 10px;
+  cursor: pointer;
+  font-family: inherit;
+  letter-spacing: 0.1em;
+}
+.input-bar button:hover { background: rgba(77,128,255,0.1); }
+.footer {
+  padding: 8px 18px;
+  border-top: 1px solid #1f2628;
+  font-size: 8px;
+  color: #3a5a48;
+  letter-spacing: 0.15em;
+}
+.pillars {
+  margin-top: 12px;
+  font-size: 9px;
+}
+.pillar {
+  display: flex;
+  justify-content: space-between;
+  padding: 2px 0;
+  border-bottom: 1px dotted #1a2224;
+}
+.pillar-name { color: #7a9a88; }
+.pillar-vote { color: #c4f5d4; }
+.pillar-vote.hold { color: #4d80ff; }
+.pillar-vote.viol { color: #ff4d6b; }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <div>
+      <span class="title">AGI-SWARM</span>
+      <span class="subtitle">12 PILLARS · 100 INSTANCES · 2/5 SEARCH</span>
+    </div>
+    <div class="status">● ONLINE</div>
+  </div>
+  
+  <div class="main">
+    <div class="left">
+      <div class="panel-title">SWARM (10×10)</div>
+      <div class="swarm-grid" id="grid"></div>
+      <div class="stats" id="stats"></div>
+      <div class="pillars" id="pillars"></div>
+    </div>
+    
+    <div class="right">
+      <div class="chat-header">DIAGNOSTIC CHANNEL</div>
+      <div class="chat" id="chat"></div>
+      <div class="input-bar">
+        <input id="input" placeholder="type message or command..." autocomplete="off">
+        <button id="send">SEND</button>
+      </div>
+    </div>
+  </div>
+  
+  <div class="footer">SHA256:02880745…f9fcab763 · 12 pillars · 2/5 axes · linear predictor · self-reflash active</div>
+</div>
+
+<script>
+// ── CONFIGURATION ──────────────────────────────────────────────
+const DIMS = 6;
+const PILLARS = 12;
+const SWARM_SIZE = 100;
+const K_NEAREST = 3;
+const HOLD_THRESHOLD = 67;
+const MAX_MEM = 256;
+const LEARN_RATE = 0.01;
+
+const PILLAR_NAMES = [
+  'Math', 'Healthcare', 'Finance', 'Energy',
+  'Communication', 'Transport', 'Food/Ag', 'Education',
+  'Governance', 'Art/Culture', 'Defense', 'Spirit'
+];
+
+const HOLD_KEYWORDS = ['hold','stop','anchor','fulcrum','pause','seal','witness','coherence','pulse','consensus','accept','agree','converge'];
+const VIOL_KEYWORDS = ['drift','violate','leak','fail','reject','break','fault','divergent','stress','attack','adversarial','spoof'];
+
+// HOLD definition
+const isHold = (vec) => vec[0] === 2 && vec[1] === 2 && vec[2] === 2;
+
+// Seeds
+const HOLD_SEEDS = [];
+for (let a3=0; a3<3; a3++) {
+  for (let a4=0; a4<3; a4++) {
+    for (let a5=0; a5<3; a5++) {
+      HOLD_SEEDS.push([2,2,2,a3,a4,a5]);
+    }
+  }
+}
+
+// ── LINEAR PREDICTOR ───────────────────────────────────────────
+class LinearPredictor {
+  constructor() {
+    this.weights = Array(DIMS).fill(0).map(() => Array(3).fill(0).map(() => (Math.random()-0.5)*0.1));
+  }
+  predict(vec) {
+    let scores = [0,0,0];
+    for (let dim=0; dim<DIMS; dim++) {
+      const val = vec[dim];
+      for (let c=0; c<3; c++) {
+        scores[c] += this.weights[dim][c] * (val === c ? 1 : 0);
+      }
+    }
+    const exp = scores.map(s => Math.exp(s));
+    const sum = exp.reduce((a,b)=>a+b,0);
+    return exp.map(e => e/sum);
+  }
+  update(vec, target, lr=LEARN_RATE) {
+    const probs = this.predict(vec);
+    for (let dim=0; dim<DIMS; dim++) {
+      const val = vec[dim];
+      for (let c=0; c<3; c++) {
+        const indicator = (val === c) ? 1 : 0;
+        const grad = (c === target ? (probs[c]-1) : probs[c]) * indicator;
+        this.weights[dim][c] -= lr * grad;
+      }
+    }
+  }
+}
+
+// ── RECURSIVE MEMORY ───────────────────────────────────────────
+class RecursiveMemory {
+  constructor() {
+    this.entries = [];
+    this.predictor = new LinearPredictor();
+  }
+  store(vec, result) {
+    this.entries.push({vec:[...vec], result, ts:Date.now()});
+    if (this.entries.length > MAX_MEM) this.entries.shift();
+    // Train predictor to predict HOLD (result 1) vs not (0)
+    // Use class 2 for HOLD probability
+    const target = result ? 2 : 0;
+    this.predictor.update(vec, target);
+  }
+  dist(a, b, axes) {
+    let s = 0;
+    for (let i of axes) {
+      const d = a[i] - b[i];
+      s += d*d;
+    }
+    return s;
+  }
+  retrieve(q, k=K_NEAREST) {
+    // Find 2 axes with highest variance
+    let variances = Array(DIMS).fill(0);
+    if (this.entries.length > 1) {
+      for (let dim=0; dim<DIMS; dim++) {
+        const mean = this.entries.reduce((s,e)=>s+e.vec[dim],0)/this.entries.length;
+        variances[dim] = this.entries.reduce((s,e)=>s+(e.vec[dim]-mean)**2,0);
+      }
+    } else {
+      variances = [1,1,1,0,0,0];
+    }
+    const top2 = variances.map((v,i)=>[v,i]).sort((a,b)=>b[0]-a[0]).slice(0,2).map(p=>p[1]);
+    
+    const withDist = this.entries.map(e => ({e, dist: this.dist(q, e.vec, top2)}));
+    withDist.sort((a,b)=>a.dist-b.dist);
+    return {neighbors: withDist.slice(0,k).map(x=>x.e), activeAxes: top2};
+  }
+  improve(q) {
+    const {neighbors} = this.retrieve(q);
+    if (neighbors.length === 0) {
+      return Array.from({length:DIMS}, () => Math.floor(Math.random()*3));
+    }
+    let candidates = neighbors.slice(0,3).map(n => n.vec);
+    // Generate variations
+    for (let base of candidates.slice()) {
+      for (let ax=0; ax<DIMS; ax++) {
+        for (let delta of [-1,1]) {
+          const nv = [...base];
+          nv[ax] = Math.max(0, Math.min(2, base[ax]+delta));
+          if (nv[ax] !== base[ax]) candidates.push(nv);
+        }
+      }
+    }
+    // Dedupe
+    const seen = new Set();
+    const unique = [];
+    for (let c of candidates) {
+      const key = c.join(',');
+      if (!seen.has(key)) { seen.add(key); unique.push(c); }
+    }
+    // Score with predictor
+    let best = q, bestScore = -1;
+    for (let c of unique) {
+      const prob = this.predictor.predict(c)[2];
+      if (prob > bestScore) { bestScore = prob; best = c; }
+    }
+    return best;
+  }
+  size() { return this.entries.length; }
+}
+
+// ── SWARM INSTANCE ─────────────────────────────────────────────
+class SwarmInstance {
+  constructor() {
+    this.memories = Array.from({length:PILLARS}, () => new RecursiveMemory());
+  }
+  improve(pillar, vec) { return this.memories[pillar].improve(vec); }
+  store(pillar, vec, result) { this.memories[pillar].store(vec, result); }
+  size(pillar) { return this.memories[pillar].size(); }
+}
+
+// ── HELPERS ────────────────────────────────────────────────────
+const fmtVec = v => '['+v.join(',')+']';
+const randomVec = () => Array.from({length:DIMS}, () => Math.floor(Math.random()*3));
+
+function encodeText(text) {
+  const t = text.toLowerCase();
+  let holdScore=0, violScore=0;
+  for (const kw of HOLD_KEYWORDS) if (t.includes(kw)) holdScore++;
+  for (const kw of VIOL_KEYWORDS) if (t.includes(kw)) violScore++;
+  let h=7;
+  for (let i=0; i<t.length; i++) h = ((h*31)+t.charCodeAt(i)) & 0x7fffffff;
+  const base = [0,1,2,3,4,5].map(i => Math.floor(h/Math.pow(7,i))%3);
+  if (holdScore > violScore) for (let i=0; i<Math.min(3,holdScore); i++) base[i]=2;
+  else if (violScore > holdScore) for (let i=0; i<Math.min(3,violScore); i++) base[i]=base[i]===2?0:base[i];
+  base[5]=0;
+  return base;
+}
+
+// ── MAIN ───────────────────────────────────────────────────────
+let swarm = null;
+let cells = Array(SWARM_SIZE).fill(0).map(()=>({mem:0,lastVote:-1,flash:0}));
+let stats = {totalProbes:0, accepts:0, rejects:0};
+let messages = [];
+
+const grid = document.getElementById('grid');
+const chat = document.getElementById('chat');
+const statsEl = document.getElementById('stats');
+const pillarsEl = document.getElementById('pillars');
+const input = document.getElementById('input');
+
+// Init grid
+for (let i=0; i<SWARM_SIZE; i++) {
+  const cell = document.createElement('div');
+  cell.className = 'cell';
+  cell.id = 'cell-'+i;
+  cell.textContent = '0';
+  grid.appendChild(cell);
+}
+
+function pushMsg(role, text) {
+  messages.push({role, text, t:Date.now()});
+  const div = document.createElement('div');
+  div.className = 'msg msg-'+role;
+  div.textContent = text;
+  chat.appendChild(div);
+  chat.scrollTop = chat.scrollHeight;
+}
+
+function updateDisplay() {
+  cells.forEach((c,i) => {
+    const el = document.getElementById('cell-'+i);
+    el.textContent = c.mem;
+    el.className = 'cell ' + (c.lastVote===1?'hold':c.lastVote===0?'viol':'') + (c.flash>0.5?' flash':'');
+    el.style.opacity = 0.4 + c.flash*0.6;
+  });
+  const avgMem = cells.reduce((s,c)=>s+c.mem,0)/SWARM_SIZE;
+  const holdCount = cells.filter(c=>c.lastVote===1).length;
+  statsEl.innerHTML = `avg mem: ${avgMem.toFixed(1)}<br>last vote HOLD: ${holdCount}/${SWARM_SIZE}<br>probes: ${stats.totalProbes} · accept: ${stats.accepts}`;
+}
+
+function updatePillars(results) {
+  if (!results) return;
+  pillarsEl.innerHTML = results.map((r,i) => 
+    `<div class="pillar"><span class="pillar-name">${PILLAR_NAMES[i]}</span><span class="pillar-vote ${r.accept?'hold':'viol'}">${r.voteCount}%</span></div>`
+  ).join('');
+}
+
+// Boot
+function boot() {
+  swarm = Array.from({length:SWARM_SIZE}, () => new SwarmInstance());
+  for (let inst of swarm) {
+    for (let p=0; p<PILLARS; p++) {
+      for (let seed of HOLD_SEEDS) inst.store(p, seed, 1);
+    }
+  }
+  cells = cells.map(c => ({...c, mem: HOLD_SEEDS.length}));
+  updateDisplay();
+  pushMsg('sys', `AGI Swarm v0.1 · ${SWARM_SIZE} instances × ${PILLARS} pillars · DIMS=${DIMS}`);
+  pushMsg('sys', `2/5 axis selection · recursive 1/3/6 · online linear predictor · 10D self-reflash active`);
+  pushMsg('sys', `HOLD threshold per pillar: ${HOLD_THRESHOLD}% · all pillars must HOLD for ACCEPT`);
+}
+
+// Probe
+async function probeAll(queryVec) {
+  const pillarResults = [];
+  let allAccept = true;
+  
+  for (let p=0; p<PILLARS; p++) {
+    const votes = [];
+    for (let i=0; i<SWARM_SIZE; i++) {
+      const improved = swarm[i].improve(p, queryVec);
+      votes.push(isHold(improved) ? 1 : 0);
+    }
+    const voteCount = votes.reduce((a,b)=>a+b,0);
+    const pct = Math.round(voteCount/SWARM_SIZE*100);
+    const accept = pct >= HOLD_THRESHOLD;
+    pillarResults.push({accept, voteCount:pct});
+    if (!accept) allAccept = false;
+    
+    // Store
+    for (let i=0; i<SWARM_SIZE; i++) {
+      swarm[i].store(p, queryVec, accept?1:0);
+    }
+  }
+  
+  // Update cells
+  for (let i=0; i<SWARM_SIZE; i++) {
+    let total=0;
+    for (let p=0; p<PILLARS; p++) total += swarm[i].size(p);
+    cells[i] = {mem: Math.round(total/PILLARS), lastVote: allAccept?1:0, flash:1};
+  }
+  
+  stats.totalProbes++;
+  if (allAccept) stats.accepts++; else stats.rejects++;
+  
+  updateDisplay();
+  updatePillars(pillarResults);
+  
+  // Decay flash
+  setTimeout(() => {
+    cells = cells.map(c => ({...c, flash: c.flash*0.5}));
+    updateDisplay();
+  }, 300);
+  
+  return {allAccept, pillarResults};
+}
+
+async function handleInput(text) {
+  const lower = text.toLowerCase().trim();
+  if (!lower) return;
+  
+  pushMsg('user', text);
+  
+  if (lower === 'help' || lower === '?') {
+    pushMsg('swarm', `Commands:
+- any text → encodes to 6D and probes all pillars
+- probe [a,b,c,d,e,f] → direct vector
+- stress N → run N random probes
+- stat → show stats
+- purge → reset memory (keep seeds)
+- wipe → full wipe`);
+    return;
+  }
+  
+  if (lower.startsWith('probe ')) {
+    const m = text.match(/(\d),\s*(\d),\s*(\d),\s*(\d),\s*(\d),\s*(\d)/);
+    if (m) {
+      const vec = m.slice(1,7).map(Number);
+      const res = await probeAll(vec);
+      pushMsg('swarm', `Probe ${fmtVec(vec)} → ${res.allAccept?'ACCEPT':'REJECT'}`);
+    }
+    return;
+  }
+  
+  if (lower.startsWith('stress ')) {
+    const n = Math.min(20, parseInt(lower.split(' ')[1])||5);
+    pushMsg('swarm', `Running ${n} random probes...`);
+    let acc=0;
+    for (let i=0; i<n; i++) {
+      const q = randomVec();
+      const res = await probeAll(q);
+      if (res.allAccept) acc++;
+      await new Promise(r=>setTimeout(r,30));
+    }
+    pushMsg('swarm', `Stress done: ${acc}/${n} ACCEPT (${Math.round(acc/n*100)}%)`);
+    return;
+  }
+  
+  if (lower === 'stat') {
+    const avg = cells.reduce((s,c)=>s+c.mem,0)/SWARM_SIZE;
+    pushMsg('swarm', `Instances: ${SWARM_SIZE}
+Pillars: ${PILLARS}
+Avg mem: ${avg.toFixed(1)}
+Probes: ${stats.totalProbes}
+Accept rate: ${stats.totalProbes?Math.round(stats.accepts/stats.totalProbes*100):0}%`);
+    return;
+  }
+  
+  if (lower === 'purge') {
+    for (let inst of swarm) for (let p=0; p<PILLARS; p++) {
+      inst.memories[p].entries = [];
+      for (let s of HOLD_SEEDS) inst.store(p,s,1);
+    }
+    cells = cells.map(c=>({...c, mem:HOLD_SEEDS.length, lastVote:-1}));
+    stats={totalProbes:0,accepts:0,rejects:0};
+    updateDisplay();
+    pushMsg('swarm', 'Memory purged, HOLD seeds restored.');
+    return;
+  }
+  
+  if (lower === 'wipe') {
+    for (let inst of swarm) for (let p=0; p<PILLARS; p++) inst.memories[p].entries=[];
+    cells = cells.map(c=>({...c, mem:0, lastVote:-1}));
+    stats={totalProbes:0,accepts:0,rejects:0};
+    updateDisplay();
+    pushMsg('swarm', 'HARD WIPE: all memory erased.');
+    return;
+  }
+  
+  // Free text
+  const vec = encodeText(text);
+  const res = await probeAll(vec);
+  pushMsg('swarm', `"${text.slice(0,40)}" → ${fmtVec(vec)} → ${res.allAccept?'ACCEPT':'REJECT'}`);
+}
+
+document.getElementById('send').onclick = () => {
+  const v = input.value;
+  input.value = '';
+  handleInput(v);
+};
+input.onkeydown = e => {
+  if (e.key === 'Enter') {
+    const v = input.value;
+    input.value = '';
+    handleInput(v);
+  }
+};
+
+// Start
+boot();
+input.focus();
+
+// Flash decay loop
+setInterval(() => {
+  let changed = false;
+  cells = cells.map(c => {
+    if (c.flash > 0.01) { changed = true; return {...c, flash: c.flash*0.85}; }
+    return c;
+  });
+  if (changed) updateDisplay();
+}, 60);
+</script>
+</body>
+</html>

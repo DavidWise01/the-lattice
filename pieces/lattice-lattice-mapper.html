@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TOPH v9.5 — Lattice Geometry Mapper</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Azeret+Mono:wght@300;400;500;700&family=Orbitron:wght@400;700;900&display=swap');
+
+  :root {
+    --void: #020308;
+    --deep: #060a14;
+    --panel: rgba(6,10,20,0.96);
+    --wire: rgba(112,33,255,0.12);
+    --wire-b: rgba(112,33,255,0.3);
+    --purple: #7021ff;
+    --purple-dim: rgba(112,33,255,0.06);
+    --cobalt: #0047AB;
+    --cyan: #00b4ff;
+    --green: #0eff6a;
+    --green-dim: rgba(14,255,106,0.06);
+    --red: #ff2040;
+    --red-dim: rgba(255,32,64,0.06);
+    --gold: #d4a843;
+    --white: #b0bcd0;
+    --dim: rgba(176,188,208,0.15);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--void);
+    color: var(--white);
+    font-family: 'Azeret Mono', monospace;
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  #bar {
+    height: 38px;
+    background: var(--deep);
+    border-bottom: 1px solid var(--wire);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+    flex-shrink: 0;
+  }
+
+  #bar h1 {
+    font-family: 'Orbitron', monospace;
+    font-weight: 900;
+    font-size: 11px;
+    letter-spacing: 4px;
+    color: var(--purple);
+    text-shadow: 0 0 12px var(--purple-dim);
+  }
+
+  #bar .r { font-size: 9px; color: var(--dim); letter-spacing: 1px; }
+
+  #main {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 260px 1fr 280px;
+    gap: 1px;
+    background: rgba(112,33,255,0.04);
+    overflow: hidden;
+  }
+
+  .pane {
+    background: var(--panel);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .ph {
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--wire);
+    font-family: 'Orbitron', monospace;
+    font-size: 7px;
+    letter-spacing: 3px;
+    color: var(--purple);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
+  }
+
+  .pb {
+    flex: 1;
+    padding: 10px 12px;
+    overflow-y: auto;
+    font-size: 10px;
+  }
+
+  .sl {
+    font-size: 8px;
+    letter-spacing: 2px;
+    color: var(--purple);
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    margin-top: 14px;
+  }
+
+  .sl:first-child { margin-top: 0; }
+
+  /* Controls */
+  .ctrl {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 6px;
+  }
+
+  .ctrl label { flex: 1; opacity: 0.4; font-size: 10px; }
+  .ctrl input[type="range"] { width: 90px; accent-color: var(--purple); }
+  .ctrl .val { font-weight: 700; font-size: 10px; width: 50px; text-align: right; }
+
+  .btn {
+    width: 100%;
+    background: var(--purple-dim);
+    border: 1px solid var(--wire-b);
+    color: var(--purple);
+    font-family: 'Orbitron', monospace;
+    font-size: 9px;
+    letter-spacing: 2px;
+    padding: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-bottom: 4px;
+  }
+
+  .btn:hover { background: rgba(112,33,255,0.15); color: #fff; }
+  .btn.go { border-color: rgba(14,255,106,0.3); color: var(--green); }
+  .btn.rst { border-color: rgba(255,32,64,0.2); color: var(--red); }
+
+  /* Preset buttons */
+  .preset {
+    display: block;
+    width: 100%;
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.03);
+    color: var(--white);
+    font-family: 'Azeret Mono', monospace;
+    font-size: 9px;
+    padding: 5px 8px;
+    margin-bottom: 3px;
+    cursor: pointer;
+    text-align: left;
+    opacity: 0.4;
+    transition: all 0.15s;
+  }
+
+  .preset:hover { opacity: 1; border-color: var(--purple); padding-left: 12px; }
+
+  /* Activation bar editor */
+  .act-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 0;
+    font-size: 9px;
+    cursor: pointer;
+    transition: background 0.1s;
+  }
+
+  .act-row:hover { background: var(--purple-dim); }
+
+  .act-idx {
+    width: 28px;
+    color: var(--purple);
+    font-weight: 700;
+    font-size: 8px;
+    text-align: center;
+  }
+
+  .act-bar-wrap {
+    flex: 1;
+    height: 10px;
+    background: rgba(255,255,255,0.02);
+    border-radius: 1px;
+    overflow: hidden;
+  }
+
+  .act-bar {
+    height: 100%;
+    border-radius: 1px;
+    transition: width 0.2s, background 0.2s;
+  }
+
+  .act-val {
+    width: 36px;
+    text-align: right;
+    font-size: 8px;
+    opacity: 0.5;
+  }
+
+  /* 3D Canvas */
+  #viewport {
+    position: relative;
+    overflow: hidden;
+  }
+
+  #threeCanvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  #viewportOverlay {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    font-size: 9px;
+    opacity: 0.4;
+    pointer-events: none;
+    line-height: 1.6;
+  }
+
+  #hoverInfo {
+    position: absolute;
+    display: none;
+    background: rgba(6,10,20,0.95);
+    border: 1px solid var(--wire-b);
+    padding: 8px 12px;
+    font-size: 10px;
+    pointer-events: none;
+    z-index: 100;
+    max-width: 220px;
+    line-height: 1.6;
+  }
+
+  #hoverInfo .hi-title {
+    font-family: 'Orbitron', monospace;
+    font-size: 9px;
+    color: var(--purple);
+    letter-spacing: 2px;
+    margin-bottom: 4px;
+  }
+
+  /* Right panel */
+  .sr {
+    display: flex;
+    justify-content: space-between;
+    padding: 3px 0;
+    font-size: 10px;
+  }
+
+  .sr .k { opacity: 0.3; }
+  .sr .v { font-weight: 500; }
+  .v.g { color: var(--green); }
+  .v.r { color: var(--red); }
+  .v.c { color: var(--cyan); }
+  .v.y { color: var(--gold); }
+  .v.p { color: var(--purple); }
+
+  /* Tension chart */
+  #tensionChart {
+    margin-top: 8px;
+    position: relative;
+    height: 120px;
+    background: rgba(0,0,0,0.3);
+    border: 1px solid var(--wire);
+    overflow: hidden;
+  }
+
+  #tensionCanvas {
+    width: 100%;
+    height: 100%;
+  }
+
+  .tension-label {
+    position: absolute;
+    font-size: 7px;
+    color: var(--gold);
+    letter-spacing: 1px;
+    pointer-events: none;
+  }
+
+  /* Formula block */
+  .formula {
+    margin-top: 12px;
+    padding: 8px;
+    background: rgba(0,0,0,0.3);
+    border: 1px solid var(--wire);
+    font-size: 9px;
+    line-height: 1.8;
+  }
+
+  .formula .fk { color: var(--cyan); }
+  .formula .fn { color: var(--gold); font-weight: 700; }
+  .formula .fc { opacity: 0.3; }
+
+  /* Log */
+  .le {
+    font-size: 9px;
+    padding: 2px 0;
+    line-height: 1.5;
+  }
+
+  .le.ok { color: var(--green); }
+  .le.warn { color: var(--gold); }
+  .le.err { color: var(--red); }
+  .le.info { color: var(--cyan); opacity: 0.6; }
+
+  ::-webkit-scrollbar { width: 2px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--wire); }
+</style>
+</head>
+<body>
+
+<div id="bar">
+  <h1>LATTICE GEOMETRY MAPPER</h1>
+  <span class="r">TOPH v9.5 &middot; 3D Möbius Stack &middot; Standard 3,002 (Terra)</span>
+</div>
+
+<div id="main">
+  <!-- LEFT -->
+  <div class="pane">
+    <div class="ph"><span>Lattice Config</span></div>
+    <div class="pb">
+      <div class="sl">Grid Dimensions</div>
+      <div class="ctrl">
+        <label>Layers</label>
+        <input type="range" id="sliderLayers" min="8" max="96" value="32" step="8" oninput="updateConfig()">
+        <span class="val" id="valLayers" style="color:var(--purple)">32</span>
+      </div>
+      <div class="ctrl">
+        <label>Grid X</label>
+        <span class="val" id="valGridX" style="color:var(--cyan)">4</span>
+      </div>
+      <div class="ctrl">
+        <label>Grid Y</label>
+        <span class="val" id="valGridY" style="color:var(--cyan)">8</span>
+      </div>
+      <div class="ctrl">
+        <label>Terra Anchor</label>
+        <span class="val" id="valTerra" style="color:var(--gold)">3002</span>
+      </div>
+
+      <div class="sl">Activation Pattern</div>
+      <button class="preset" onclick="loadPattern('stable')">Stable: 3002 × 32 (no drift)</button>
+      <button class="preset" onclick="loadPattern('break16')">Break at 16: 3002→2700 (0.93)</button>
+      <button class="preset" onclick="loadPattern('gradient')">Gradient: 3002→1500 (linear)</button>
+      <button class="preset" onclick="loadPattern('spike')">Spike at L20: Patricia detection</button>
+      <button class="preset" onclick="loadPattern('oscillate')">Oscillation: ±300 sine wave</button>
+      <button class="preset" onclick="loadPattern('collapse')">Collapse: 3002→0 at L24</button>
+
+      <div class="sl">Layer Activations</div>
+      <div id="actEditor"></div>
+
+      <div style="margin-top:10px;">
+        <button class="btn go" onclick="runMapping()">MAP LATTICE</button>
+        <button class="btn rst" onclick="resetAll()">RESET</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CENTER: 3D -->
+  <div class="pane" id="viewport">
+    <div class="ph"><span>3D Lattice</span><span id="viewStatus" style="color:var(--dim)">IDLE</span></div>
+    <canvas id="threeCanvas"></canvas>
+    <div id="viewportOverlay">
+      Drag: rotate &middot; Scroll: zoom<br>
+      Grid: 4×8 &middot; Z = activation / 3002
+    </div>
+    <div id="hoverInfo">
+      <div class="hi-title"></div>
+      <div class="hi-body"></div>
+    </div>
+  </div>
+
+  <!-- RIGHT -->
+  <div class="pane">
+    <div class="ph"><span>Analysis</span></div>
+    <div class="pb">
+
+      <div class="sl" style="margin-top:0;">Lattice Stats</div>
+      <div class="sr"><span class="k">Nodes</span><span class="v p" id="stNodes">0</span></div>
+      <div class="sr"><span class="k">Edges</span><span class="v c" id="stEdges">0</span></div>
+      <div class="sr"><span class="k">Max tension</span><span class="v r" id="stMaxT">—</span></div>
+      <div class="sr"><span class="k">Min tension</span><span class="v g" id="stMinT">—</span></div>
+      <div class="sr"><span class="k">Avg tension</span><span class="v y" id="stAvgT">—</span></div>
+      <div class="sr"><span class="k">Break point</span><span class="v r" id="stBreak">—</span></div>
+      <div class="sr"><span class="k">Break ratio</span><span class="v y" id="stRatio">—</span></div>
+
+      <div class="sl">Tension Map</div>
+      <div id="tensionChart">
+        <canvas id="tensionCanvas"></canvas>
+      </div>
+
+      <div class="sl">Coordinate Map</div>
+      <div class="formula">
+        <div><span class="fk">x</span> = layer_idx <span class="fc">//</span> <span class="fn">8</span></div>
+        <div><span class="fk">y</span> = layer_idx <span class="fc">%</span> <span class="fn">8</span></div>
+        <div><span class="fk">z</span> = activation <span class="fc">/</span> <span class="fn">3002</span> <span class="fc">(relative displacement)</span></div>
+        <div style="margin-top:4px;"><span class="fk">tension</span> = <span class="fc">‖</span><span class="fk">p₁</span> - <span class="fk">p₂</span><span class="fc">‖</span> <span class="fc">(Euclidean)</span></div>
+        <div><span class="fk">grid</span> = <span class="fn">4</span>×<span class="fn">8</span>×<span class="fn">z</span> <span class="fc">(Möbius stack)</span></div>
+      </div>
+
+      <div class="sl">Event Log</div>
+      <div id="logFeed"></div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════
+// LATTICE MAPPER ENGINE (mirrors Python class)
+// ═══════════════════════════════════════════
+
+const TERRA = 3002;
+let numLayers = 32;
+let activations = new Array(32).fill(TERRA);
+
+// Patterns
+const PATTERNS = {
+  stable: () => new Array(numLayers).fill(TERRA),
+  break16: () => {
+    const half = Math.floor(numLayers / 2);
+    return [...new Array(half).fill(TERRA), ...new Array(numLayers - half).fill(2700)];
+  },
+  gradient: () => {
+    return Array.from({ length: numLayers }, (_, i) => TERRA - (i / (numLayers - 1)) * 1502);
+  },
+  spike: () => {
+    const arr = new Array(numLayers).fill(TERRA);
+    const spikeAt = Math.floor(numLayers * 0.625);
+    for (let i = spikeAt - 1; i <= spikeAt + 1 && i < numLayers; i++) {
+      if (i >= 0) arr[i] = TERRA * 1.4;
+    }
+    return arr;
+  },
+  oscillate: () => {
+    return Array.from({ length: numLayers }, (_, i) => TERRA + Math.sin(i / numLayers * Math.PI * 4) * 300);
+  },
+  collapse: () => {
+    const breakAt = Math.floor(numLayers * 0.75);
+    return Array.from({ length: numLayers }, (_, i) => {
+      if (i < breakAt) return TERRA;
+      const t = (i - breakAt) / (numLayers - breakAt);
+      return TERRA * (1 - t);
+    });
+  }
+};
+
+function mapLayerToCoord(idx, val) {
+  const x = Math.floor(idx / 8);
+  const y = idx % 8;
+  const z = val / TERRA;
+  return [x, y, z];
+}
+
+function calcTensions(acts) {
+  const tensions = [];
+  for (let i = 0; i < acts.length - 1; i++) {
+    const p1 = mapLayerToCoord(i, acts[i]);
+    const p2 = mapLayerToCoord(i + 1, acts[i + 1]);
+    const dx = p1[0] - p2[0], dy = p1[1] - p2[1], dz = p1[2] - p2[2];
+    tensions.push(Math.sqrt(dx * dx + dy * dy + dz * dz));
+  }
+  return tensions;
+}
+
+// ═══════════════════════════════════════════
+// UI STATE
+// ═══════════════════════════════════════════
+
+function updateConfig() {
+  numLayers = parseInt(document.getElementById('sliderLayers').value);
+  document.getElementById('valLayers').textContent = numLayers;
+  document.getElementById('valGridX').textContent = Math.ceil(numLayers / 8);
+  document.getElementById('valGridY').textContent = 8;
+  activations = new Array(numLayers).fill(TERRA);
+  renderActEditor();
+}
+
+function loadPattern(key) {
+  activations = PATTERNS[key]();
+  renderActEditor();
+  log(`Pattern loaded: ${key}`, 'info');
+  runMapping();
+}
+
+function renderActEditor() {
+  const el = document.getElementById('actEditor');
+  el.innerHTML = '';
+  activations.forEach((v, i) => {
+    const pct = (v / (TERRA * 1.5) * 100).toFixed(0);
+    const color = v >= TERRA * 0.95 ? 'var(--green)' : v >= TERRA * 0.8 ? 'var(--gold)' : 'var(--red)';
+    const row = document.createElement('div');
+    row.className = 'act-row';
+    row.innerHTML = `
+      <span class="act-idx">L${String(i).padStart(2, '0')}</span>
+      <div class="act-bar-wrap"><div class="act-bar" style="width:${Math.min(pct, 100)}%;background:${color};"></div></div>
+      <span class="act-val" style="color:${color}">${Math.round(v)}</span>
+    `;
+    el.appendChild(row);
+  });
+}
+
+function resetAll() {
+  activations = new Array(numLayers).fill(TERRA);
+  renderActEditor();
+  clearScene();
+  document.getElementById('viewStatus').textContent = 'IDLE';
+  document.getElementById('viewStatus').style.color = 'var(--dim)';
+  log('Reset.', 'info');
+}
+
+// ═══════════════════════════════════════════
+// THREE.JS — 3D LATTICE
+// ═══════════════════════════════════════════
+
+const canvas = document.getElementById('threeCanvas');
+let scene, camera, renderer, latticeGroup;
+let mouseDown = false, mouseX = 0, mouseY = 0;
+let rotX = -0.4, rotY = 0.5;
+let camDist = 8;
+
+function initThree() {
+  const rect = canvas.parentElement.getBoundingClientRect();
+  const W = rect.width;
+  const H = rect.height - 30;
+
+  scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x020308);
+
+  camera = new THREE.PerspectiveCamera(50, W / H, 0.1, 100);
+  camera.position.set(0, 0, camDist);
+
+  renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+  renderer.setSize(W, H);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+  // Ambient
+  scene.add(new THREE.AmbientLight(0x404060, 0.5));
+
+  // Point lights
+  const l1 = new THREE.PointLight(0x7021ff, 0.8, 20);
+  l1.position.set(5, 5, 5);
+  scene.add(l1);
+
+  const l2 = new THREE.PointLight(0x00b4ff, 0.4, 20);
+  l2.position.set(-5, -3, 3);
+  scene.add(l2);
+
+  latticeGroup = new THREE.Group();
+  scene.add(latticeGroup);
+
+  // Grid helper
+  const gridHelper = new THREE.GridHelper(10, 20, 0x111122, 0x080812);
+  gridHelper.position.y = -2;
+  scene.add(gridHelper);
+
+  // Mouse controls
+  canvas.addEventListener('mousedown', e => { mouseDown = true; mouseX = e.clientX; mouseY = e.clientY; });
+  canvas.addEventListener('mouseup', () => mouseDown = false);
+  canvas.addEventListener('mouseleave', () => mouseDown = false);
+  canvas.addEventListener('mousemove', e => {
+    if (!mouseDown) return;
+    const dx = e.clientX - mouseX, dy = e.clientY - mouseY;
+    rotY += dx * 0.005;
+    rotX += dy * 0.005;
+    rotX = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, rotX));
+    mouseX = e.clientX;
+    mouseY = e.clientY;
+  });
+
+  canvas.addEventListener('wheel', e => {
+    camDist += e.deltaY * 0.005;
+    camDist = Math.max(3, Math.min(20, camDist));
+  });
+
+  animate();
+}
+
+function animate() {
+  requestAnimationFrame(animate);
+
+  camera.position.x = Math.sin(rotY) * Math.cos(rotX) * camDist;
+  camera.position.y = Math.sin(rotX) * camDist;
+  camera.position.z = Math.cos(rotY) * Math.cos(rotX) * camDist;
+  camera.lookAt(0, 0, 0);
+
+  renderer.render(scene, camera);
+}
+
+function clearScene() {
+  while (latticeGroup.children.length > 0) {
+    const child = latticeGroup.children[0];
+    if (child.geometry) child.geometry.dispose();
+    if (child.material) child.material.dispose();
+    latticeGroup.remove(child);
+  }
+}
+
+// ═══════════════════════════════════════════
+// BUILD LATTICE
+// ═══════════════════════════════════════════
+
+function runMapping() {
+  clearScene();
+
+  const tensions = calcTensions(activations);
+  const maxTension = Math.max(...tensions, 0.001);
+  const coords = activations.map((v, i) => mapLayerToCoord(i, v));
+
+  // Center offset
+  const gridX = Math.ceil(numLayers / 8);
+  const offX = (gridX - 1) / 2;
+  const offY = 3.5;
+
+  // Scale
+  const scale = 0.6;
+
+  // Nodes
+  coords.forEach((c, i) => {
+    const [x, y, z] = c;
+    const ratio = activations[i] / TERRA;
+    const color = ratio >= 0.95 ? new THREE.Color(0x0eff6a) :
+                  ratio >= 0.8 ? new THREE.Color(0xd4a843) :
+                  new THREE.Color(0xff2040);
+
+    // Node sphere
+    const geo = new THREE.SphereGeometry(0.08 + ratio * 0.04, 12, 12);
+    const mat = new THREE.MeshPhongMaterial({
+      color,
+      emissive: color,
+      emissiveIntensity: 0.3,
+      transparent: true,
+      opacity: 0.8
+    });
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.position.set((x - offX) * scale, (z - 1) * 2, (y - offY) * scale);
+    latticeGroup.add(mesh);
+
+    // Outer ring
+    const ringGeo = new THREE.RingGeometry(0.14, 0.17, 16);
+    const ringMat = new THREE.MeshBasicMaterial({
+      color,
+      transparent: true,
+      opacity: 0.15,
+      side: THREE.DoubleSide
+    });
+    const ring = new THREE.Mesh(ringGeo, ringMat);
+    ring.position.copy(mesh.position);
+    ring.lookAt(camera.position);
+    latticeGroup.add(ring);
+  });
+
+  // Edges (sequential)
+  for (let i = 0; i < coords.length - 1; i++) {
+    const [x1, y1, z1] = coords[i];
+    const [x2, y2, z2] = coords[i + 1];
+    const t = tensions[i] / maxTension;
+
+    const color = t < 0.3 ? new THREE.Color(0x0eff6a) :
+                  t < 0.6 ? new THREE.Color(0xd4a843) :
+                  new THREE.Color(0xff2040);
+
+    const geo = new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3((x1 - offX) * scale, (z1 - 1) * 2, (y1 - offY) * scale),
+      new THREE.Vector3((x2 - offX) * scale, (z2 - 1) * 2, (y2 - offY) * scale)
+    ]);
+
+    const mat = new THREE.LineBasicMaterial({
+      color,
+      transparent: true,
+      opacity: 0.2 + t * 0.6,
+      linewidth: 1
+    });
+
+    latticeGroup.add(new THREE.Line(geo, mat));
+  }
+
+  // Grid-aligned edges (same row connections)
+  for (let i = 0; i < coords.length; i++) {
+    // Connect to same-X neighbors
+    for (let j = i + 1; j < coords.length; j++) {
+      if (Math.abs(coords[i][0] - coords[j][0]) === 0 && Math.abs(coords[i][1] - coords[j][1]) === 1) {
+        const [x1, y1, z1] = coords[i];
+        const [x2, y2, z2] = coords[j];
+        const geo = new THREE.BufferGeometry().setFromPoints([
+          new THREE.Vector3((x1 - offX) * scale, (z1 - 1) * 2, (y1 - offY) * scale),
+          new THREE.Vector3((x2 - offX) * scale, (z2 - 1) * 2, (y2 - offY) * scale)
+        ]);
+        const mat = new THREE.LineBasicMaterial({
+          color: 0x7021ff,
+          transparent: true,
+          opacity: 0.06
+        });
+        latticeGroup.add(new THREE.Line(geo, mat));
+      }
+      // Connect same-Y cross-row
+      if (Math.abs(coords[i][1] - coords[j][1]) === 0 && Math.abs(coords[i][0] - coords[j][0]) === 1) {
+        const [x1, y1, z1] = coords[i];
+        const [x2, y2, z2] = coords[j];
+        const geo = new THREE.BufferGeometry().setFromPoints([
+          new THREE.Vector3((x1 - offX) * scale, (z1 - 1) * 2, (y1 - offY) * scale),
+          new THREE.Vector3((x2 - offX) * scale, (z2 - 1) * 2, (y2 - offY) * scale)
+        ]);
+        const mat = new THREE.LineBasicMaterial({
+          color: 0x0047AB,
+          transparent: true,
+          opacity: 0.04
+        });
+        latticeGroup.add(new THREE.Line(geo, mat));
+      }
+    }
+  }
+
+  // Stats
+  document.getElementById('stNodes').textContent = coords.length;
+  document.getElementById('stEdges').textContent = tensions.length;
+  document.getElementById('stMaxT').textContent = maxTension.toFixed(4);
+  document.getElementById('stMinT').textContent = Math.min(...tensions).toFixed(4);
+  const avg = tensions.reduce((a, b) => a + b, 0) / tensions.length;
+  document.getElementById('stAvgT').textContent = avg.toFixed(4);
+
+  // Find break point (max tension)
+  const breakIdx = tensions.indexOf(maxTension);
+  document.getElementById('stBreak').textContent = `Layer ${breakIdx} → ${breakIdx + 1}`;
+  document.getElementById('stBreak').style.color = 'var(--red)';
+
+  const breakRatio = (activations[breakIdx + 1] / activations[breakIdx]);
+  document.getElementById('stRatio').textContent = breakRatio.toFixed(4);
+
+  // Tension chart
+  renderTensionChart(tensions);
+
+  document.getElementById('viewStatus').textContent = 'MAPPED';
+  document.getElementById('viewStatus').style.color = 'var(--green)';
+
+  log(`Lattice mapped: ${coords.length} nodes, ${tensions.length} edges.`, 'ok');
+  log(`Max tension at Layer ${breakIdx}→${breakIdx + 1}: ${maxTension.toFixed(4)}`, maxTension > 0.5 ? 'warn' : 'info');
+  if (breakRatio < 0.95) {
+    log(`Break ratio: ${breakRatio.toFixed(4)} (The 0.${Math.round(breakRatio * 100)} Break)`, 'err');
+  }
+}
+
+// ═══════════════════════════════════════════
+// TENSION CHART (2D canvas)
+// ═══════════════════════════════════════════
+
+function renderTensionChart(tensions) {
+  const canvas = document.getElementById('tensionCanvas');
+  const rect = canvas.parentElement.getBoundingClientRect();
+  canvas.width = rect.width;
+  canvas.height = rect.height;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  const pad = 4;
+
+  ctx.clearRect(0, 0, W, H);
+
+  if (tensions.length === 0) return;
+
+  const maxT = Math.max(...tensions);
+  const barW = (W - pad * 2) / tensions.length;
+
+  tensions.forEach((t, i) => {
+    const h = (t / maxT) * (H - pad * 2);
+    const ratio = t / maxT;
+    const r = Math.floor(ratio > 0.5 ? 255 : ratio * 2 * 255);
+    const g = Math.floor(ratio < 0.5 ? 255 * (1 - ratio * 2) + 106 : 60);
+    const b = Math.floor(ratio < 0.3 ? 106 : 40);
+
+    ctx.fillStyle = `rgba(${r},${g},${b},0.6)`;
+    ctx.fillRect(pad + i * barW, H - pad - h, barW - 1, h);
+
+    // Peak marker
+    if (t === maxT) {
+      ctx.strokeStyle = '#ff2040';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([2, 2]);
+      ctx.beginPath();
+      ctx.moveTo(pad + i * barW + barW / 2, 0);
+      ctx.lineTo(pad + i * barW + barW / 2, H);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+  });
+
+  // Baseline
+  ctx.strokeStyle = 'rgba(112,33,255,0.2)';
+  ctx.lineWidth = 0.5;
+  ctx.beginPath();
+  ctx.moveTo(0, H - pad);
+  ctx.lineTo(W, H - pad);
+  ctx.stroke();
+}
+
+// ═══════════════════════════════════════════
+// LOG
+// ═══════════════════════════════════════════
+
+const logFeed = document.getElementById('logFeed');
+
+function log(msg, cls = 'info') {
+  const el = document.createElement('div');
+  el.className = `le ${cls}`;
+  el.textContent = msg;
+  logFeed.appendChild(el);
+  logFeed.parentElement.scrollTop = logFeed.parentElement.scrollHeight;
+  while (logFeed.children.length > 100) logFeed.removeChild(logFeed.firstChild);
+}
+
+// ═══════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════
+
+renderActEditor();
+initThree();
+log('Lattice Geometry Mapper initialized.', 'info');
+log(`Grid: ${Math.ceil(numLayers / 8)}×8 | Terra anchor: ${TERRA}`, 'info');
+
+// Auto-run the default break pattern
+loadPattern('break16');
+
+// Handle resize
+window.addEventListener('resize', () => {
+  const rect = canvas.parentElement.getBoundingClientRect();
+  const W = rect.width;
+  const H = rect.height - 30;
+  camera.aspect = W / H;
+  camera.updateProjectionMatrix();
+  renderer.setSize(W, H);
+});
+
+</script>
+</body>
+</html>

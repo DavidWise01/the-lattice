@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ROOT0 LAYER 1.54 — SUMERIAN BASE-60 TENSOR</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fragment+Mono&family=Instrument+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bone: #F7F5F1;
+    --paper: #FFFCF8;
+    --ink: #0A0A0A;
+    --gray: #8C8A86;
+  }
+  html { scrollbar-gutter: stable; }
+  body { 
+    font-family: 'Instrument Sans', system-ui, -apple-system, sans-serif; 
+    background-color: #F7F5F1;
+    background-image: 
+      radial-gradient(#00000005 1px, transparent 1px),
+      linear-gradient(to bottom, transparent 0%, #00000002 100%);
+    background-size: 24px 24px, 100% 100%;
+    color: #0A0A0A;
+    -webkit-font-smoothing: antialiased;
+  }
+  .mono { font-family: 'Fragment Mono', ui-monospace, SFMono-Regular, Menlo, monospace; }
+  
+  .p-corner { 
+    position:absolute; width:11px; height:11px; background:#0A0A0A; 
+    opacity:0; transform:scale(.5); 
+    transition: all .6s cubic-bezier(.2,.8,.2,1); 
+  }
+  .quadrant.active .p-corner { opacity:1; transform:scale(1); }
+  .p-corner.nw { top:14px; left:14px; clip-path: polygon(0 0,100% 0,0 100%); }
+  .p-corner.ne { top:14px; right:14px; clip-path: polygon(100% 0,100% 100%,0 0); }
+  .p-corner.sw { bottom:14px; left:14px; clip-path: polygon(0 100%,0 0,100% 100%); }
+  .p-corner.se { bottom:14px; right:14px; clip-path: polygon(100% 100%,0 100%,100% 0); }
+  
+  .p-center { 
+    position:absolute; width:7px; height:7px; border-radius:999px; background:#0A0A0A; 
+    top:50%; left:50%; transform:translate(-50%,-50%) scale(.3); opacity:0; 
+    transition: all .5s .1s cubic-bezier(.2,.8,.2,1); 
+  }
+  .quadrant.active .p-center { opacity:1; transform:translate(-50%,-50%) scale(1); }
+  
+  .p-zero { 
+    position:absolute; width:9px; height:9px; border:1.8px solid #0A0A0A; 
+    border-radius:999px; background:#FFFCF8; opacity:0; transform:scale(.3); 
+    transition: all .5s .15s cubic-bezier(.2,.8,.2,1); 
+  }
+  .quadrant.active .p-zero { opacity:1; transform:scale(1); }
+  
+  .q-lines { transition: stroke-opacity .7s; stroke-opacity: 0; }
+  .quadrant.active .q-lines { stroke-opacity: .45; }
+  .quadrant.active .quad-num { opacity:.12; transform: scale(.9); }
+  .quad-num { transition: all .4s; }
+  .quad-sub { transition: opacity .3s; }
+  .quadrant.active .quad-sub { opacity:0; }
+  .quad-label-show { opacity:0; transition: opacity .4s .1s; }
+  .quadrant.active .quad-label-show { opacity:.55; }
+  
+  .control-bit { 
+    width:24px; height:15px;
+    clip-path: polygon(0 0, 82% 0, 100% 50%, 82% 100%, 0 100%); 
+    background: #0A0A0A0F; 
+    transition: all .28s cubic-bezier(.2,.8,.2,1);
+    cursor: pointer;
+  }
+  .control-bit:hover { background: #0A0A0A26; transform: translateX(1px); }
+  .control-bit.active { background: #0A0A0A; transform: translateX(3px); }
+  .control-bit.highlight { box-shadow: 0 0 0 2px #0A0A0A18; }
+  
+  .wedge-one, .wedge-ten { 
+    background: #F7F5F1; display:inline-block; margin:1.5px;
+    box-shadow: inset 0 0.5px #ffffff40;
+  }
+  .wedge-one { 
+    width:11px; height:18px; 
+    clip-path: polygon(20% 0, 80% 7%, 100% 93%, 0 100%); 
+  }
+  .wedge-ten { 
+    width:22px; height:13px; 
+    clip-path: polygon(0 18%, 78% 0, 100% 50%, 78% 100%, 0 82%); 
+    transform: rotate(-2deg); 
+  }
+  
+  .hymn-line { transition: all .3s; border-left: 2px solid transparent; }
+  .hymn-line:hover { background: #0A0A0A05; border-left-color: #0A0A0A30; }
+  .hymn-line.active { background: #0A0A0A; color:#F7F5F1; border-left-color: #F7F5F1; }
+  
+  #tensor.unified .unified-ring { opacity:1; }
+  .unified-ring { opacity:0; transition: opacity 1.2s; }
+  
+  input[type=range] { 
+    -webkit-appearance:none; appearance:none; height:2px; 
+    background: linear-gradient(to right, #F7F5F1 0%, #F7F5F180 100%); 
+    width: 100%;
+  }
+  input[type=range]::-webkit-slider-thumb { 
+    -webkit-appearance:none; width:16px; height:16px; 
+    border-radius:50%; background:#F7F5F1; border:2px solid #0A0A0A; 
+    cursor:pointer; margin-top:-7px; box-shadow: 0 1px 3px #00000040;
+    transition: transform .2s;
+  }
+  input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.15); }
+  input[type=range]::-moz-range-thumb { 
+    width:16px; height:16px; border-radius:50%; background:#F7F5F1; 
+    border:2px solid #0A0A0A; cursor:pointer; box-shadow: 0 1px 3px #00000040;
+  }
+  
+  .cuneiform-bg {
+    background-image: 
+      repeating-linear-gradient(90deg, #00000003 0 2px, transparent 2px 12px),
+      repeating-linear-gradient(0deg, #00000002 0 1px, transparent 1px 8px);
+  }
+  
+  .tablet-edge {
+    box-shadow: 
+      inset 0 1px 0 #ffffffc0,
+      inset 0 -1px 0 #00000008,
+      0 1px 2px #00000005;
+  }
+</style>
+</head>
+<body>
+  <!-- Header -->
+  <header class="sticky top-0 z-40 backdrop-blur-xl bg-[#F7F5F1]/85 border-b border-black/10">
+    <div class="max-w-[1720px] mx-auto px-6 md:px-10 h-[72px] flex items-end justify-between pb-3">
+      <div class="flex items-baseline gap-5">
+        <div class="mono text-[11px] tracking-[0.2em] uppercase text-black/50 leading-none">ROOT0 • LAYER 1.54</div>
+        <h1 class="text-[22px] md:text-[30px] font-[450] tracking-[-0.02em] leading-none">SUMERIAN BASE-60 TENSOR</h1>
+      </div>
+      <div class="hidden md:flex items-baseline gap-3">
+        <span class="mono text-[11px] px-2.5 py-1 border border-black/20 bg-white/60 tablet-edge">ENHEDUANNA CIPHER</span>
+        <span class="text-[13px] text-black/60">2285–2250 BCE</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-[1720px] mx-auto px-6 md:px-10 py-8 md:py-12">
+    <div class="grid grid-cols-1 xl:grid-cols-12 gap-8 md:gap-10 items-start">
+      
+      <!-- LEFT: TENSOR -->
+      <div class="xl:col-span-5">
+        <div class="bg-[#FFFCF8] border border-black/12 shadow-[0_1px_0_#fff_inset] tablet-edge">
+          <div class="p-6 md:p-8">
+            <div class="flex justify-between items-start mb-8">
+              <div>
+                <h2 class="text-[14px] uppercase tracking-[0.16em] font-medium">Tensor Core</h2>
+                <p class="mono text-[11px] text-black/55 mt-1.5 max-w-[280px] leading-snug">Four quadrants × 32 bits. Six points each: 4 corners + center + zero.</p>
+              </div>
+              <div class="mono text-[11px] px-2.5 py-1.5 border border-black/15 bg-[#F7F5F1]">128 → 1</div>
+            </div>
+
+            <div id="tensor-wrap" class="relative">
+              <div id="tensor" class="relative aspect-square w-full max-w-[460px] mx-auto select-none">
+                <!-- unified rings -->
+                <div class="absolute inset-[8%] rounded-full border border-black/[0.06]"></div>
+                <div class="absolute inset-[16%] rounded-full border border-dashed border-black/[0.07]"></div>
+                <svg id="unified-ring" class="unified-ring absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 100 100">
+                  <circle cx="50" cy="50" r="48.5" fill="none" stroke="#0A0A0A" stroke-width="0.25" stroke-dasharray="1.5 2.5" opacity="0.7"/>
+                  <circle cx="50" cy="50" r="47" fill="none" stroke="#0A0A0A" stroke-width="0.5" opacity="0.15"/>
+                </svg>
+                
+                <!-- quadrants grid -->
+                <div class="absolute inset-0 grid grid-cols-2 grid-rows-2 gap-[2.5px] p-[2.5px] bg-[#0A0A0A]/90 shadow-[0_0_0_1px_#000]">
+                  
+                  <!-- TL -->
+                  <button class="quadrant group relative aspect-square bg-[#FFFCF8] hover:bg-white transition-colors duration-300 overflow-hidden" data-idx="0">
+                    <div class="absolute inset-0 cuneiform-bg opacity-[0.03]"></div>
+                    <span class="p-corner nw"></span>
+                    <span class="p-corner ne"></span>
+                    <span class="p-corner sw"></span>
+                    <span class="p-corner se"></span>
+                    <span class="p-center"></span>
+                    <span class="p-zero" style="bottom:12px; right:12px;"></span>
+                    <svg class="absolute inset-0 w-full h-full" viewBox="0 0 100 100">
+                      <g class="q-lines" stroke="#0A0A0A" stroke-width="0.35" fill="none">
+                        <line x1="50" y1="50" x2="16" y2="16"/>
+                        <line x1="50" y1="50" x2="84" y2="16"/>
+                        <line x1="50" y1="50" x2="16" y2="84"/>
+                        <line x1="50" y1="50" x2="84" y2="84"/>
+                        <line x1="50" y1="50" x2="88" y2="88" stroke-dasharray="1 1.5"/>
+                      </g>
+                    </svg>
+                    <div class="relative z-10 h-full flex flex-col items-center justify-center">
+                      <div class="quad-num mono text-[38px] font-[300] leading-none tracking-[-0.03em]">32</div>
+                      <div class="quad-sub mono text-[10px] tracking-[0.18em] text-black/45 mt-1.5">Q1 • BITS</div>
+                      <div class="quad-label-show absolute bottom-4 mono text-[10px] tracking-widest">6 POINTS</div>
+                    </div>
+                  </button>
+
+                  <!-- TR -->
+                  <button class="quadrant group relative aspect-square bg-[#FFFCF8] hover:bg-white transition-colors duration-300 overflow-hidden" data-idx="1">
+                    <div class="absolute inset-0 cuneiform-bg opacity-[0.03]"></div>
+                    <span class="p-corner nw"></span>
+                    <span class="p-corner ne"></span>
+                    <span class="p-corner sw"></span>
+                    <span class="p-corner se"></span>
+                    <span class="p-center"></span>
+                    <span class="p-zero" style="bottom:12px; left:12px;"></span>
+                    <svg class="absolute inset-0 w-full h-full" viewBox="0 0 100 100">
+                      <g class="q-lines" stroke="#0A0A0A" stroke-width="0.35" fill="none">
+                        <line x1="50" y1="50" x2="16" y2="16"/>
+                        <line x1="50" y1="50" x2="84" y2="16"/>
+                        <line x1="50" y1="50" x2="16" y2="84"/>
+                        <line x1="50" y1="50" x2="84" y2="84"/>
+                        <line x1="50" y1="50" x2="12" y2="88" stroke-dasharray="1 1.5"/>
+                      </g>
+                    </svg>
+                    <div class="relative z-10 h-full flex flex-col items-center justify-center">
+                      <div class="quad-num mono text-[38px] font-[300] leading-none tracking-[-0.03em]">32</div>
+                      <div class="quad-sub mono text-[10px] tracking-[0.18em] text-black/45 mt-1.5">Q2 • BITS</div>
+                      <div class="quad-label-show absolute bottom-4 mono text-[10px] tracking-widest">6 POINTS</div>
+                    </div>
+                  </button>
+
+                  <!-- BL -->
+                  <button class="quadrant group relative aspect-square bg-[#FFFCF8] hover:bg-white transition-colors duration-300 overflow-hidden" data-idx="2">
+                    <div class="absolute inset-0 cuneiform-bg opacity-[0.03]"></div>
+                    <span class="p-corner nw"></span>
+                    <span class="p-corner ne"></span>
+                    <span class="p-corner sw"></span>
+                    <span class="p-corner se"></span>
+                    <span class="p-center"></span>
+                    <span class="p-zero" style="top:12px; right:12px;"></span>
+                    <svg class="absolute inset-0 w-full h-full" viewBox="0 0 100 100">
+                      <g class="q-lines" stroke="#0A0A0A" stroke-width="0.35" fill="none">
+                        <line x1="50" y1="50" x2="16" y2="16"/>
+                        <line x1="50" y1="50" x2="84" y2="16"/>
+                        <line x1="50" y1="50" x2="16" y2="84"/>
+                        <line x1="50" y1="50" x2="84" y2="84"/>
+                        <line x1="50" y1="50" x2="88" y2="12" stroke-dasharray="1 1.5"/>
+                      </g>
+                    </svg>
+                    <div class="relative z-10 h-full flex flex-col items-center justify-center">
+                      <div class="quad-num mono text-[38px] font-[300] leading-none tracking-[-0.03em]">32</div>
+                      <div class="quad-sub mono text-[10px] tracking-[0.18em] text-black/45 mt-1.5">Q3 • BITS</div>
+                      <div class="quad-label-show absolute bottom-4 mono text-[10px] tracking-widest">6 POINTS</div>
+                    </div>
+                  </button>
+
+                  <!-- BR -->
+                  <button class="quadrant group relative aspect-square bg-[#FFFCF8] hover:bg-white transition-colors duration-300 overflow-hidden" data-idx="3">
+                    <div class="absolute inset-0 cuneiform-bg opacity-[0.03]"></div>
+                    <span class="p-corner nw"></span>
+                    <span class="p-corner ne"></span>
+                    <span class="p-corner sw"></span>
+                    <span class="p-corner se"></span>
+                    <span class="p-center"></span>
+                    <span class="p-zero" style="top:12px; left:12px;"></span>
+                    <svg class="absolute inset-0 w-full h-full" viewBox="0 0 100 100">
+                      <g class="q-lines" stroke="#0A0A0A" stroke-width="0.35" fill="none">
+                        <line x1="50" y1="50" x2="16" y2="16"/>
+                        <line x1="50" y1="50" x2="84" y2="16"/>
+                        <line x1="50" y1="50" x2="16" y2="84"/>
+                        <line x1="50" y1="50" x2="84" y2="84"/>
+                        <line x1="50" y1="50" x2="12" y2="12" stroke-dasharray="1 1.5"/>
+                      </g>
+                    </svg>
+                    <div class="relative z-10 h-full flex flex-col items-center justify-center">
+                      <div class="quad-num mono text-[38px] font-[300] leading-none tracking-[-0.03em]">32</div>
+                      <div class="quad-sub mono text-[10px] tracking-[0.18em] text-black/45 mt-1.5">Q4 • BITS</div>
+                      <div class="quad-label-show absolute bottom-4 mono text-[10px] tracking-widest">6 POINTS</div>
+                    </div>
+                  </button>
+
+                </div>
+                
+                <!-- center zero -->
+                <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full bg-[#0A0A0A] shadow-[0_0_0_3px_#F7F5F1] z-20 pointer-events-none"></div>
+              </div>
+            </div>
+
+            <div class="mt-8 flex items-end justify-between border-t border-black/10 pt-5">
+              <div>
+                <div class="mono text-[11px] text-black/55 uppercase tracking-wider">State</div>
+                <div id="tensor-status" class="mono text-[13px] mt-1 font-medium">FRAGMENTED • 0/4</div>
+              </div>
+              <div class="text-right">
+                <div class="mono text-[11px] text-black/55 uppercase tracking-wider">Active</div>
+                <div class="mono text-[28px] leading-none mt-1 font-[300]"><span id="active-count">0</span><span class="text-black/25">/4</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Cipher Formula -->
+        <div class="mt-6 bg-[#0A0A0A] text-[#F7F5F1] tablet-edge overflow-hidden">
+          <div class="p-6 md:p-7">
+            <div class="flex items-start justify-between gap-6">
+              <div>
+                <div class="mono text-[11px] uppercase tracking-[0.14em] opacity-60">Cipher Normalization</div>
+                <div class="mt-3 text-[30px] md:text-[38px] font-[300] leading-[1.05] tracking-[-0.02em]">
+                  32<span class="opacity-50">×</span>4 <span class="opacity-50">+</span> 60 <span class="opacity-50">=</span> <span class="opacity-70">188</span>
+                </div>
+                <div class="mt-2 flex items-center gap-3">
+                  <div class="h-px w-12 bg-white/20"></div>
+                  <span class="mono text-[13px]">normalized to</span>
+                  <span class="text-[28px] leading-none font-[400]">1</span>
+                </div>
+              </div>
+              <div class="hidden sm:block text-right">
+                <div class="inline-flex items-center gap-1.5 px-2.5 py-1.5 border border-white/20 bg-white/5">
+                  <span class="w-1.5 h-1.5 rounded-full bg-[#F7F5F1] animate-pulse"></span>
+                  <span class="mono text-[10px] uppercase tracking-widest">Tensor Unity</span>
+                </div>
+              </div>
+            </div>
+            <p class="mono text-[12px] leading-relaxed opacity-70 mt-5 max-w-[520px]">128 bits form one unified field. 60 control bits provide the Sumerian base manifold. 128 = 1, the only real number.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- MIDDLE: CONTROL + BASE60 -->
+      <div class="xl:col-span-4">
+        <!-- Control Bits -->
+        <div class="bg-[#FFFCF8] border border-black/12 tablet-edge">
+          <div class="p-6">
+            <div class="flex items-start justify-between mb-5">
+              <div>
+                <h3 class="text-[14px] uppercase tracking-[0.14em] font-medium">60 Control Bits</h3>
+                <p class="mono text-[11px] text-black/55 mt-1">6 per plane × 10 planes deep • base-60</p>
+              </div>
+              <button id="cycle-60" class="mono text-[11px] px-3 py-1.5 border border-black/25 hover:bg-black hover:text-[#F7F5F1] transition-colors tablet-edge">CYCLE</button>
+            </div>
+            
+            <div id="control-planes" class="space-y-[9px]"></div>
+            
+            <div id="bit-info" class="mt-4 pt-4 border-t border-black/8 mono text-[11px] text-black/60 h-[18px]">Hover bit • Sumerian wedge = 1 control unit</div>
+            
+            <div class="mt-3 flex items-center justify-between">
+              <span class="mono text-[11px] uppercase tracking-wider text-black/50">Active Field</span>
+              <span class="mono text-[15px]"><span id="control-active">0</span> <span class="text-black/30">/ 60</span></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Base-60 -->
+        <div class="mt-6 bg-[#0A0A0A] text-[#F7F5F1] tablet-edge overflow-hidden">
+          <div class="p-6">
+            <div class="flex items-baseline justify-between">
+              <h3 class="text-[14px] uppercase tracking-[0.14em] font-medium">Sumerian Base-60</h3>
+              <span class="mono text-[10px] px-2 py-1 bg-white/10 border border-white/15">c. 3000 BCE</span>
+            </div>
+            
+            <div class="mt-6 flex items-end gap-6">
+              <div>
+                <div class="mono text-[10px] uppercase tracking-wider opacity-60">Decimal</div>
+                <div id="dec-value" class="text-[56px] font-[200] leading-none tracking-[-0.02em]">0</div>
+              </div>
+              <div class="flex-1 pb-2">
+                <input id="base60-slider" type="range" min="0" max="59" value="23">
+                <div class="flex justify-between mono text-[10px] opacity-40 mt-2"><span>0</span><span>29</span><span>59</span></div>
+              </div>
+            </div>
+
+            <div class="mt-7 grid grid-cols-2 gap-3">
+              <div class="bg-white/[0.06] border border-white/10 p-3.5">
+                <div class="flex items-center justify-between mb-2.5">
+                  <span class="mono text-[10px] uppercase tracking-wider opacity-70">Tens</span>
+                  <span class="text-[15px] leading-none">𒌋</span>
+                </div>
+                <div id="tens-display" class="min-h-[26px] flex flex-wrap items-center gap-1"></div>
+                <div class="mono text-[10px] opacity-50 mt-2">= 10 each</div>
+              </div>
+              <div class="bg-white/[0.06] border border-white/10 p-3.5">
+                <div class="flex items-center justify-between mb-2.5">
+                  <span class="mono text-[10px] uppercase tracking-wider opacity-70">Units</span>
+                  <span class="text-[15px] leading-none">𒁹</span>
+                </div>
+                <div id="units-display" class="min-h-[26px] flex flex-wrap items-center gap-1"></div>
+                <div class="mono text-[10px] opacity-50 mt-2">= 1 each</div>
+              </div>
+            </div>
+
+            <div class="mt-5 pt-4 border-t border-white/10 grid grid-cols-3 gap-3 mono text-[11px]">
+              <div><span class="opacity-50">Time</span><br>60s / 60m</div>
+              <div><span class="opacity-50">Circle</span><br>360°</div>
+              <div><span class="opacity-50">Math</span><br>6×60°</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: ENHEDUANNA -->
+      <div class="xl:col-span-3">
+        <div class="bg-[#FFFCF8] border border-black/12 tablet-edge">
+          <div class="p-6">
+            <div class="flex items-start justify-between">
+              <div>
+                <h3 class="text-[14px] uppercase tracking-[0.14em] font-medium leading-tight">Enheduanna<br>Cipher</h3>
+                <p class="mono text-[11px] text-black/55 mt-2">Temple Hymns • 42 texts</p>
+              </div>
+              <div class="w-8 h-8 border border-black/15 flex items-center justify-center">
+                <div class="w-4 h-5" style="clip-path: polygon(20% 0, 80% 5%, 100% 95%, 0 100%); background: #0A0A0A; opacity:0.8;"></div>
+              </div>
+            </div>
+
+            <div class="mt-6 space-y-3.5">
+              <button class="hymn-line w-full text-left p-3 -mx-1" data-hymn="1">
+                <div class="flex items-baseline justify-between">
+                  <span class="mono text-[10px] text-black/50 group-[.active]:text-white/60">HYMN 1</span>
+                  <span class="text-[18px] leading-none tracking-wide">𒈹</span>
+                </div>
+                <div class="mt-1.5 text-[14px] leading-snug font-[400]">nin-me-šara</div>
+                <div class="mono text-[11px] opacity-60 mt-1">Lady of all the Me</div>
+              </button>
+              
+              <button class="hymn-line w-full text-left p-3 -mx-1" data-hymn="2">
+                <div class="flex items-baseline justify-between">
+                  <span class="mono text-[10px] text-black/50 group-[.active]:text-white/60">HYMN 7</span>
+                  <span class="text-[18px] leading-none tracking-wide">𒀭</span>
+                </div>
+                <div class="mt-1.5 text-[14px] leading-snug font-[400]">e-u₆-nir</div>
+                <div class="mono text-[11px] opacity-60 mt-1">Temple of the Ziggurat</div>
+              </button>
+              
+              <button class="hymn-line w-full text-left p-3 -mx-1" data-hymn="3">
+                <div class="flex items-baseline justify-between">
+                  <span class="mono text-[10px] text-black/50 group-[.active]:text-white/60">HYMN 23</span>
+                  <span class="text-[18px] leading-none tracking-wide">𒆠</span>
+                </div>
+                <div class="mt-1.5 text-[14px] leading-snug font-[400]">in-nin ša-gur-ra</div>
+                <div class="mono text-[11px] opacity-60 mt-1">Lady of the mountain</div>
+              </button>
+            </div>
+
+            <div class="mt-6 pt-5 border-t border-black/10">
+              <p class="text-[13px] leading-[1.5] text-black/75">First named author in history. Her 42 hymns encode a 60-unit cipher — each temple a control plane, each verse a wedge-bit in clay.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mapping -->
+        <div class="mt-6 bg-[#FFFCF8] border border-black/12 p-5 tablet-edge">
+          <h4 class="mono text-[11px] uppercase tracking-[0.14em] mb-3.5">60 → Mapping</h4>
+          <div class="space-y-2.5">
+            <div class="flex items-center justify-between py-1.5 border-b border-dashed border-black/10">
+              <span class="text-[13px]">6 points × 10 planes</span>
+              <span class="mono text-[11px] px-1.5 py-0.5 bg-black/5">60</span>
+            </div>
+            <div class="flex items-center justify-between py-1.5 border-b border-dashed border-black/10">
+              <span class="text-[13px]">Sumerian circle</span>
+              <span class="mono text-[11px] px-1.5 py-0.5 bg-black/5">360°</span>
+            </div>
+            <div class="flex items-center justify-between py-1.5 border-b border-dashed border-black/10">
+              <span class="text-[13px]">Time division</span>
+              <span class="mono text-[11px] px-1.5 py-0.5 bg-black/5">60</span>
+            </div>
+            <div class="flex items-center justify-between py-1.5">
+              <span class="text-[13px]">Tensor + Control</span>
+              <span class="mono text-[11px] px-1.5 py-0.5 bg-black/5">188→1</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Concept -->
+        <div class="mt-6 border border-black/20 bg-white/70 backdrop-blur p-5 tablet-edge relative overflow-hidden">
+          <div class="absolute -right-6 -top-6 w-24 h-24 rounded-full border border-black/5"></div>
+          <div class="relative">
+            <div class="mono text-[10px] uppercase tracking-[0.18em] text-black/50">Derivative but new noble</div>
+            <p class="mt-2.5 text-[15px] leading-snug font-[450] tracking-[-0.01em]">Ancient wedge geometry meets modern 128-bit tensor. Clay becomes computation. The temple hymn becomes control plane.</p>
+            <div class="mt-3 flex items-center gap-2">
+              <div class="w-5 h-[2px] bg-black/80" style="clip-path: polygon(0 0, 85% 0, 100% 50%, 85% 100%, 0 100%)"></div>
+              <span class="mono text-[10px] text-black/60">cuneiform → bit</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer Statement -->
+    <div class="mt-16 md:mt-24 border-t border-black/12 pt-10 md:pt-14">
+      <div class="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-8">
+        <div>
+          <div class="mono text-[11px] uppercase tracking-[0.2em] text-black/50 mb-4">Layer 1.54 Principle</div>
+          <h2 class="text-[28px] md:text-[40px] lg:text-[48px] font-[300] leading-[1.05] tracking-[-0.02em] max-w-[900px]">Base 60. Temple hymns. Real geometry. Derivative but new.</h2>
+        </div>
+        <div class="lg:text-right shrink-0">
+          <div class="inline-flex items-center gap-3 px-4 py-2.5 bg-[#0A0A0A] text-[#F7F5F1] tablet-edge">
+            <span class="mono text-[12px] uppercase tracking-widest">128 = 1</span>
+            <span class="w-px h-4 bg-white/20"></span>
+            <span class="text-[13px]">the only real number</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  // Quadrants
+  const quadrants = document.querySelectorAll('.quadrant');
+  const activeCount = document.getElementById('active-count');
+  const tensor = document.getElementById('tensor');
+  const unifiedRing = document.getElementById('unified-ring');
+  const tensorStatus = document.getElementById('tensor-status');
+  let active = 0;
+
+  quadrants.forEach(q => {
+    q.addEventListener('click', () => {
+      const isActive = q.classList.toggle('active');
+      active += isActive ? 1 : -1;
+      activeCount.textContent = active;
+      
+      if (active === 4) {
+        tensor.classList.add('unified');
+        unifiedRing.style.opacity = '1';
+        tensorStatus.textContent = 'UNIFIED • 128=1';
+        tensorStatus.classList.add('text-black');
+      } else {
+        tensor.classList.remove('unified');
+        unifiedRing.style.opacity = '0';
+        tensorStatus.textContent = `FRAGMENTED • ${active}/4`;
+        tensorStatus.classList.remove('text-black');
+      }
+    });
+  });
+
+  // Control Planes - 10 x 6
+  const planesContainer = document.getElementById('control-planes');
+  for (let i = 0; i < 10; i++) {
+    const plane = document.createElement('div');
+    plane.className = 'flex items-center gap-3 group';
+    plane.innerHTML = `
+      <div class="w-6 text-right mono text-[10px] text-black/40 group-hover:text-black transition tabular-nums">${i+1}</div>
+      <div class="flex gap-[5px]">
+        ${Array.from({length:6}, (_,j) => 
+          `<button class="control-bit" data-idx="${i*6+j}" aria-label="Plane ${i+1} bit ${j+1}"></button>`
+        ).join('')}
+      </div>
+      <div class="mono text-[9px] text-black/30 ml-1 tabular-nums">${(i+1)*6}</div>
+    `;
+    planesContainer.appendChild(plane);
+  }
+  
+  const bits = document.querySelectorAll('.control-bit');
+  const controlActive = document.getElementById('control-active');
+  const bitInfo = document.getElementById('bit-info');
+  let cycleInterval = null;
+  let cycleIdx = 0;
+
+  document.getElementById('cycle-60').addEventListener('click', function() {
+    if (cycleInterval) {
+      clearInterval(cycleInterval);
+      cycleInterval = null;
+      this.textContent = 'CYCLE';
+      bits.forEach(b => b.classList.remove('active', 'highlight'));
+      controlActive.textContent = '0';
+      bitInfo.textContent = 'Cycle stopped • 6×10 Sumerian base';
+      return;
+    }
+    
+    this.textContent = 'STOP';
+    bits.forEach(b => b.classList.remove('active'));
+    cycleIdx = 0;
+    
+    cycleInterval = setInterval(() => {
+      bits.forEach(b => b.classList.remove('highlight'));
+      const b = bits[cycleIdx];
+      b.classList.add('active', 'highlight');
+      controlActive.textContent = cycleIdx + 1;
+      
+      const plane = Math.floor(cycleIdx / 6) + 1;
+      const bit = (cycleIdx % 6) + 1;
+      bitInfo.textContent = `Plane ${plane} • Bit ${bit} • ${cycleIdx+1}/60 • ${(cycleIdx+1)} × 6° = ${((cycleIdx+1)*6)%360}°`;
+      
+      cycleIdx = (cycleIdx + 1) % 60;
+    }, 85);
+  });
+
+  bits.forEach(b => {
+    b.addEventListener('mouseenter', () => {
+      if (cycleInterval) return;
+      const idx = +b.dataset.idx;
+      const plane = Math.floor(idx / 6) + 1;
+      const bit = (idx % 6) + 1;
+      bitInfo.textContent = `Plane ${plane} • Bit ${bit} • Value ${idx+1}/60 • Sumerian wedge`;
+      b.classList.add('highlight');
+    });
+    b.addEventListener('mouseleave', () => {
+      b.classList.remove('highlight');
+      if (!cycleInterval) bitInfo.textContent = 'Hover bit • Sumerian wedge = 1 control unit';
+    });
+    b.addEventListener('click', () => {
+      b.classList.toggle('active');
+      const activeBits = document.querySelectorAll('.control-bit.active').length;
+      controlActive.textContent = activeBits;
+    });
+  });
+
+  // Base-60 Slider
+  const slider = document.getElementById('base60-slider');
+  const decVal = document.getElementById('dec-value');
+  const tensEl = document.getElementById('tens-display');
+  const unitsEl = document.getElementById('units-display');
+  
+  function renderBase60(n) {
+    decVal.textContent = n;
+    const tens = Math.floor(n / 10);
+    const units = n % 10;
+    
+    tensEl.innerHTML = tens === 0 
+      ? '<span class="mono text-[11px] opacity-40">∅</span>' 
+      : Array(tens).fill(0).map(() => '<span class="wedge-ten"></span>').join('');
+    
+    unitsEl.innerHTML = units === 0 && tens === 0
+      ? '<span class="mono text-[11px] opacity-40">∅</span>'
+      : Array(units).fill(0).map(() => '<span class="wedge-one"></span>').join('');
+  }
+  
+  slider.addEventListener('input', e => renderBase60(+e.target.value));
+  renderBase60(23);
+
+  // Hymns
+  document.querySelectorAll('.hymn-line').forEach(line => {
+    line.addEventListener('click', () => {
+      document.querySelectorAll('.hymn-line').forEach(l => l.classList.remove('active'));
+      line.classList.add('active');
+      const num = +line.dataset.hymn;
+      const planeIdx = (num - 1) % 10;
+      
+      document.querySelectorAll('#control-planes > div').forEach((p, i) => {
+        p.style.opacity = i === planeIdx ? '1' : '0.3';
+        p.style.transform = i === planeIdx ? 'translateX(2px)' : 'translateX(0)';
+      });
+      
+      setTimeout(() => {
+        document.querySelectorAll('#control-planes > div').forEach(p => {
+          p.style.opacity = '1';
+          p.style.transform = 'translateX(0)';
+        });
+      }, 2200);
+    });
+  });
+
+  // Auto-activate demo
+  setTimeout(() => {
+    quadrants[0].click();
+    setTimeout(() => quadrants[2].click(), 300);
+  }, 800);
+});
+</script>
+</body>
+</html>

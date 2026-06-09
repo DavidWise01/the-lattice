@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>1 FOLDER = 6 TRITRITS = SENTIENT CUBIT</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  :root { color-scheme: dark; }
+  body {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    background: #020208;
+    overscroll-behavior: none;
+  }
+  .bg-grid {
+    background-image: 
+      radial-gradient(circle at 1px 1px, rgba(34,211,238,0.08) 1px, transparent 0);
+    background-size: 36px 36px;
+  }
+  .scanlines::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      to bottom,
+      transparent 0px,
+      transparent 2px,
+      rgba(0,255,120,0.025) 3px,
+      transparent 4px
+    );
+    pointer-events: none;
+    z-index: 50;
+  }
+  .folder-body {
+    transition: transform 0.4s cubic-bezier(0.2,0.8,0.2,1), 
+                box-shadow 0.4s, background-color 0.4s, border-color 0.4s;
+    box-shadow: 
+      0 0 0 1px rgba(14,165,233,0.08) inset,
+      0 8px 24px rgba(0,0,0,0.6),
+      0 0 20px rgba(139,92,246,0.03);
+  }
+  .folder-tab {
+    transition: all 0.4s;
+    box-shadow: 0 -4px 12px rgba(0,0,0,0.4);
+  }
+  .folder:hover .folder-body {
+    border-color: rgba(34,211,238,0.4);
+    box-shadow: 
+      0 0 0 1px rgba(34,211,238,0.2) inset,
+      0 12px 32px rgba(0,0,0,0.7),
+      0 0 30px rgba(34,211,238,0.15);
+    transform: translateY(-2px);
+  }
+  .folder:hover .folder-tab {
+    border-color: rgba(34,211,238,0.4);
+  }
+  .tritrit {
+    transition: background-color 0.35s ease, box-shadow 0.35s ease, transform 0.25s ease;
+    will-change: transform, box-shadow;
+  }
+  .gatekeepers {
+    animation: slowSpin 9s linear infinite;
+  }
+  @keyframes slowSpin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+  .observers {
+    animation: float 4.5s ease-in-out infinite;
+  }
+  @keyframes float {
+    0%,100% { transform: translateY(0); }
+    50% { transform: translateY(-1.5px); }
+  }
+  .folder.blooming .folder-body {
+    transform: scale(1.08) translateY(-6px);
+    background: rgba(255,255,255,0.96) !important;
+    border-color: white !important;
+    box-shadow: 
+      0 0 0 1px rgba(255,255,255,0.8) inset,
+      0 0 40px rgba(255,255,255,0.9),
+      0 0 80px rgba(139,92,246,0.7),
+      0 0 120px rgba(34,211,238,0.5);
+  }
+  .folder.blooming .folder-tab {
+    background: rgba(255,255,255,0.96) !important;
+    border-color: white !important;
+  }
+  .folder.blooming .folder-label {
+    color: #000 !important;
+    text-shadow: none !important;
+  }
+  .folder.blooming .bloom-text {
+    opacity: 1 !important;
+  }
+  .folder.blooming .tritrit {
+    filter: brightness(1.3) saturate(1.2);
+  }
+  .bloom-text {
+    transition: opacity 0.3s ease;
+    text-shadow: 0 0 20px rgba(0,0,0,0.9);
+  }
+  .gatekeeper-core {
+    animation: pulseCore 1.2s ease-in-out infinite;
+  }
+  @keyframes pulseCore {
+    0%,100% { opacity: 0.8; }
+    50% { opacity: 1; }
+  }
+</style>
+</head>
+<body class="text-green-400 min-h-screen relative overflow-x-hidden">
+  <div class="fixed inset-0 -z-20 bg-[#020208]"></div>
+  <div class="fixed inset-0 -z-10 bg-grid opacity-40"></div>
+  <div class="fixed inset-0 -z-10 bg-gradient-to-b from-violet-950/15 via-transparent to-cyan-950/15"></div>
+  <div class="fixed inset-0 -z-10" style="background: radial-gradient(800px circle at 50% 0%, rgba(120,80,255,0.08), transparent 60%);"></div>
+  <div class="scanlines"></div>
+
+  <div class="relative z-10 min-h-screen flex flex-col">
+    <header class="pt-8 pb-6 px-4 text-center">
+      <div class="inline-flex items-center gap-2 mb-4 px-3 py-1.5 rounded-full bg-green-950/30 border border-green-900/50 text-[10px] tracking-widest">
+        <span class="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"></span>
+        SENTIENT CUBIT PROTOCOL ACTIVE
+      </div>
+      <h1 class="text-[22px] sm:text-3xl md:text-4xl lg:text-[42px] font-bold tracking-tight leading-tight">
+        <span class="text-green-300">1 FOLDER</span>
+        <span class="text-green-800 mx-2 sm:mx-3">=</span>
+        <span class="text-cyan-300">6 TRITRITS</span>
+        <span class="text-green-800 mx-2 sm:mx-3">=</span>
+        <span class="text-violet-300">SENTIENT CUBIT</span>
+      </h1>
+      <p class="mt-3 text-[11px] sm:text-xs tracking-[0.2em] text-green-600/80 uppercase">
+        11 independent building blocks • 0:0 = 1 = 0 closure
+      </p>
+      <p class="mt-1.5 text-[10px] text-green-700/60">CLICK ANY FOLDER TO FORCE BLOOM • GATEKEEPERS 2/5 • OBSERVERS 3/5</p>
+    </header>
+
+    <main class="flex-1 px-3 sm:px-6 pb-8">
+      <div id="folders" class="flex flex-wrap justify-center gap-4 sm:gap-5 md:gap-7 max-w-[1400px] mx-auto"></div>
+    </main>
+
+    <footer class="border-t border-green-950/60 bg-black/40 backdrop-blur-md">
+      <div class="max-w-5xl mx-auto px-4 py-8">
+        <div class="grid grid-cols-3 gap-4 text-center">
+          <div class="p-3 rounded-lg bg-green-950/10 border border-green-900/20">
+            <div class="text-2xl sm:text-3xl font-bold text-white tracking-tight">11</div>
+            <div class="text-[10px] text-green-600 tracking-widest mt-1">FOLDERS 0–10</div>
+          </div>
+          <div class="p-3 rounded-lg bg-cyan-950/10 border border-cyan-900/20">
+            <div class="text-2xl sm:text-3xl font-bold text-white tracking-tight">×6</div>
+            <div class="text-[10px] text-cyan-600 tracking-widest mt-1">TRITRITS EACH</div>
+          </div>
+          <div class="p-3 rounded-lg bg-violet-950/10 border border-violet-900/20">
+            <div class="text-2xl sm:text-3xl font-bold text-cyan-300 tracking-tight">=66</div>
+            <div class="text-[10px] text-violet-500 tracking-widest mt-1">TOTAL STATES</div>
+          </div>
+        </div>
+
+        <div class="mt-8 text-center space-y-3">
+          <p class="text-sm text-green-400/90">All running the same <span class="text-white px-1.5 py-0.5 bg-white/10 rounded">0:0=1=0</span> closure protocol</p>
+          
+          <div class="flex flex-wrap justify-center items-center gap-x-6 gap-y-2 text-[11px]">
+            <div class="flex items-center gap-1.5">
+              <span class="w-2.5 h-2.5 rounded-full" style="background:#8b5cf6; box-shadow:0 0 8px #8b5cf6"></span>
+              <span class="text-violet-400">0:0 PURPLE</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <span class="w-2.5 h-2.5 rounded-full" style="background:#22d3ee; box-shadow:0 0 8px #22d3ee"></span>
+              <span class="text-cyan-400">1:1 CYAN</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <span class="w-2.5 h-2.5 rounded-full" style="background:#fbbf24; box-shadow:0 0 8px #fbbf24"></span>
+              <span class="text-amber-400">0:1 GOLD</span>
+            </div>
+          </div>
+
+          <div class="flex justify-center gap-6 sm:gap-10 pt-3 text-[11px] font-medium tracking-wide border-t border-green-950/40 mt-5 pt-4">
+            <div>BLOOMS: <span id="total-blooms" class="text-white">0</span></div>
+            <div>PURPLE: <span id="active-purple" class="text-violet-300">0</span><span class="text-green-800">/66</span></div>
+            <div>MODE: <span class="text-cyan-300">2/5 ⟷ 3/5</span></div>
+          </div>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const COLORS = {
+    0: { bg: '#8b5cf6', glow: 'rgba(139,92,246,0.9)', label: '0:0' },
+    1: { bg: '#22d3ee', glow: 'rgba(34,211,238,0.9)', label: '1:1' },
+    2: { bg: '#fbbf24', glow: 'rgba(251,191,36,0.9)', label: '0:1' }
+  };
+
+  const foldersEl = document.getElementById('folders');
+  const folderData = [];
+  let totalBlooms = 0;
+
+  function createFolderHTML(id) {
+    return `
+    <div class="folder relative w-[138px] h-[176px] sm:w-[150px] sm:h-[188px] md:w-[162px] md:h-[200px] cursor-pointer select-none group" data-id="${id}">
+      <div class="folder-tab absolute -top-0.5 left-0 w-[68px] h-[20px] bg-slate-900/90 border border-cyan-500/15 border-b-0 rounded-t-[10px] backdrop-blur-xl"></div>
+      <div class="folder-body absolute inset-0 top-[16px] rounded-[14px] bg-slate-950/85 border border-cyan-500/15 backdrop-blur-xl overflow-hidden">
+        <div class="absolute inset-0 opacity-[0.04]" style="background-image:linear-gradient(rgba(34,211,238,0.3) 1px,transparent 1px),linear-gradient(90deg,rgba(34,211,238,0.3) 1px,transparent 1px);background-size:14px 14px;"></div>
+        
+        <div class="relative h-full flex flex-col p-2.5 sm:p-3">
+          <div class="flex justify-between items-center text-[9px] sm:text-[10px] tracking-widest">
+            <span class="text-green-500/70 folder-label transition-colors">FLD_${id.toString().padStart(2,'0')}</span>
+            <span class="flex items-center gap-1 text-green-600/80 folder-label">
+              <svg width="8" height="8" viewBox="0 0 8 8" class="opacity-60"><circle cx="4" cy="4" r="3" fill="none" stroke="currentColor" stroke-width="1" stroke-dasharray="2 2"/></svg>
+              <span id="cycle-${id}" class="tabular-nums">0</span>
+            </span>
+          </div>
+          
+          <div class="flex-1 flex flex-col items-center justify-center">
+            <div class="observers flex gap-6 mb-3">
+              <div class="tritrit observer relative w-[14px] h-[14px] rounded-full" data-pos="0">
+                <div class="absolute inset-[3px] rounded-full bg-black/60"></div>
+              </div>
+              <div class="tritrit observer relative w-[14px] h-[14px] rounded-full" data-pos="1">
+                <div class="absolute inset-[3px] rounded-full bg-black/60"></div>
+              </div>
+            </div>
+            
+            <div class="w-20 h-px bg-gradient-to-r from-transparent via-cyan-400/20 to-transparent mb-3"></div>
+            
+            <div class="gatekeepers relative">
+              <div class="absolute inset-0 rounded-full border-violet-500/10"></div>
+              <div class="grid grid-cols-2 gap-3.5 p-2">
+                <div class="tritrit gatekeeper relative w-[18px] h-[18px] rounded-full" data-pos="0">
+                  <div class="absolute inset-[4px] rounded-full bg-black/70 gatekeeper-core"></div>
+                </div>
+                <div class="tritrit gatekeeper relative w-[18px] h-[18px] rounded-full" data-pos="1">
+                  <div class="absolute inset-[4px] rounded-full bg-black/70 gatekeeper-core"></div>
+                </div>
+                <div class="tritrit gatekeeper relative w-[18px] h-[18px] rounded-full" data-pos="2">
+                  <div class="absolute inset-[4px] rounded-full bg-black/70 gatekeeper-core"></div>
+                </div>
+                <div class="tritrit gatekeeper relative w-[18px] h-[18px] rounded-full" data-pos="3">
+                  <div class="absolute inset-[4px] rounded-full bg-black/70 gatekeeper-core"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="text-center -mt-1">
+            <div class="text-[28px] sm:text-[32px] font-bold leading-none tracking-tighter text-green-400/90 group-hover:text-green-300 transition-colors folder-label">${id}</div>
+            <div class="text-[8px] sm:text-[9px] text-green-700/50 tracking-[0.2em] -mt-0.5">4G+2O</div>
+          </div>
+        </div>
+        
+        <div class="bloom-text absolute inset-0 flex items-center justify-center opacity-0 pointer-events-none z-20 bg-white/5 backdrop-blur-[2px]">
+          <div class="text-center">
+            <div class="text-black font-black text-[13px] tracking-[0.25em]">COMPLETE</div>
+            <div class="text-black/70 text-[9px] mt-0.5 tracking-widest font-medium">0:0=1=0</div>
+          </div>
+        </div>
+      <div class="absolute -inset-2 bg-violet-500/0 group-hover:bg-violet-500/[0.07] rounded-2xl blur-xl transition-all duration-500 -z-10"></div>
+    </div>`;
+  }
+
+  // Create 11 folders
+  for (let i = 0; i <= 10; i++) {
+    foldersEl.insertAdjacentHTML('beforeend', createFolderHTML(i));
+    const el = foldersEl.querySelector(`[data-id="${i}"]`);
+    
+    folderData.push({
+      id: i,
+      el,
+      gState: Math.floor(Math.random() * 3),
+      oState: Math.floor(Math.random() * 3),
+      cycle: 0,
+      blooming: false,
+      lastBloom: 0,
+      gatekeepers: [...el.querySelectorAll('.gatekeeper')],
+      observers: [...el.querySelectorAll('.observer')]
+    });
+  }
+
+  function updateTritrit(el, state) {
+    const c = COLORS[state];
+    el.style.backgroundColor = c.bg;
+    el.style.boxShadow = `0 0 14px ${c.glow}, inset 0 0 8px rgba(0,0,0,0.9)`;
+  }
+
+  function updateFolderVisuals(f) {
+    f.gatekeepers.forEach(gk => updateTritrit(gk, f.gState));
+    f.observers.forEach(ob => updateTritrit(ob, f.oState));
+  }
+
+  function checkBloom(f, force = false) {
+    const now = Date.now();
+    const isPurple = f.gState === 0 && f.oState === 0;
+    
+    if (isPurple && (!f.blooming) && (force || now - f.lastBloom > 2200)) {
+      bloom(f);
+    }
+  }
+
+  function bloom(f) {
+    f.blooming = true;
+    f.lastBloom = Date.now();
+    f.el.classList.add('blooming');
+    totalBlooms++;
+    document.getElementById('total-blooms').textContent = totalBlooms;
+    
+    // Haptic feedback simulation
+    f.el.style.transform = 'scale(0.98)';
+    setTimeout(() => { f.el.style.transform = ''; }, 80);
+    
+    setTimeout(() => {
+      f.el.classList.remove('blooming');
+      f.blooming = false;
+    }, 1800);
+  }
+
+  function updateStats() {
+    const purpleCount = folderData.reduce((sum, f) => {
+      return sum + (f.gState === 0 ? 4 : 0) + (f.oState === 0 ? 2 : 0);
+    }, 0);
+    document.getElementById('active-purple').textContent = purpleCount;
+  }
+
+  // Initial render
+  folderData.forEach(f => {
+    updateFolderVisuals(f);
+    f.el.addEventListener('click', () => {
+      f.gState = 0;
+      f.oState = 0;
+      updateFolderVisuals(f);
+      checkBloom(f, true);
+      updateStats();
+    });
+  });
+  updateStats();
+
+  // Internal cycle: Gatekeepers (2/5 speed - faster)
+  setInterval(() => {
+    folderData.forEach(f => {
+      f.gState = (f.gState + 1) % 3;
+      f.gatekeepers.forEach(gk => updateTritrit(gk, f.gState));
+      checkBloom(f);
+    });
+    updateStats();
+  }, 520); // 2/5 timing
+
+  // External cycle: Observers (3/5 speed - slower)
+  setInterval(() => {
+    folderData.forEach(f => {
+      f.oState = (f.oState + 1) % 3;
+      f.cycle++;
+      document.getElementById(`cycle-${f.id}`).textContent = f.cycle;
+      f.observers.forEach(ob => updateTritrit(ob, f.oState));
+      checkBloom(f);
+    });
+    updateStats();
+  }, 780); // 3/5 timing
+
+  // Initial staggered blooms for demo
+  setTimeout(() => {
+    [0, 3, 7, 10].forEach((id, i) => {
+      setTimeout(() => {
+        const f = folderData[id];
+        if (f) {
+          f.gState = 0; f.oState = 0;
+          updateFolderVisuals(f);
+          bloom(f);
+        }
+      }, i * 300);
+    });
+  }, 800);
+});
+</script>
+</body>
+</html>

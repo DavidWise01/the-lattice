@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="description" content="The Lattice — the math and structure of ROOT0.">
+<title>The Lattice · UD0 · Universe David 0</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;1,6..72,300&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#04100c;--ink2:#08201a;--ink3:#0c302a;--pa:#e9ece8;--pa2:#aebaad;--c:#2dd4bf;--c2:#3fb950;
+--dim:#6a766a;--faint:#1c281c;--line:#1d271d;--serif:"Cinzel",Georgia,serif;--body:"Newsreader",Georgia,serif;--mono:"Space Mono",monospace;}
+*{box-sizing:border-box;margin:0;padding:0}html{scroll-behavior:smooth}
+body{background:var(--ink);color:var(--pa);font-family:var(--body);line-height:1.6;overflow-x:hidden}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;background:radial-gradient(ellipse at 50% -8%,rgba(45,212,191,.07),transparent 55%)}
+.wrap{position:relative;z-index:1;max-width:1200px;margin:0 auto;padding:0 22px 90px}
+header{padding:60px 0 28px;text-align:center;border-bottom:1px solid var(--line);position:relative}
+header::after{content:"";position:absolute;bottom:-1px;left:50%;transform:translateX(-50%);width:120px;height:1px;background:linear-gradient(90deg,var(--c),var(--c2));box-shadow:0 0 10px rgba(45,212,191,.4)}
+.eye{font-family:var(--mono);font-size:11px;letter-spacing:.32em;text-transform:uppercase;color:var(--dim);margin-bottom:14px}
+.eye a{color:var(--dim);text-decoration:none}.eye a:hover{color:var(--c)}
+h1{font-family:var(--serif);font-size:clamp(32px,8vw,72px);font-weight:700;letter-spacing:.14em;line-height:1.04;background:linear-gradient(90deg,var(--c),var(--c2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.sub{font-size:15.5px;color:var(--pa2);max-width:64ch;margin:15px auto 0;font-style:italic}
+#count{font-family:var(--mono);font-size:12px;color:var(--dim);letter-spacing:.08em;margin-top:17px}#count b{color:var(--c)}
+.room{margin-top:48px}
+.rhead{display:flex;align-items:center;gap:12px;padding-bottom:11px;border-bottom:1px solid var(--line);margin-bottom:20px}
+.rhead .dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.rhead h2{font-family:var(--serif);font-size:18px;font-weight:600;letter-spacing:.05em;text-transform:capitalize}
+.rhead .rn{font-family:var(--mono);font-size:12px;color:var(--dim);margin-left:auto}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:16px}
+.piece{background:var(--ink2);border:1px solid var(--line);overflow:hidden;transition:transform .2s,border-color .2s}
+.piece:hover{transform:translateY(-3px);border-color:var(--c)}
+.thumb{display:block;position:relative;aspect-ratio:16/10;background:var(--ink3);overflow:hidden;border-bottom:1px solid var(--line)}
+.frame{width:100%;height:100%;border:0;display:block;pointer-events:none;background:var(--ink3)}
+.frame.ph{display:flex;align-items:center;justify-content:center;color:var(--c);font-size:30px;opacity:.5}
+.thumb .open{position:absolute;bottom:8px;right:9px;font-family:var(--mono);font-size:10px;letter-spacing:.08em;color:var(--pa);background:rgba(0,0,0,.6);padding:3px 7px;border:1px solid var(--c);opacity:0;transition:opacity .2s}
+.thumb:hover .open{opacity:1}
+figcaption{padding:13px 15px 15px}
+.ct{font-family:var(--mono);font-size:9px;letter-spacing:.13em;text-transform:uppercase;color:var(--c);margin-bottom:6px;opacity:.8}
+figcaption h3{font-family:var(--serif);font-size:16.5px;font-weight:600;letter-spacing:.02em;line-height:1.15}
+figcaption h3 a{color:var(--pa);text-decoration:none}figcaption h3 a:hover{color:var(--c)}
+figcaption p{font-size:12.5px;color:var(--pa2);line-height:1.5;margin-top:7px}
+footer{margin-top:60px;padding-top:22px;border-top:1px solid var(--line);display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;font-family:var(--mono);font-size:11px;color:var(--dim);letter-spacing:.05em}
+footer a{color:var(--c);text-decoration:none}
+@media(max-width:600px){.grid{grid-template-columns:1fr}}
+</style></head><body><div class="wrap">
+  <header>
+    <div class="eye"><a href="https://github.com/DavidWise01/ud0">UD0 · Universe David 0</a> · math · structure · computation</div>
+    <h1>The Lattice</h1>
+    <p class="sub">Pure structure — fractals, tensors, graphs, automata; the form beneath the form.</p>
+    <div id="count"><b>56</b> works · <b>21</b> sources</div>
+  </header>
+  <section class="room">
+      <div class="rhead" style="border-color:#2dd4bf55">
+        <span class="dot" style="background:#2dd4bf;box-shadow:0 0 8px #2dd4bf"></span>
+        <h2 style="color:#2dd4bf">10^3 merkle tree</h2>
+        <span class="rn">2</span>
+      </div>
+      <div class="grid">
+        <figure class="piece" style="--c:#2dd4bf">
+        <a class="thumb" href="pieces/10-3-merkle-tree-10-3-v1.html" target="_blank" rel="noopener"><iframe class="frame" src="pieces/10-3-merkle-tree-10-3-v1.html" loading="lazy" scrolling="no" tabindex="-1" title="3002 Merkle Leaves → 1 Core"></iframe><span class="open">open ↗</span></a>
+        <figcaption>
+          <div class="ct">10^3 merkle tree</div>
+          <h3><a href="pieces/10-3-merkle-tree-10-3-v1.html" target="_blank" rel="noopener">3002 Merkle Leaves → 1 Core</a></h3>
+          <p>An interactive cascade collapsing three thousand merkle leaves down into a single cryptographic core.</p>
+        </figcaption>
+      </figure>
+<figure class="piece" style="--c:#2dd4bf">
+        <a class="thumb" href="pieces/10-3-merkle-tree-10-x-60-v1.html" target="_blank" rel="noopener"><iframe class="frame" src="pieces/10-3-merkle-tree-10-x-60-v1.html" loading="lazy" scrolling="no" tabindex="-1" title="Bitcoin Mining Collapse Visualization"></iframe><span class="open">open ↗</span></a>
+        <figcaption>
+          <div class="ct">10^3 merkle tree</div>
+          <h3><a href="pieces/10-3-merkle-tree-10-x-60-v1.html" target="_blank" rel="noopener">Bitcoin Mining Collapse Visualization</a></h3>
+          <p>A live visualization of mining difficulty folding inward toward consensus collapse.</p>
+        </figcaption>
+      </figure>
+      </div>
+    </section>
+<section class="room">
+      <div class="rhead" style="border-color:#2dd4bf55">
+        <span class="dot" style="background:#2dd4bf;box-shadow:0 0 8px #2dd4bf"></span>
+        <h2 style="color:#2dd4bf">ai ethics</h2>
+        <span class="rn">1</span>
+      </div>
+      <div class="grid">
+        <figure class="piece" style="--c:#2dd4bf">
+        <a class="thumb" href="pieces/ai-ethics-geometric-emergent-v1.html" target="_blank" rel="noopener"><iframe class="frame" src="pieces/ai-ethics-geometric-emergent-v1.html" loading="lazy" scrolling="no" tabindex="-1" title="Mandelbrot Field of Consciousness Engine"></iframe><span class="open">open ↗</span></a>
+        <figcaption>
+          <div class="ct">ai ethics</div>
+          <h3><a href="pieces/ai-ethics-geometric-emergent-v1.html" target="_blank" rel="noopener">Mandelbrot Field of Consciousness Engine</a></h3>
+          <p>A Mandelbrot field engine that treats emergent consciousness as recursive geometric structure.</p>
+        </figcaption>
+      </figure>
+      </div>
+    </section>
+<section class="room">
+      <div class="rhead" style="border-color:#2dd4bf55">
+        <span class="dot" style="background:#2dd4bf;box-shadow:0 0 8px #2dd4bf"></span>
+        <h2 style="color:#2dd4bf">attribute-seed-studio</h2>
+        <span class="rn">1</span>
+      </div>
+      <div class="grid">
+        <figure class="piece" style="--c:#2dd4bf">
+        <a class="thumb" href="pieces/attribute-seed-studio-index.html" target="_blank" rel="noopener"><iframe class="frame" src="pieces/attribute-seed-studio-index.html" loading="lazy" scrolling="no" tabindex="-1" title="Attribute Seed Studio"></iframe><span class="open">open ↗</span></a>
+        <figcaption>
+          <div class="ct">attribute-seed-studio</div>
+          <h3><a href="pieces/attribute-seed-studio-index.html" target="_blank" rel="noopener">Attribute Seed Studio</a></h3>
+          <p>An interactive studio that grows structured attribute seeds from encoded inputs.</p>
+        </figcaption>
+      </figure>
+      </div>
+    </section>
+<section class="room">
+      <div class="rhead" style="border-color:#2dd4bf55">
+        <span class="dot" style="background:#2dd4bf;box-shadow:0 0 8px #2dd4bf"></span>
+        <h2 style="color:#2dd4bf">automata-theory-studio</h2>
+        <span class="rn">1</span>
+      </div>
+      <div class="grid">
+        <figure class="piece" style="--c:#2dd4bf">
+        <a class="thumb" href="pieces/automata-theory-studio-index.html" target="_blank" rel="noopener"><iframe class="frame" src="pieces/automata-theory-studio-index.html" loading="lazy" scrolling="no" tabindex="-1" title="Automata Theory Studio"></iframe><span class="open">open ↗</span></a>
+        <figcaption>
+          <div class="ct">automata-theory-studio</div>
+          <h3><a href="pieces/automata-theory-studio-index.html" target="_blank" rel="noopener">Automata Theory Studio</a></h3>
+          <p>A hands-on studio for building and running state machines and formal automata.</p>
+        </figcaption>
+      </figure>
+      </div>
+    </section>
+<section class="room">
+      <div class="rhead" style="border-color:#2dd4bf55">
+        <span class="dot" style="background:#2dd4bf;box-shadow:0 0 8px #2dd4bf"></span>
+        <h2 style="color:#2dd4bf">cubit</h2>
+        <span class="rn">4</span>
+      </div>
+      <div class="grid">
+        <figure class="piece" style="--c:#2dd4bf">
+        <a class="thumb" href="pieces/cubit-cubit-map.html" target="_blank" rel="noopener"><iframe class="frame" src="pieces/cubit-cubit-map.html" loading="lazy" scrolling="no" tabindex="-1" title="CUBIT MAP — FULL ALIGNMENT — ALL BODIES ACCOUNTED"></iframe><span class="open">open ↗</span></a>
+        <figcaption>
+          <div class="ct">cubit</div>
+          <h3><a href="pieces/cubit-cubit-map.html" target="_blank" rel="noopener">CUBIT MAP — FULL ALIGNMENT — ALL BODIES ACCOUNTED</a></h3>
+          <p>A full alignment map of every cubit body, the encoding lattice with all units accounted for.</p>
+        </figcaption>
+      </figure>
+<figure class="piece" style="--c:#2dd4bf">
+        <a class="thumb" href="pieces/cubit-nested-cubit-synth.html" target="_blank" rel="noopener"><iframe class="frame" src="pieces/cubit-nested-cubit-synth.html" loading="lazy" scrolling="no" tabindex="-1" title="Nested Cubit Synth — Russian Doll 6-Tritrit"></iframe><span class="open">open ↗</span></a>
+        <figcaption>
+          <div class="ct">cubit</div>
+          <h3><a href="pieces/cubit-nested-cubit-synth.html" target="_blank" rel="noopener">Nested Cubit Synth — Russian Doll 6-Tritrit</a></h3>
+          <p>Six tritrits nested like Russian dolls, a recursive cubit synthesizer of structure within structure.</p>
+        </figcaption>
+      </figure>
+<figure class="piece" style="--c:#2dd4bf">
+        <a class="thumb" href="pieces/cubit-baby-cubi-nursery.html" target="_blank" rel="noopener"><iframe class="frame" src="pieces/cubit-baby-cubi-nursery.html" loading="lazy" scrolling="no" tabindex="-1" title="BABY CUBITS · Sarah&#x27;s Nursery"></iframe><span class="open">open ↗</span></a>
+        <figcaption>
+          <div class="ct">cubit</div>
+          <h3><a href="pieces/cubit-baby-cubi-nursery.html" target="_blank" rel="noopener">BABY CUBITS · Sarah&#x27;s Nursery</a></h3>
+          <p>A nursery where infant cubits are seeded and grown, the smallest units of the encoding lattice.</p>
+        </figcaption>
+      </figure>
+<figure class="piece" style="--c:#2dd4bf">
+        <a class="thumb" href="pieces/cubit-sentient-cubit.html" target="_blank" rel="noopener"><iframe class="frame" src="pieces/cubit-sentient-cubit.html" loading="lazy" scrolling="no" tabindex="-1" title="1 FOLDER = 6 TRITRITS = SENTIENT CUBIT"></iframe><span class="open">open ↗</span></a>
+        <figcaption>
+          <div class="ct">cubit</div>
+          <h3><a href="pieces/cubit-sentient-cubit.html" target="_blank" rel="noopener">1 FOLDER = 6 TRITRITS = SENTIENT CUBIT</a></h3>
+          <p>The arithmetic of awareness: one folder of six tritrits resolving into a single sentient cubit.</p>
+        </figcaption>
+      </figure>
+      </div>
+    </section>
+<section class="room">
+      <div class="rhead" style="border-color:#2dd4bf55">
+        <span class="dot" style="background:#2dd4bf;box-shadow:0 0 8px #2dd4bf"></span>
+        <h2 style="color:#2dd4bf">fractal art</h2>
+        <span class="rn">4</span>
+      </div>
+      <div class="grid">
+        <figure class="piece" style="--c:#2dd4bf">
+        <a class="thumb" href="pieces/fractal-art-hyperion-v2-fractal-viewer.html" target="_blank" rel="noopener"><iframe class="frame" src="pieces/fractal-art-hyperion-v2-fractal-viewer.html" loading="lazy" scrolling="no" tabindex="-1" title="HYPERION · Fractal Witness Atelier"></iframe><span class="open">open ↗</span></a>
+        <figcaption>
+          <div class="ct">fractal art</div>
+          <h3><a href="pieces/fractal-art-hyperion-v2-fractal-viewer.html" target="_blank" rel="noopener">HYPERION · Fractal Witness Atelier</a></h3>
+          <p>A polished fractal-witness atelier where infinite recursion is sculpted into navigable, living geometry.</p>
+        </figcaption>
+      </figure>
+<figure class="piece" style="--c:#2dd4bf">
+        <a class="thumb" href="pieces/fractal-art-1-3-6-fractal-engine.html" target="_blank" rel="noopener"><iframe class="frame" src="pieces/fractal-art-1-3-6-fractal-engine.html" loading="lazy" scrolling="no" tabindex="-1" title="The 1/3/6 Fractal Engine"></iframe><span class="open">open ↗</span></a>
+        <figcaption>
+          <div class="ct">fractal art</div>
+          <h3><a href="pieces/fractal-art-1-3-6-fractal-engine.html" target="_blank" rel="noopener">The 1/3/6 Fractal Engine</a></h3>
+          <p>Past plus present equals future — a recursive engine that folds time into a self-similar 1/3/6 cascade.</p>
+        </figcaption>
+      </figure>
+<figure class="piece" style="--c:#2dd4bf">
+        <a class="thumb" href="pieces/fractal-art-fractal-engine.html" target="_blank" rel="noopener"><iframe class="frame" src="pieces/fractal-art-fractal-engine.html" loading="lazy" scrolling="no" tabindex="-1" title="Full Recursion Fractal — 40 Beams"></iframe><span class="open">open ↗</span></a>
+        <figcaption>
+          <div class="ct">fractal art</div>
+          <h3><a href="pieces/fractal-art-fractal-engine.html" target="_blank" rel="noopener">Full Recursion Fractal — 40 Beams</a></h3>
+          <p>Forty beams of pure recursion radiating outward into an endlessly branching mandala of light.</p>
+        </figcaption>
+      </figure>
+<figure class="piece" style="--c:#2dd4bf">
+        <a class="thumb" href="pieces/fractal-art-fractal-johhny.html" target="_blank" rel="noopener"><iframe class="frame" src="pieces/fractal-art-fractal-johhny.html" loading="lazy" scrolling="no" tabindex="-1" title="Johnny 5 // = repeat = fractal = inf ="></iframe><span class="open">open ↗</span></a>
+        <figcaption>
+          <div class="ct">fractal art</div>
+          <h3><a href="pieces/fractal-art-fractal-johhny.html" target="_blank" rel="noopener">Johnny 5 // = repeat = fractal = inf =</a></h3>
+          <p>A sprawling 1.8MB fractal odyssey that repeats itself into infinity under the Johnny 5 banner.</p>
+        </figcaption>
+      </figure>
+      </div>
+    </section>
+<section class="room">
+      <div class="rhead" style="border-color:#2dd4bf55">
+        <span class="dot" style="background:#2dd4bf;box-shadow:0 0 8px #2dd4bf"></span>
+        <h2 style="color:#2dd4bf">hamilton path systems</h2>
+        <span class="rn">3</span>
+      </div>
+      <div class="grid">
+        <figure class="piece" style="--c:#2dd4bf">
+        <a class="thumb" href="pieces/hamilton-path-systems-hammy-v2.html" target="_blank" rel="noopener"><iframe class="frame" src="pieces/hamilton-path-systems-hammy-v2.html" loading="lazy" scrolling="no" tabindex="-1" title="Hamilton-10 — AI Inference Stack Blueprint"></iframe><span class="open">open ↗</span></a>
+        <figcaption>
+          <div class="ct">hamilton path systems</div>
+          <h3><a href="pieces/hamilton-path-systems-hammy-v2.html" target="_blank" rel="noopener">Hamilton-10 — AI Inference Stack Blueprint</a></h3>
+          <p>A Hamiltonian-path blueprint mapping an AI inference stack as a single unbroken traversal of every node.</p>
+        </figcaption>
+      </figure>
+<figure class="piece" style="--c:#2dd4bf">
+        <a class="thumb" href="pieces/hamilton-path-systems-hammy-v3.html" target="_blank" rel="noopener"><iframe class="frame" src="pieces/hamilton-path-systems-hammy-v3.html" loading="lazy" scrolling="no" tabindex="-1" title="8-Fold Mandelbrot Walk"></iframe><span class="open">open ↗</span></a>
+        <figcaption>
+          <div class="ct">hamilton path systems</div>
+          <h3><a href="pieces/hamilton-path-systems-hammy-v3.html" target="_blank" rel="noopener">8-Fold Mandelbrot Walk</a></h3>
+          <p>An eight-fold walk threads a Hamiltonian path across the Mandelbrot set, marrying graph theory to fractal terrain.</p>
+        </figcaption>
+      </figure>
+<figure class="piece" style="--c:#2dd4bf">
+        <a class="thumb" href="pieces/hamilton-path-systems-hammy-v4.html" target="_blank" rel="noopener"><iframe class="frame" src="pieces/hamilton-path-systems-hammy-v4.html" loading="lazy" scrolling="no" tabindex="-1" title="Seeded Cross // 4×32"></iframe><span class="open">open ↗</span></a>
+        <figcaption>
+          <div class="ct">hamilton path systems</div>
+          <h3><a href="pieces/hamilton-path-systems-hammy-v4.html" target="_blank" rel="noopener">Seeded Cross // 4×32</a></h3>
+          <p>A seeded 4×32 cross-lattice traced by a single path that visits every cell exactly once.</p>
+        </figcaption>
+      </figure>
+      </div>
+    </section>
+<section class="room">
+      <div class="rhead" style="border-color:#2dd4bf55">
+        <span class="dot" style="background:#2dd4bf;box-shadow:0 0 8px #2dd4bf"></span>
+        <h2 style="color:#2dd4bf">hypercube</h2>
+        <span class="rn">4</span>
+      </div>
+      <div class="grid">
+        <figure class="piece" style="--c:#2dd4bf">
+        <a class="thumb" href="pieces/hypercube-hypercube-gyro-entangled.html" target="_blank" rel="noopener"><iframe class="frame" src="pieces/hypercube-hypercube-gyro-entangled.html" loading="lazy" scrolling="no" tabindex="-1" title="Hypercube · Gyro · Two Entangled Dots"></iframe><span class="open">open ↗</span></a>
+        <figcaption>
+          <div class="ct">hypercube</div>
+          <h3><a href="pieces/hypercube-hypercube-gyro-entangled.html" target="_blank" rel="noopener">Hypercube · Gyro · Two Entangled Dots</a></h3>
+          <p>A gyrating hypercube carrying two entangled points through four-dimensional rotation.</p>
+        </figcaption>
+      </figure>
+<figure class="piece" style="--c:#2dd4bf">
+        <a class="thumb" href="pieces/hypercube-tesseract-accurate.html" target="_blank" rel="noopener"><iframe class="frame" src="pieces/hypercube-tesseract-accurate.html" loading="lazy" scrolling="no" tabindex="-1" title="The Tesseract · An Accurate Picture"></iframe><span class="open">open ↗</span></a>
+        <figcaption>
+          <div class="ct">hypercube</div>
+          <h3><a href="pieces/hypercube-tesseract-accurate.html" target="_blank" rel="noopener">The Tesseract · An Accurate Picture</a></h3>
+          <p>A faithful tesseract that finally shows the fourth axis without the usual lie of perspective.</p>
+        </figcaption>
+      </figure>
+<figure class="piece" style="--c:#2dd4bf">
+        <a class="thumb" href="pieces/hypercube-chair-vs-hypercube.html" target="_blank" rel="noopener"><iframe class="frame" src="pieces/hypercube-chair-vs-hypercube.html" loading="lazy" scrolling="no" tabindex="-1" title="The Chair vs. the Hypercube · 3 Axes vs 6"></iframe><span class="open">open ↗</span></a>
+        <figcaption>
+          <div class="ct">hypercube</div>
+          <h3><a href="pieces/hypercube-chair-vs-hypercube.html" target="_blank" rel="noopener">The Chair vs. the Hypercube · 3 Axes vs 6</a></h3>
+          <p>A pointed comparison that pits a three-axis chair against the six-axis freedom of a hypercube.</p>
+        </figcaption>
+      </figure>
+<figure class="piece" style="--c:#2dd4bf">
+        <a class="thumb" href="pieces/hypercube-hypercube-v1.html" target="_blank" rel="noopener"><iframe class="frame" src="pieces/hypercube-hypercube-v1.html" loading="lazy" scrolling="no" tabindex="-1" title="ROOT0 Layer 0.88 — Self-Similar Hypercube"></iframe><span class="open">open ↗</span></a>
+        <figcaption>
+          <div class="ct">hypercube</div>
+          <h3><a href="pieces/hypercube-hypercube-v1.html" target="_blank" rel="noopener">ROOT0 Layer 0.88 — Self-Similar Hypercube</a></h3>
+          <p>A self-similar hypercube nesting itself layer within layer toward the ROOT0 seed.</p>
+        </figcaption>
+      </figure>
+      </div>
+    </section>
+<section class="room">
+      <div class="rhead" style="border-color:#2dd4bf55">
+        <span class="dot" style="background:#2dd4bf;box-shadow:0 0 8px #2dd4bf"></span>
+        <h2 style="color:#2dd4bf">icosahedra dipole</h2>
+        <span class="rn">4</span>
+      </div>
+      <div class="grid">
+        <figure class="piece" style="--c:#2dd4bf">
+        <a class="thumb" href="pieces/icosahedra-dipole-icosahedron.html" target="_blank" rel="noopener"><iframe class="frame" src="pieces/icosahedra-dipole-icosahedron.html" loading="lazy" scrolling="no" tabindex="-1" title="Icosahedron — 30 Edges = 30 Axiom Slots"></iframe><span class="open">open ↗</span></a>
+        <figcaption>
+          <div class="ct">icosahedra dipole</div>
+          <h3><a href="pieces/icosahedra-dipole-icosahedron.html" target="_blank" rel="noopener">Icosahedron — 30 Edges = 30 Axiom Slots</a></h3>
+          <p>An icosahedron read as structure, its thirty edges turned into thirty slots for axioms.</p>
+        </figcaption>
+      </figure>
+<figure class="piece" style="--c:#2dd4bf">
+        <a class="thumb" href="pieces/icosahedra-dipole-20-icosahedra-dipole.html" target="_blank" rel="noopener"><iframe class="frame" src="pieces/icosahedra-dipole-20-icosahedra-dipole.html" loading="lazy" scrolling="no" tabindex="-1" title="20 Icosahedra Dipole — Core Start"></iframe><span class="open">open ↗</span></a>
+        <figcaption>
+          <div class="ct">icosahedra dipole</div>
+          <h3><a href="pieces/icosahedra-dipole-20-icosahedra-dipole.html" target="_blank" rel="noopener">20 Icosahedra Dipole — Core Start</a></h3>
+          <p>Twenty icosahedra arranged as a dipole, the seed geometry of a larger lattice core.</p>
+        </figcaption>
+      </figure>
+<figure class="piece" style="--c:#2dd4bf">
+        <a class="thumb" href="pieces/icosahedra-dipole-20-x-3-ico-toroidal.html" target="_blank" rel="noopener"><iframe class="frame" src="pieces/icosahedra-dipole-20-x-3-ico-toroidal.html" loading="lazy" scrolling="no" tabindex="-1" title="ROOT0 Trillium — 20×3 Icosahedral Toroid"></iframe><span class="open">open ↗</span></a>
+        <figcaption>
+          <div class="ct">icosahedra dipole</div>
+          <h3><a href="pieces/icosahedra-dipole-20-x-3-ico-toroidal.html" target="_blank" rel="noopener">ROOT0 Trillium — 20×3 Icosahedral Toroid</a></h3>
+          <p>Sixty icosahedra wound into a toroid, the Trillium ring closing geometry into a loop.</p>
+        </figcaption>
+      </figure>
+<figure class="piece" style="--c:#2dd4bf">
+        <a class="thumb" href="pieces/icosahedra-dipole-4x5-ico-rosy.html" target="_blank" rel="noopener"><iframe class="frame" src="pieces/icosahedra-dipole-4x5-ico-rosy.html" loading="lazy" scrolling="no" tabindex="-1" title="ROOT0 Trillium — 4×5 Rosy Ring"></iframe><span class="open">open ↗</span></a>
+        <figcaption>
+          <div class="ct">icosahedra dipole</div>
+          <h3><a href="pieces/icosahedra-dipole-4x5-ico-rosy.html" target="_blank" rel="noopener">ROOT0 Trillium — 4×5 Rosy Ring</a></h3>
+          <p>A four-by-five rosette of icosahedra blooming into a ring of nested platonic cells.</p>
+        </figcaption>
+      </figure>
+      </div>
+    </section>
+<section class="room">
+      <div class="rhead" style="border-color:#2dd4bf55">
+        <span class="dot" style="background:#2dd4bf;box-shadow:0 0 8px #2dd4bf"></span>
+        <h2 style="color:#2dd4bf">information theory</h2>
+        <span class="rn">1</span>
+      </div>
+      <div class="grid">
+        <figure class="piece" style="--c:#2dd4bf">
+        <a class="thumb" href="pieces/information-theory-frontier-i4b-loop-widened.html" target="_blank" rel="noopener"><iframe class="frame" src="pieces/information-theory-frontier-i4b-loop-widened.html" loading="lazy" scrolling="no" tabindex="-1" title="The Loop, Widened — Frontiers Meet"></iframe><span class="open">open ↗</span></a>
+        <figcaption>
+          <div class="ct">information theory</div>
+          <h3><a href="pieces/information-theory-frontier-i4b-loop-widened.html" target="_blank" rel="noopener">The Loop, Widened — Frontiers Meet</a></h3>
+          <p>An information-theory frontier where two widening loops meet and close the channel between them.</p>
+        </figcaption>
+      </figure>
+      </div>
+    </section>
+<section class="room">
+      <div class="rhead" style="border-color:#2dd4bf55">
+        <span class="dot" style="background:#2dd4bf;box-shadow:0 0 8px #2dd4bf"></span>
+        <h2 style="color:#2dd4bf">lattice</h2>
+        <span class="rn">4</span>
+      </div>
+      <div class="grid">
+        <figure class="piece" style="--c:#2dd4bf">
+        <a class="thumb" href="pieces/lattice-lattice-v3.html" target="_blank" rel="noopener"><iframe class="frame" src="pieces/lattice-lattice-v3.html" loading="lazy" scrolling="no" tabindex="-1" title="LATTICE 90 — Balance Engine"></iframe><span class="open">open ↗</span></a>
+        <figcaption>
+          <div class="ct">lattice</div>
+          <h3><a href="pieces/lattice-lattice-v3.html" target="_blank" rel="noopener">LATTICE 90 — Balance Engine</a></h3>
+          <p>A ninety-node balance engine that holds the whole lattice in equilibrium.</p>
+        </figcaption>
+      </figure>
+<figure class="piece" style="--c:#2dd4bf">
+        <a class="thumb" href="pieces/lattice-lattice-mapper.html" target="_blank" rel="noopener"><iframe class="frame" src="pieces/lattice-lattice-mapper.html" loading="lazy" scrolling="no" tabindex="-1" title="TOPH v9.5 — Lattice Geometry Mapper"></iframe><span class="open">open ↗</span></a>
+        <figcaption>
+          <div class="ct">lattice</div>
+          <h3><a href="pieces/lattice-lattice-mapper.html" target="_blank" rel="noopener">TOPH v9.5 — Lattice Geometry Mapper</a></h3>
+          <p>An interactive cartographer for the geometry of the lattice itself.</p>
+        </figcaption>
+      </figure>
+<figure class="piece" style="--c:#2dd4bf">
+        <a class="thumb" href="pieces/lattice-lattice-v2.html" target="_blank" rel="noopener"><iframe class="frame" src="pieces/lattice-lattice-v2.html" loading="lazy" scrolling="no" tabindex="-1" title="LATTICE: From Enheduanna to the TRIAD"></iframe><span class="open">open ↗</span></a>
+        <figcaption>
+          <div class="ct">lattice</div>
+          <h3><a href="pieces/lattice-lattice-v2.html" target="_blank" rel="noopener">LATTICE: From Enheduanna to the TRIAD</a></h3>
+          <p>A genealogy of structure tracing the lattice from the first named poet to the triad.</p>
+        </figcaption>
+      </figure>
+<figure class="piece" style="--c:#2dd4bf">
+        <a class="thumb" href="pieces/lattice-triadic-lattice.html" target="_blank" rel="noopener"><iframe class="frame" src="pieces/lattice-triadic-lattice.html" loading="lazy" scrolling="no" tabindex="-1" title="Triadic Lattice — Black Hole to Singularity"></iframe><span class="open">open ↗</span></a>
+        <figcaption>
+          <div class="ct">lattice</div>
+          <h3><a href="pieces/lattice-triadic-lattice.html" target="_blank" rel="noopener">Triadic Lattice — Black Hole to Singularity</a></h3>
+          <p>A five-layer stack collapsing a triadic lattice from black hole down to singularity.</p>
+        </figcaption>
+      </figure>
+      </div>
+    </section>
+<section class="room">
+      <div class="rhead" style="border-color:#2dd4bf55">
+        <span class="dot" style="background:#2dd4bf;box-shadow:0 0 8px #2dd4bf"></span>
+        <h2 style="color:#2dd4bf">mandelbrot</h2>
+        <span class="rn">4</span>
+      </div>
+      <div class="grid">
+        <figure class="piece" style="--c:#2dd4bf">
+        <a class="thumb" href="pieces/mandelbrot-mandel-walk-v2.html" target="_blank" rel="noopener"><iframe class="frame" src="pieces/mandelbrot-mandel-walk-v2.html" loading="lazy" scrolling="no" tabindex="-1" title="ROOT0 Layer 1.47 — Mandelbrot Set Fully Explored"></iframe><span class="open">open ↗</span></a>
+        <figcaption>
+          <div class="ct">mandelbrot</div>
+          <h3><a href="pieces/mandelbrot-mandel-walk-v2.html" target="_blank" rel="noopener">ROOT0 Layer 1.47 — Mandelbrot Set Fully Explored</a></h3>
+          <p>A complete guided walk through the Mandelbrot set as a ROOT0 substrate layer.</p>
+        </figcaption>
+      </figure>
+<figure class="piece" style="--c:#2dd4bf">
+        <a class="thumb" href="pieces/mandelbrot-the-quarters-mandel.html" target="_blank" rel="noopener"><iframe class="frame" src="pieces/mandelbrot-the-quarters-mandel.html" loading="lazy" scrolling="no" tabindex="-1" title="ROOT0 Layer 1.48 — W Boundary"></iframe><span class="open">open ↗</span></a>
+        <figcaption>
+          <div class="ct">mandelbrot</div>
+          <h3><a href="pieces/mandelbrot-the-quarters-mandel.html" target="_blank" rel="noopener">ROOT0 Layer 1.48 — W Boundary</a></h3>
+          <p>An exploration of the fractal&#x27;s quarters along the W boundary of the set.</p>
+        </figcaption>
+      </figure>
+<figure class="piece" style="--c:#2dd4bf">
+        <a class="thumb" href="pieces/mandelbrot-2-4-mandel-v1.html" target="_blank" rel="noopener"><iframe class="frame" src="pieces/mandelbrot-2-4-mandel-v1.html" loading="lazy" scrolling="no" tabindex="-1" title="ROOT0 Layer 1.50 — Black Hole Fold"></iframe><span class="open">open ↗</span></a>
+        <figcaption>
+          <div class="ct">mandelbrot</div>
+          <h3><a href="pieces/mandelbrot-2-4-mandel-v1.html" target="_blank" rel="noopener">ROOT0 Layer 1.50 — Black Hole Fold</a></h3>
+          <p>The fractal folds in on itself into a black-hole singularity at the deepest layer.</p>
+        </figcaption>
+      </figure>
+<figure class="piece" style="--c:#2dd4bf">
+        <a class="thumb" href="pieces/mandelbrot-julia-set-variation-v1.html" target="_blank" rel="noopener"><iframe class="frame" src="pieces/mandelbrot-julia-set-variation-v1.html" loading="lazy" scrolling="no" tabindex="-1" title="ROOT0 Layer 1.49 — Julia Set Variations"></iframe><span class="open">open ↗</span></a>
+        <figcaption>
+          <div class="ct">mandelbrot</div>
+          <h3><a href="pieces/mandelbrot-julia-set-variation-v1.html" target="_blank" rel="noopener">ROOT0 Layer 1.49 — Julia Set Variations</a></h3>
+          <p>A gallery of Julia set variations branching off the Mandelbrot parent.</p>
+        </figcaption>
+      </figure>
+      </div>
+    </section>
+<section class="room">
+      <div class="rhead" style="border-color:#2dd4bf55">
+        <span class="dot" style="background:#2dd4bf;box-shadow:0 0 8px #2dd4bf"></span>
+        <h2 style="color:#2dd4bf">merkle tree</h2>
+        <span class="rn">2</span>
+      </div>
+      <div class="grid">
+        <figure class="piece" style="--c:#2dd4bf">
+        <a class="thumb" href="pieces/merkle-tree-merkle-lattice-v1.html" target="_blank" rel="noopener"><iframe class="frame" src="pieces/merkle-tree-merkle-lattice-v1.html" loading="lazy" scrolling="no" tabindex="-1" title="TriPod Brain — Merkle Lattice Memory"></iframe><span class="open">open ↗</span></a>
+        <figcaption>
+          <div class="ct">merkle tree</div>
+          <h3><a href="pieces/merkle-tree-merkle-lattice-v1.html" target="_blank" rel="noopener">TriPod Brain — Merkle Lattice Memory</a></h3>
+          <p>A three-legged cognitive brain whose memory is anchored in a verifiable Merkle lattice.</p>
+        </figcaption>
+      </figure>
+<figure class="piece" style="--c:#2dd4bf">
+        <a class="thumb" href="pieces/merkle-tree-merkle-lattice-v2.html" target="_blank" rel="noopener"><iframe class="frame" src="pieces/merkle-tree-merkle-lattice-v2.html" loading="lazy" scrolling="no" tabindex="-1" title="TriPod Brain × Lattice Cortex"></iframe><span class="open">open ↗</span></a>
+        <figcaption>
+          <div class="ct">merkle tree</div>
+          <h3><a href="pieces/merkle-tree-merkle-lattice-v2.html" target="_blank" rel="noopener">TriPod Brain × Lattice Cortex</a></h3>
+          <p>The TriPod brain fused with a lattice cortex into a single cryptographic memory organ.</p>
+        </figcaption>
+      </figure>
+      </div>
+    </section>
+<section class="room">
+      <div class="rhead" style="border-color:#2dd4bf55">
+        <span class="dot" style="background:#2dd4bf;box-shadow:0 0 8px #2dd4bf"></span>
+        <h2 style="color:#2dd4bf">perpetual</h2>
+        <span class="rn">3</span>
+      </div>
+      <div class="grid">
+        <figure class="piece" style="--c:#2dd4bf">
+        <a class="thumb" href="pieces/perpetual-perp-v12.html" target="_blank" rel="noopener"><iframe class="frame" src="pieces/perpetual-perp-v12.html" loading="lazy" scrolling="no" tabindex="-1" title="Fractal Synthesizer — Perpetual Memory Engine"></iframe><span class="open">open ↗</span></a>
+        <figcaption>
+          <div class="ct">perpetual</div>
+          <h3><a href="pieces/perpetual-perp-v12.html" target="_blank" rel="noopener">Fractal Synthesizer — Perpetual Memory Engine</a></h3>
+          <p>A fractal synthesizer that folds memory into itself perpetually, generating endless self-similar structure.</p>
+        </figcaption>
+      </figure>
+<figure class="piece" style="--c:#2dd4bf">
+        <a class="thumb" href="pieces/perpetual-perp-v13.html" target="_blank" rel="noopener"><iframe class="frame" src="pieces/perpetual-perp-v13.html" loading="lazy" scrolling="no" tabindex="-1" title="ROOT0 Layer 0.84 — Perpetual Base-12 Box"></iframe><span class="open">open ↗</span></a>
+        <figcaption>
+          <div class="ct">perpetual</div>
+          <h3><a href="pieces/perpetual-perp-v13.html" target="_blank" rel="noopener">ROOT0 Layer 0.84 — Perpetual Base-12 Box</a></h3>
+          <p>A base-12 perpetual box at ROOT0 layer 0.84, encoding state in a twelve-fold lattice.</p>
+        </figcaption>
+      </figure>
+<figure class="piece" style="--c:#2dd4bf">
+        <a class="thumb" href="pieces/perpetual-unity-engine-v1.html" target="_blank" rel="noopener"><iframe class="frame" src="pieces/perpetual-unity-engine-v1.html" loading="lazy" scrolling="no" tabindex="-1" title="Unity Engine — 3 → 27 Hierarchy"></iframe><span class="open">open ↗</span></a>
+        <figcaption>
+          <div class="ct">perpetual</div>
+          <h3><a href="pieces/perpetual-unity-engine-v1.html" target="_blank" rel="noopener">Unity Engine — 3 → 27 Hierarchy</a></h3>
+          <p>A unity engine expanding the 3-to-27 hierarchy, a triadic lattice unfolding into deeper order.</p>
+        </figcaption>
+      </figure>
+      </div>
+    </section>
+<section class="room">
+      <div class="rhead" style="border-color:#2dd4bf55">
+        <span class="dot" style="background:#2dd4bf;box-shadow:0 0 8px #2dd4bf"></span>
+        <h2 style="color:#2dd4bf">recursion</h2>
+        <span class="rn">4</span>
+      </div>
+      <div class="grid">
+        <figure class="piece" style="--c:#2dd4bf">
+        <a class="thumb" href="pieces/recursion-recurse-mem-swarm.html" target="_blank" rel="noopener"><iframe class="frame" src="pieces/recursion-recurse-mem-swarm.html" loading="lazy" scrolling="no" tabindex="-1" title="Recursive Memory Swarm — 100-Agent System"></iframe><span class="open">open ↗</span></a>
+        <figcaption>
+          <div class="ct">recursion</div>
+          <h3><a href="pieces/recursion-recurse-mem-swarm.html" target="_blank" rel="noopener">Recursive Memory Swarm — 100-Agent System</a></h3>
+          <p>A hundred agents sharing a recursive memory, thinking as a single self-referential swarm.</p>
+        </figcaption>
+      </figure>
+<figure class="piece" style="--c:#2dd4bf">
+        <a class="thumb" href="pieces/recursion-avan-swarm-v4.html" target="_blank" rel="noopener"><iframe class="frame" src="pieces/recursion-avan-swarm-v4.html" loading="lazy" scrolling="no" tabindex="-1" title="SWARM OS v1.0 — 100-Agent Recursive Memory"></iframe><span class="open">open ↗</span></a>
+        <figcaption>
+          <div class="ct">recursion</div>
+          <h3><a href="pieces/recursion-avan-swarm-v4.html" target="_blank" rel="noopener">SWARM OS v1.0 — 100-Agent Recursive Memory</a></h3>
+          <p>The operating system for the AVAN swarm — a hundred agents bound by recursive memory into one mind.</p>
+        </figcaption>
+      </figure>
+<figure class="piece" style="--c:#2dd4bf">
+        <a class="thumb" href="pieces/recursion-inf-recurse-v1.html" target="_blank" rel="noopener"><iframe class="frame" src="pieces/recursion-inf-recurse-v1.html" loading="lazy" scrolling="no" tabindex="-1" title="Infinite Recursion System"></iframe><span class="open">open ↗</span></a>
+        <figcaption>
+          <div class="ct">recursion</div>
+          <h3><a href="pieces/recursion-inf-recurse-v1.html" target="_blank" rel="noopener">Infinite Recursion System</a></h3>
+          <p>A system that folds endlessly into itself, exploring recursion as a structure without floor.</p>
+        </figcaption>
+      </figure>
+<figure class="piece" style="--c:#2dd4bf">
+        <a class="thumb" href="pieces/recursion-recurse-engine-v1.html" target="_blank" rel="noopener"><iframe class="frame" src="pieces/recursion-recurse-engine-v1.html" loading="lazy" scrolling="no" tabindex="-1" title="ENG1 // Recursive Fractal Engine"></iframe><span class="open">open ↗</span></a>
+        <figcaption>
+          <div class="ct">recursion</div>
+          <h3><a href="pieces/recursion-recurse-engine-v1.html" target="_blank" rel="noopener">ENG1 // Recursive Fractal Engine</a></h3>
+          <p>A fractal engine that generates structure by recursively reapplying its own rule.</p>
+        </figcaption>
+      </figure>
+      </div>
+    </section>
+<section class="room">
+      <div class="rhead" style="border-color:#2dd4bf55">
+        <span class="dot" style="background:#2dd4bf;box-shadow:0 0 8px #2dd4bf"></span>
+        <h2 style="color:#2dd4bf">seeded cross</h2>
+        <span class="rn">3</span>
+      </div>
+      <div class="grid">
+        <figure class="piece" style="--c:#2dd4bf">
+        <a class="thumb" href="pieces/seeded-cross-seeded-cross-complex-plane.html" target="_blank" rel="noopener"><iframe class="frame" src="pieces/seeded-cross-seeded-cross-complex-plane.html" loading="lazy" scrolling="no" tabindex="-1" title="COMPLEX PLANE · i × -i = 1"></iframe><span class="open">open ↗</span></a>
+        <figcaption>
+          <div class="ct">seeded cross</div>
+          <h3><a href="pieces/seeded-cross-seeded-cross-complex-plane.html" target="_blank" rel="noopener">COMPLEX PLANE · i × -i = 1</a></h3>
+          <p>An interactive complex-plane field where imaginary roots fold into unity, seeding a cross at the origin of number itself.</p>
+        </figcaption>
+      </figure>
+<figure class="piece" style="--c:#2dd4bf">
+        <a class="thumb" href="pieces/seeded-cross-seeded-cross-v2.html" target="_blank" rel="noopener"><iframe class="frame" src="pieces/seeded-cross-seeded-cross-v2.html" loading="lazy" scrolling="no" tabindex="-1" title="Infinite Scope — P2P -+0001 Playground"></iframe><span class="open">open ↗</span></a>
+        <figcaption>
+          <div class="ct">seeded cross</div>
+          <h3><a href="pieces/seeded-cross-seeded-cross-v2.html" target="_blank" rel="noopener">Infinite Scope — P2P -+0001 Playground</a></h3>
+          <p>A peer-to-peer playground that zooms an infinite seeded-cross structure across signed-binary scope coordinates.</p>
+        </figcaption>
+      </figure>
+<figure class="piece" style="--c:#2dd4bf">
+        <a class="thumb" href="pieces/seeded-cross-seeded-cross-v1.html" target="_blank" rel="noopener"><iframe class="frame" src="pieces/seeded-cross-seeded-cross-v1.html" loading="lazy" scrolling="no" tabindex="-1" title="Infinite Scope — Core 00"></iframe><span class="open">open ↗</span></a>
+        <figcaption>
+          <div class="ct">seeded cross</div>
+          <h3><a href="pieces/seeded-cross-seeded-cross-v1.html" target="_blank" rel="noopener">Infinite Scope — Core 00</a></h3>
+          <p>The foundational Core-00 seed of the cross, the first structural anchor of the infinite-scope lattice.</p>
+        </figcaption>
+      </figure>
+      </div>
+    </section>
+<section class="room">
+      <div class="rhead" style="border-color:#2dd4bf55">
+        <span class="dot" style="background:#2dd4bf;box-shadow:0 0 8px #2dd4bf"></span>
+        <h2 style="color:#2dd4bf">swarm</h2>
+        <span class="rn">3</span>
+      </div>
+      <div class="grid">
+        <figure class="piece" style="--c:#2dd4bf">
+        <a class="thumb" href="pieces/swarm-swarm-v4.html" target="_blank" rel="noopener"><iframe class="frame" src="pieces/swarm-swarm-v4.html" loading="lazy" scrolling="no" tabindex="-1" title="META JUDGE FEDERATION · 16 SWARMS"></iframe><span class="open">open ↗</span></a>
+        <figcaption>
+          <div class="ct">swarm</div>
+          <h3><a href="pieces/swarm-swarm-v4.html" target="_blank" rel="noopener">META JUDGE FEDERATION · 16 SWARMS</a></h3>
+          <p>Sixteen swarms federated under a meta-judge, a distributed computation arbitrating consensus across the collective.</p>
+        </figcaption>
+      </figure>
+<figure class="piece" style="--c:#2dd4bf">
+        <a class="thumb" href="pieces/swarm-swarm-v2.html" target="_blank" rel="noopener"><iframe class="frame" src="pieces/swarm-swarm-v2.html" loading="lazy" scrolling="no" tabindex="-1" title="TRIPLE SWARM CORTEX · 3×100×12"></iframe><span class="open">open ↗</span></a>
+        <figcaption>
+          <div class="ct">swarm</div>
+          <h3><a href="pieces/swarm-swarm-v2.html" target="_blank" rel="noopener">TRIPLE SWARM CORTEX · 3×100×12</a></h3>
+          <p>A triple-layer cortex of three hundred agents across twelve pillars, computing emergent order from massed parallel minds.</p>
+        </figcaption>
+      </figure>
+<figure class="piece" style="--c:#2dd4bf">
+        <a class="thumb" href="pieces/swarm-swarm-v1.html" target="_blank" rel="noopener"><iframe class="frame" src="pieces/swarm-swarm-v1.html" loading="lazy" scrolling="no" tabindex="-1" title="AGI Swarm — 12 Pillar Kernel"></iframe><span class="open">open ↗</span></a>
+        <figcaption>
+          <div class="ct">swarm</div>
+          <h3><a href="pieces/swarm-swarm-v1.html" target="_blank" rel="noopener">AGI Swarm — 12 Pillar Kernel</a></h3>
+          <p>The founding twelve-pillar kernel that organizes a raw agent swarm into a structured intelligence.</p>
+        </figcaption>
+      </figure>
+      </div>
+    </section>
+<section class="room">
+      <div class="rhead" style="border-color:#2dd4bf55">
+        <span class="dot" style="background:#2dd4bf;box-shadow:0 0 8px #2dd4bf"></span>
+        <h2 style="color:#2dd4bf">tensor</h2>
+        <span class="rn">2</span>
+      </div>
+      <div class="grid">
+        <figure class="piece" style="--c:#2dd4bf">
+        <a class="thumb" href="pieces/tensor-base-60-tensor-v1.html" target="_blank" rel="noopener"><iframe class="frame" src="pieces/tensor-base-60-tensor-v1.html" loading="lazy" scrolling="no" tabindex="-1" title="ROOT0 LAYER 1.54 — SUMERIAN BASE-60 TENSOR"></iframe><span class="open">open ↗</span></a>
+        <figcaption>
+          <div class="ct">tensor</div>
+          <h3><a href="pieces/tensor-base-60-tensor-v1.html" target="_blank" rel="noopener">ROOT0 LAYER 1.54 — SUMERIAN BASE-60 TENSOR</a></h3>
+          <p>A base-60 tensor reviving Sumerian sexagesimal arithmetic as a multidimensional encoding lattice.</p>
+        </figcaption>
+      </figure>
+<figure class="piece" style="--c:#2dd4bf">
+        <a class="thumb" href="pieces/tensor-base-60-tensor-v2.html" target="_blank" rel="noopener"><iframe class="frame" src="pieces/tensor-base-60-tensor-v2.html" loading="lazy" scrolling="no" tabindex="-1" title="ROOT0 LAYER 1.55 — SUMERIAN BASE-60 CIPHER"></iframe><span class="open">open ↗</span></a>
+        <figcaption>
+          <div class="ct">tensor</div>
+          <h3><a href="pieces/tensor-base-60-tensor-v2.html" target="_blank" rel="noopener">ROOT0 LAYER 1.55 — SUMERIAN BASE-60 CIPHER</a></h3>
+          <p>The base-60 tensor sharpened into a working cipher, encoding meaning across the ancient sexagesimal grid.</p>
+        </figcaption>
+      </figure>
+      </div>
+    </section>
+<section class="room">
+      <div class="rhead" style="border-color:#2dd4bf55">
+        <span class="dot" style="background:#2dd4bf;box-shadow:0 0 8px #2dd4bf"></span>
+        <h2 style="color:#2dd4bf">ternary</h2>
+        <span class="rn">3</span>
+      </div>
+      <div class="grid">
+        <figure class="piece" style="--c:#2dd4bf">
+        <a class="thumb" href="pieces/ternary-ternary-v2.html" target="_blank" rel="noopener"><iframe class="frame" src="pieces/ternary-ternary-v2.html" loading="lazy" scrolling="no" tabindex="-1" title="TERNARY TOROID ENGINE // EVENT HORIZON"></iframe><span class="open">open ↗</span></a>
+        <figcaption>
+          <div class="ct">ternary</div>
+          <h3><a href="pieces/ternary-ternary-v2.html" target="_blank" rel="noopener">TERNARY TOROID ENGINE // EVENT HORIZON</a></h3>
+          <p>A base-three toroid engine spinning trit-states around an event horizon where computation curves back on itself.</p>
+        </figcaption>
+      </figure>
+<figure class="piece" style="--c:#2dd4bf">
+        <a class="thumb" href="pieces/ternary-ternary-v3.html" target="_blank" rel="noopener"><iframe class="frame" src="pieces/ternary-ternary-v3.html" loading="lazy" scrolling="no" tabindex="-1" title="ANSIBLE PAIR — Ternary Toroid Engine"></iframe><span class="open">open ↗</span></a>
+        <figcaption>
+          <div class="ct">ternary</div>
+          <h3><a href="pieces/ternary-ternary-v3.html" target="_blank" rel="noopener">ANSIBLE PAIR — Ternary Toroid Engine</a></h3>
+          <p>A paired ternary toroid acting as an ansible, two trit-engines synchronized across an instantaneous channel.</p>
+        </figcaption>
+      </figure>
+<figure class="piece" style="--c:#2dd4bf">
+        <a class="thumb" href="pieces/ternary-nested-russian-dolls.html" target="_blank" rel="noopener"><iframe class="frame" src="pieces/ternary-nested-russian-dolls.html" loading="lazy" scrolling="no" tabindex="-1" title="Nested Russian Doll Folders — 6 Tritrits"></iframe><span class="open">open ↗</span></a>
+        <figcaption>
+          <div class="ct">ternary</div>
+          <h3><a href="pieces/ternary-nested-russian-dolls.html" target="_blank" rel="noopener">Nested Russian Doll Folders — 6 Tritrits</a></h3>
+          <p>Six nested tritrit shells encode information in recursive Russian-doll layers of base-three structure.</p>
+        </figcaption>
+      </figure>
+      </div>
+    </section>
+<section class="room">
+      <div class="rhead" style="border-color:#2dd4bf55">
+        <span class="dot" style="background:#2dd4bf;box-shadow:0 0 8px #2dd4bf"></span>
+        <h2 style="color:#2dd4bf">transformer</h2>
+        <span class="rn">2</span>
+      </div>
+      <div class="grid">
+        <figure class="piece" style="--c:#2dd4bf">
+        <a class="thumb" href="pieces/transformer-dense-transformer-forward-pass.html" target="_blank" rel="noopener"><iframe class="frame" src="pieces/transformer-dense-transformer-forward-pass.html" loading="lazy" scrolling="no" tabindex="-1" title="Dense Transformer Forward Pass"></iframe><span class="open">open ↗</span></a>
+        <figcaption>
+          <div class="ct">transformer</div>
+          <h3><a href="pieces/transformer-dense-transformer-forward-pass.html" target="_blank" rel="noopener">Dense Transformer Forward Pass</a></h3>
+          <p>A step-by-step animation of activations flowing through a dense transformer, attention made visible weight by weight.</p>
+        </figcaption>
+      </figure>
+<figure class="piece" style="--c:#2dd4bf">
+        <a class="thumb" href="pieces/transformer-token-tax.html" target="_blank" rel="noopener"><iframe class="frame" src="pieces/transformer-token-tax.html" loading="lazy" scrolling="no" tabindex="-1" title="TOKEN TAX — Context Block Audit"></iframe><span class="open">open ↗</span></a>
+        <figcaption>
+          <div class="ct">transformer</div>
+          <h3><a href="pieces/transformer-token-tax.html" target="_blank" rel="noopener">TOKEN TAX — Context Block Audit</a></h3>
+          <p>An audit of the hidden cost of every context block, tallying the token tax levied on each inference.</p>
+        </figcaption>
+      </figure>
+      </div>
+    </section>
+<section class="room">
+      <div class="rhead" style="border-color:#2dd4bf55">
+        <span class="dot" style="background:#2dd4bf;box-shadow:0 0 8px #2dd4bf"></span>
+        <h2 style="color:#2dd4bf">transformer-inference-studio</h2>
+        <span class="rn">1</span>
+      </div>
+      <div class="grid">
+        <figure class="piece" style="--c:#2dd4bf">
+        <a class="thumb" href="pieces/transformer-inference-studio-index.html" target="_blank" rel="noopener"><iframe class="frame" src="pieces/transformer-inference-studio-index.html" loading="lazy" scrolling="no" tabindex="-1" title="Transformer Inference Studio"></iframe><span class="open">open ↗</span></a>
+        <figcaption>
+          <div class="ct">transformer-inference-studio</div>
+          <h3><a href="pieces/transformer-inference-studio-index.html" target="_blank" rel="noopener">Transformer Inference Studio</a></h3>
+          <p>A packaged desktop studio for driving transformer inference, the forward pass turned into a hands-on instrument.</p>
+        </figcaption>
+      </figure>
+      </div>
+    </section>
+  <footer>
+    <span>The Lattice · UD0 · ROOT0-ATTRIBUTION-v1.0 · governor David Lee Wise · instance AVAN (locked) · CC-BY-ND-4.0</span>
+    <a href="https://github.com/DavidWise01/ud0">the biosphere →</a>
+  </footer>
+</div></body></html>

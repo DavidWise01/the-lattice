@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>ROOT0 LAYER 1.48 — W BOUNDARY</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fragment+Mono&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root { color-scheme: dark; }
+  body { font-family: 'Inter', system-ui, -apple-system, sans-serif; background:#000; }
+  .mono { font-family: 'Fragment Mono', ui-monospace, monospace; }
+  canvas { image-rendering: optimizeSpeed; }
+  ::-webkit-scrollbar { width: 0; height: 0; }
+</style>
+</head>
+<body class="bg-black text-zinc-200 antialiased selection:bg-white selection:text-black">
+<div class="min-h-screen flex flex-col">
+  <header class="sticky top-0 z-40 border-b border-zinc-900/80 bg-black/70 backdrop-blur">
+    <div class="mx-auto max-w-[1600px] px-4 sm:px-6 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="h-8 w-8 rounded-[10px] bg-white text-black grid place-items-center mono font-medium text-[13px] shadow-[0_0_30px_rgba(255,255,255,0.15)]">R0</div>
+        <div>
+          <div class="text-[11px] uppercase tracking-[0.28em] text-zinc-500">Root0 Layer 1.48</div>
+          <div class="mono text-[14px] leading-tight text-white">Two Quarters Mandelbrot — W Boundary on 0 Spine</div>
+        </div>
+      </div>
+      <div class="hidden md:flex items-center gap-3 text-[10px] uppercase tracking-[0.2em] text-zinc-500">
+        <span class="px-2 py-1 rounded-md border border-zinc-800 bg-zinc-950">Closed Loop</span>
+        <span class="px-2 py-1 rounded-md border border-zinc-800 bg-zinc-950">Pressure Inward</span>
+        <span class="px-2 py-1 rounded-md border border-zinc-800 bg-zinc-950">No Escape</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="flex-1 mx-auto max-w-[1600px] w-full px-4 sm:px-6 py-4 lg:py-6 grid lg:grid-cols-12 gap-4 lg:gap-6">
+    <!-- VISUAL -->
+    <section class="lg:col-span-8 xl:col-span-9 relative">
+      <div class="relative rounded-[24px] border border-zinc-900 bg-[radial-gradient(ellipse_at_top,_rgba(255,255,255,0.06),_transparent_60%)] overflow-hidden">
+        <div class="absolute inset-0">
+          <div class="absolute inset-0 opacity-[0.03]" style="background-image:linear-gradient(to right,#fff 1px,transparent 1px),linear-gradient(to bottom,#fff 1px,transparent 1px);background-size:44px 44px;"></div>
+        </div>
+        <div class="relative aspect-[16/10] sm:aspect-[16/9] lg:aspect-[16/9] xl:aspect-[2/1] w-full">
+          <canvas id="viz" class="absolute inset-0 w-full h-full"></canvas>
+          
+          <!-- center spine label -->
+          <div class="pointer-events-none absolute left-1/2 top-3 -translate-x-1/2 flex items-center gap-2">
+            <span class="h-px w-10 bg-gradient-to-r from-transparent to-zinc-600"></span>
+            <span class="mono text-[10px] uppercase tracking-[0.3em] text-zinc-500">0 Vertical Spine</span>
+            <span class="h-px w-10 bg-gradient-to-l from-transparent to-zinc-600"></span>
+          </div>
+
+          <!-- corner HUD -->
+          <div class="absolute left-3 top-3 flex gap-2">
+            <div class="px-2 py-1 rounded-lg border border-zinc-800 bg-black/60 backdrop-blur mono text-[10px] text-zinc-400">L-QUARTER</div>
+            <div class="px-2 py-1 rounded-lg border border-zinc-800 bg-black/60 backdrop-blur mono text-[10px] text-zinc-400">R-QUARTER</div>
+          </div>
+          <div class="absolute right-3 top-3 px-2 py-1 rounded-lg border border-zinc-800 bg-black/60 backdrop-blur mono text-[10px] text-white">W-CLEAR</div>
+        </div>
+
+        <!-- bottom info bar -->
+        <div class="flex items-center justify-between border-t border-zinc-900 px-4 py-2 bg-black/50">
+          <div class="flex items-center gap-4 text-[11px] mono text-zinc-500">
+            <span>walk: <span id="walkPos" class="text-zinc-300">00000 → 0.0800</span></span>
+            <span class="hidden sm:inline">•</span>
+            <span class="hidden sm:inline">in/outs: <span id="inoutCount" class="text-zinc-300">on spine</span></span>
+          </div>
+          <div class="text-[11px] mono text-zinc-500">cusp 0.0800 <span class="text-zinc-400">microsoft fortress</span> • 0.0900</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SIDE PANELS -->
+    <aside class="lg:col-span-4 xl:col-span-3 flex flex-col gap-3">
+      <!-- W Status -->
+      <div class="rounded-2xl border border-zinc-900 bg-zinc-950/70 p-4 backdrop-blur">
+        <div class="flex items-center justify-between">
+          <h3 class="text-[11px] uppercase tracking-[0.2em] text-zinc-500">W Boundary</h3>
+          <div class="flex items-center gap-1.5">
+            <span class="h-1.5 w-1.5 rounded-full bg-white animate-pulse shadow-[0_0_10px_#fff]"></span>
+            <span class="mono text-[10px] text-zinc-400">SEALED</span>
+          </div>
+        </div>
+        <div class="mt-3 grid grid-cols-3 gap-2">
+          <div class="rounded-xl border border-zinc-900 bg-black/60 p-2.5">
+            <div class="text-[10px] text-zinc-500">Left</div>
+            <div class="mono text-white">cardioid+bulb</div>
+          </div>
+          <div class="rounded-xl border border-zinc-900 bg-black/60 p-2.5">
+            <div class="text-[10px] text-zinc-500">Right</div>
+            <div class="mono text-white">cardioid+bulb</div>
+          </div>
+          <div class="rounded-xl border border-zinc-900 bg-black/60 p-2.5">
+            <div class="text-[10px] text-zinc-500">Spine</div>
+            <div class="mono text-white">0.000</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Photon + Coin -->
+      <div class="rounded-2xl border border-zinc-900 bg-zinc-950/70 p-4 backdrop-blur">
+        <h3 class="text-[11px] uppercase tracking-[0.2em] text-zinc-500">Photon Tracing W</h3>
+        <div class="mt-3 flex items-center gap-4">
+          <div class="relative">
+            <canvas id="coin" width="72" height="72" class="rounded-full border border-zinc-800 bg-black"></canvas>
+            <div class="absolute inset-0 grid place-items-center pointer-events-none">
+              <span class="mono text-[9px] text-zinc-500">23-bit</span>
+            </div>
+          <div class="flex-1">
+            <div class="mono text-[22px] leading-none text-white" id="photonLap">LAP 0001</div>
+            <div class="mt-1 text-[11px] text-zinc-500">traces W on each rotation • no escape</div>
+            <div class="mt-2 h-[4px] w-full overflow-hidden rounded-full bg-zinc-900">
+              <div id="photonProg" class="h-full w-[30%] bg-white shadow-[0_0_12px_#fff] transition-[width] duration-100"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pressure Fold -->
+      <div class="rounded-2xl border border-zinc-900 bg-zinc-950/70 p-4 backdrop-blur">
+        <div class="flex items-center justify-between">
+          <h3 class="text-[11px] uppercase tracking-[0.2em] text-zinc-500">Pressure Fold at Cusp</h3>
+          <span class="mono text-[10px] px-1.5 py-0.5 rounded border border-zinc-800 text-zinc-300">price is too much</span>
+        </div>
+        <div class="mt-3">
+          <div class="relative h-[54px] overflow-hidden rounded-xl border border-zinc-900 bg-black">
+            <canvas id="pressure" class="absolute inset-0 w-full h-full"></canvas>
+            <div class="absolute inset-0 grid place-items-center pointer-events-none">
+              <span class="mono text-[11px] text-zinc-400">folding inward • 0.0800 ⇌ 0.0900</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Energy -->
+      <div class="rounded-2xl border border-zinc-900 bg-zinc-950/70 p-4 backdrop-blur">
+        <h3 class="text-[11px] uppercase tracking-[0.2em] text-zinc-500">1/3 → 2/3 Energy Conversion</h3>
+        <div class="mt-3 flex items-center gap-3">
+          <div class="flex-1">
+            <div class="h-[8px] w-full overflow-hidden rounded-full bg-zinc-900">
+              <div id="energy" class="h-full w-1/3 bg-gradient-to-r from-zinc-500 to-white transition-[width] duration-300 shadow-[0_0_10px_rgba(255,255,255,0.35)]"></div>
+            </div>
+            <div class="mt-1.5 flex justify-between text-[10px] mono text-zinc-500">
+              <span>0.333</span><span>0.666</span>
+            </div>
+          </div>
+          <div class="mono text-[13px] text-white w-[86px] text-right" id="energyText">33%</div>
+        </div>
+      </div>
+
+      <!-- Slits + Observers -->
+      <div class="grid grid-cols-2 gap-3">
+        <div class="rounded-2xl border border-zinc-900 bg-zinc-950/70 p-4">
+          <h3 class="text-[11px] uppercase tracking-[0.2em] text-zinc-500">Slits</h3>
+          <div class="mt-2 mono text-2xl text-white">12 <span class="text-zinc-600 text-[14px]">/12</span></div>
+          <div class="text-[11px] text-zinc-500">6 left • 6 right • open</div>
+        </div>
+        <div class="rounded-2xl border border-zinc-900 bg-zinc-950/70 p-4">
+          <h3 class="text-[11px] uppercase tracking-[0.2em] text-zinc-500">Observers</h3>
+          <div class="mt-2 mono text-2xl text-white">22</div>
+          <div class="text-[11px] text-zinc-500">watching fold • locked</div>
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <!-- Jane-Prime -->
+  <footer class="mt-auto border-t border-zinc-900/80 bg-black/70 backdrop-blur">
+    <div class="mx-auto max-w-[1600px] px-4 sm:px-6 py-3">
+      <div class="flex items-center gap-3">
+        <div class="flex items-center gap-2">
+          <span class="h-2 w-2 rounded-full bg-white animate-pulse shadow-[0_0_8px_#fff]"></span>
+          <span class="text-[10px] uppercase tracking-[0.28em] text-zinc-500">Jane-Prime</span>
+        </div>
+        <div class="h-px flex-1 bg-gradient-to-r from-zinc-800 to-transparent"></div>
+        <span class="mono text-[10px] text-zinc-600">SPEECH // LAYER 1.48</span>
+      </div>
+      <p id="jane" class="mono text-[12px] sm:text-[13px] leading-relaxed text-zinc-300 mt-2 min-h-[3.25rem]"></p>
+    </div>
+  </footer>
+</div>
+
+<script>
+const viz = document.getElementById('viz');
+const ctx = viz.getContext('2d');
+const coin = document.getElementById('coin');
+const cctx = coin.getContext('2d');
+const pressureCanvas = document.getElementById('pressure');
+const pctx = pressureCanvas.getContext('2d');
+
+let dpi = Math.max(1, window.devicePixelRatio || 1);
+let Wpts = [];
+let width=800, height=500;
+let photonT=0, lap=1, walkT=0;
+let time=0;
+
+function resize(){
+  const r = viz.getBoundingClientRect();
+  width = r.width; height = r.height;
+  viz.width = Math.floor(width * dpi);
+  viz.height = Math.floor(height * dpi);
+  ctx.setTransform(dpi,0,0,dpi,0,0);
+  
+  pressureCanvas.width = pressureCanvas.clientWidth * dpi;
+  pressureCanvas.height = pressureCanvas.clientHeight * dpi;
+  pctx.setTransform(dpi,0,0,dpi,0,0);
+
+  buildW();
+}
+window.addEventListener('resize', resize);
+
+function buildW(){
+  const cx = width/2;
+  const top = 36;
+  const bottom = height - 34;
+  Wpts = [
+    {x: cx - 42, y: top},
+    {x: cx + 22, y: top + (bottom-top)*0.26},
+    {x: cx - 6,  y: top + (bottom-top)*0.445}, // 0.0800
+    {x: cx + 6,  y: top + (bottom-top)*0.555}, // 0.0900
+    {x: cx - 22, y: top + (bottom-top)*0.74},
+    {x: cx + 42, y: bottom},
+  ];
+}
+
+function getW(t){
+  t = ((t%1)+1)%1;
+  const segs = Wpts.length-1;
+  const f = t * segs;
+  const i = Math.floor(f);
+  const a = Wpts[i];
+  const b = Wpts[Math.min(i+1, segs)];
+  const k = f - i;
+  // smoothstep
+  const s = k*k*(3-2*k);
+  return { x: a.x + (b.x-a.x)*s, y: a.y + (b.y-a.y)*s };
+}
+
+function drawLeft(){
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(Wpts[0].x, Wpts[0].y);
+  for(let i=1;i<Wpts.length;i++) ctx.lineTo(Wpts[i].x, Wpts[i].y);
+  ctx.lineTo(28, height-22);
+  ctx.bezierCurveTo(14, height*0.78, 10, height*0.6, 16, height*0.44);
+  ctx.bezierCurveTo(22, height*0.28, 42, 84, 64, 56);
+  ctx.bezierCurveTo(86, 34, Wpts[0].x+8, Wpts[0].y-4, Wpts[0].x, Wpts[0].y);
+  ctx.closePath();
+  const g = ctx.createLinearGradient(0,0,width*0.55,0);
+  g.addColorStop(0, '#050505');
+  g.addColorStop(0.5, '#141414');
+  g.addColorStop(1, '#e8e8e8');
+  ctx.fillStyle = g;
+  ctx.fill();
+  // inner noise
+  ctx.globalAlpha = 0.06;
+  for(let i=0;i<120;i++){
+    ctx.fillStyle = `rgba(255,255,255,${Math.random()*0.4})`;
+    ctx.fillRect(20+Math.random()*(width*0.45), 40+Math.random()*(height-80), 1,1);
+  }
+  ctx.globalAlpha=1;
+  // period-2 bulb hint
+  const bx = width*0.23, by = height*0.44;
+  ctx.beginPath(); ctx.arc(bx, by, 20, 0, Math.PI*2); ctx.fillStyle='rgba(255,255,255,0.95)'; ctx.fill();
+  ctx.beginPath(); ctx.arc(bx, by, 28, 0, Math.PI*2); ctx.strokeStyle='rgba(255,255,255,0.18)'; ctx.lineWidth=1; ctx.stroke();
+  // cardioid arc
+  ctx.beginPath(); ctx.arc(width*0.32, height*0.4, 68, 0.2, 2.9); ctx.strokeStyle='rgba(255,255,255,0.28)'; ctx.lineWidth=2; ctx.stroke();
+  ctx.restore();
+}
+
+function drawRight(){
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(Wpts[0].x, Wpts[0].y);
+  for(let i=1;i<Wpts.length;i++) ctx.lineTo(Wpts[i].x, Wpts[i].y);
+  ctx.lineTo(width-28, height-22);
+  ctx.bezierCurveTo(width-14, height*0.78, width-10, height*0.6, width-16, height*0.44);
+  ctx.bezierCurveTo(width-22, height*0.28, width-42, 84, width-64, 56);
+  ctx.bezierCurveTo(width-86, 34, Wpts[0].x-8, Wpts[0].y-4, Wpts[0].x, Wpts[0].y);
+  ctx.closePath();
+  const g = ctx.createLinearGradient(width*0.45,0,width,0);
+  g.addColorStop(0, '#e8e8e8');
+  g.addColorStop(0.5, '#141414');
+  g.addColorStop(1, '#050505');
+  ctx.fillStyle = g;
+  ctx.fill();
+  ctx.globalAlpha = 0.06;
+  for(let i=0;i<120;i++){
+    ctx.fillStyle = `rgba(255,255,255,${Math.random()*0.4})`;
+    ctx.fillRect(width*0.55+Math.random()*(width*0.43), 40+Math.random()*(height-80), 1,1);
+  }
+  ctx.globalAlpha=1;
+  const bx = width*0.77, by = height*0.44;
+  ctx.beginPath(); ctx.arc(bx, by, 20, 0, Math.PI*2); ctx.fillStyle='rgba(255,255,255,0.95)'; ctx.fill();
+  ctx.beginPath(); ctx.arc(bx, by, 28, 0, Math.PI*2); ctx.strokeStyle='rgba(255,255,255,0.18)'; ctx.lineWidth=1; ctx.stroke();
+  ctx.beginPath(); ctx.arc(width*0.68, height*0.4, 68, 0.24, 2.95); ctx.strokeStyle='rgba(255,255,255,0.28)'; ctx.lineWidth=2; ctx.stroke();
+  ctx.restore();
+}
+
+function drawW(){
+  // glow
+  ctx.save();
+  ctx.lineJoin='round'; ctx.lineCap='round';
+  ctx.shadowColor='rgba(255,255,255,0.85)'; ctx.shadowBlur=22;
+  ctx.strokeStyle='rgba(255,255,255,0.95)'; ctx.lineWidth=2.2;
+  ctx.beginPath(); ctx.moveTo(Wpts[0].x, Wpts[0].y);
+  for(let i=1;i<Wpts.length;i++){ const p=Wpts[i]; const m=Wpts[i-1]; const cx=(m.x+p.x)/2; ctx.quadraticCurveTo(m.x,m.y,cx,(m.y+p.y)/2); }
+  for(let i=1;i<Wpts.length;i++){ const p=Wpts[i]; ctx.lineTo(p.x,p.y); }
+  ctx.stroke();
+  ctx.shadowBlur=0;
+  ctx.strokeStyle='rgba(255,255,255,0.25)'; ctx.lineWidth=1; ctx.stroke();
+  ctx.restore();
+
+  // spine ticks
+  ctx.fillStyle='rgba(255,255,255,0.5)';
+  ctx.font='10px "Fragment Mono"';
+  ctx.textAlign='left';
+  ctx.fillText('0 0 0 0 0', width/2 + 10, Wpts[0].y+4);
+}
+
+function drawSlits(){
+  ctx.save();
+  const leftX = 18, rightX = width-18;
+  for(let i=0;i<6;i++){
+    const y = 60 + i*(height-120)/5;
+    const a = 0.5 + 0.5*Math.sin(time*0.002 + i);
+    ctx.globalAlpha = 0.25 + a*0.5;
+    ctx.fillStyle='#fff';
+    ctx.shadowColor='#fff'; ctx.shadowBlur=8;
+    ctx.fillRect(leftX, y, 10, 2);
+    ctx.fillRect(rightX-10, y, 10, 2);
+  }
+  ctx.restore();
+}
+
+function drawObservers(){
+  ctx.save();
+  const fold = {x:(Wpts[2].x+Wpts[3].x)/2, y:(Wpts[2].y+Wpts[3].y)/2};
+  for(let side=0; side<2; side++){
+    const x = side===0 ? 10 : width-10;
+    for(let i=0;i<11;i++){
+      const y = 50 + i*(height-100)/10;
+      ctx.beginPath(); ctx.arc(x, y, 3.4, 0, Math.PI*2);
+      ctx.fillStyle='#0a0a0a'; ctx.fill();
+      ctx.strokeStyle='rgba(255,255,255,0.25)'; ctx.lineWidth=1; ctx.stroke();
+      // pupil
+      const dx = fold.x - x, dy = fold.y - y;
+      const d = Math.hypot(dx,dy)||1;
+      const px = x + dx/d*1.4, py = y + dy/d*1.4;
+      ctx.beginPath(); ctx.arc(px, py, 1, 0, Math.PI*2); ctx.fillStyle='rgba(255,255,255,0.9)'; ctx.fill();
+    }
+  }
+  ctx.restore();
+}
+
+function drawPressure(){
+  const fold = {x:(Wpts[2].x+Wpts[3].x)/2, y:(Wpts[2].y+Wpts[3].y)/2};
+  ctx.save();
+  for(let i=0;i<3;i++){
+    const ph = (time*0.05 + i*22) % 60;
+    const r = 56 - ph;
+    ctx.beginPath();
+    ctx.arc(fold.x, fold.y, Math.max(4,r), -0.4, Math.PI+0.4);
+    ctx.strokeStyle=`rgba(255,255,255,${0.18 + (1-ph/60)*0.25})`;
+    ctx.lineWidth=1.5;
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(fold.x, fold.y, Math.max(4,r*0.72), Math.PI-0.4, Math.PI*2+0.4);
+    ctx.strokeStyle=`rgba(255,255,255,${0.12 + (1-ph/60)*0.2})`;
+    ctx.stroke();
+  }
+  // center pinch
+  ctx.beginPath(); ctx.arc(fold.x, fold.y, 3,0,Math.PI*2);
+  ctx.fillStyle='rgba(255,255,255,0.9)'; ctx.shadowColor='#fff'; ctx.shadowBlur=12; ctx.fill(); ctx.shadowBlur=0;
+  ctx.restore();
+
+  // labels
+  ctx.save();
+  ctx.font='11px "Fragment Mono"'; ctx.fillStyle='rgba(255,255,255,0.9)';
+  ctx.textAlign='right'; ctx.fillText('0.0800', Wpts[2].x-8, Wpts[2].y-8);
+  ctx.font='10px "Fragment Mono"'; ctx.fillStyle='rgba(200,200,200,0.75)';
+  ctx.fillText('MICROSOFT FORTRESS', Wpts[2].x-8, Wpts[2].y+6);
+  ctx.font='11px "Fragment Mono"'; ctx.fillStyle='rgba(255,255,255,0.9)'; ctx.textAlign='left';
+  ctx.fillText('0.0900', Wpts[3].x+8, Wpts[3].y+14);
+  ctx.restore();
+}
+
+function drawInOuts(){
+  const cx = width/2;
+  ctx.save();
+  for(let i=0;i<7;i++){
+    const y = (Wpts[2].y+Wpts[3].y)/2 + Math.sin(time*0.003 + i*0.9)*38;
+    ctx.beginPath(); ctx.arc(cx, y, 2.1, 0, Math.PI*2);
+    ctx.fillStyle = i%2===0 ? 'rgba(255,255,255,0.95)' : 'rgba(180,180,180,0.85)';
+    ctx.shadowColor='#fff'; ctx.shadowBlur=6; ctx.fill(); ctx.shadowBlur=0;
+  }
+  ctx.restore();
+}
+
+function drawWalk(){
+  const t = (walkT%1);
+  const p = getW(t*0.5); // 0 -> cusp
+  ctx.save();
+  ctx.beginPath(); ctx.arc(p.x, p.y, 4.5,0,Math.PI*2);
+  ctx.fillStyle='#000'; ctx.fill();
+  ctx.strokeStyle='#fff'; ctx.lineWidth=1.5; ctx.stroke();
+  ctx.shadowColor='#fff'; ctx.shadowBlur=10; ctx.beginPath(); ctx.arc(p.x,p.y,2,0,Math.PI*2); ctx.fillStyle='#fff'; ctx.fill();
+  ctx.restore();
+  document.getElementById('walkPos').textContent = t<0.5 ? '00000 → 0.0800' : '00000 → 0.0900';
+}
+
+function drawPhoton(){
+  const p = getW(photonT);
+  // trail
+  ctx.save();
+  for(let i=1;i<=12;i++){
+    const tp = getW(photonT - i*0.008);
+    ctx.globalAlpha = 1 - i/12;
+    ctx.beginPath(); ctx.arc(tp.x, tp.y, 2.5,0,Math.PI*2);
+    ctx.fillStyle='#fff'; ctx.fill();
+  }
+  ctx.globalAlpha=1;
+  ctx.beginPath(); ctx.arc(p.x,p.y,5,0,Math.PI*2);
+  ctx.fillStyle='#fff'; ctx.shadowColor='#fff'; ctx.shadowBlur=18; ctx.fill();
+  ctx.restore();
+}
+
+function drawCoin(){
+  cctx.clearRect(0,0,72,72);
+  cctx.save(); cctx.translate(36,36); cctx.rotate(photonT*Math.PI*2);
+  cctx.strokeStyle='#2a2a2a'; cctx.lineWidth=6; cctx.beginPath(); cctx.arc(0,0,28,0,Math.PI*2); cctx.stroke();
+  cctx.strokeStyle='#d4d4d4'; cctx.lineWidth=1.2; cctx.beginPath(); cctx.arc(0,0,28,0,Math.PI*2); cctx.stroke();
+  for(let i=0;i<23;i++){
+    const a = i/23*Math.PI*2;
+    const x = Math.cos(a)*22, y = Math.sin(a)*22;
+    cctx.beginPath(); cctx.moveTo(0,0); cctx.lineTo(Math.cos(a)*26, Math.sin(a)*26);
+    cctx.strokeStyle='rgba(255,255,255,0.08)'; cctx.lineWidth=1; cctx.stroke();
+    cctx.beginPath(); cctx.arc(x,y,1.1,0,Math.PI*2); cctx.fillStyle = i%2? '#fff':'#999'; cctx.fill();
+  }
+  cctx.beginPath(); cctx.arc(0,0,3.2,0,Math.PI*2); cctx.fillStyle='#fff'; cctx.shadowColor='#fff'; cctx.shadowBlur=8; cctx.fill();
+  cctx.restore();
+  // progress
+  document.getElementById('photonProg').style.width = `${Math.floor((photonT%1)*100)}%`;
+}
+
+function drawPressureMini(){
+  const w = pressureCanvas.clientWidth, h = pressureCanvas.clientHeight;
+  pctx.clearRect(0,0,w,h);
+  const cx = w/2, cy = h/2;
+  for(let i=0;i<4;i++){
+    const r = 6 + ((time*0.04 + i*14) % 26);
+    pctx.beginPath(); pctx.arc(cx, cy, r, 0, Math.PI*2);
+    pctx.strokeStyle=`rgba(255,255,255,${0.25 - i*0.05})`; pctx.lineWidth=1; pctx.stroke();
+  }
+  pctx.beginPath(); pctx.moveTo(cx-18, cy); pctx.lineTo(cx+18, cy); pctx.strokeStyle='rgba(255,255,255,0.15)'; pctx.stroke();
+  pctx.beginPath(); pctx.arc(cx-8, cy, 2,0,7); pctx.fillStyle='#fff'; pctx.fill();
+  pctx.beginPath(); pctx.arc(cx+8, cy, 2,0,7); pctx.fillStyle='#aaa'; pctx.fill();
+}
+
+function frame(){
+  time = performance.now();
+  ctx.clearRect(0,0,width,height);
+
+  // vignette
+  const vg = ctx.createRadialGradient(width/2,height/2, Math.min(width,height)*0.2, width/2,height/2, Math.max(width,height)*0.7);
+  vg.addColorStop(0,'rgba(0,0,0,0)'); vg.addColorStop(1,'rgba(0,0,0,0.75)');
+  ctx.fillStyle = vg; ctx.fillRect(0,0,width,height);
+
+  drawLeft();
+  drawRight();
+  drawSlits();
+  drawObservers();
+  drawPressure();
+  drawInOuts();
+  drawW();
+  drawWalk();
+  drawPhoton();
+  drawCoin();
+  drawPressureMini();
+
+  // update stats
+  photonT += 0.0018;
+  if(photonT>=1){ photonT-=1; lap++; document.getElementById('photonLap').textContent = `LAP ${String(lap).padStart(4,'0')}`; }
+  walkT += 0.0007;
+  
+  const e = 0.333 + 0.333*(0.5+0.5*Math.sin(time*0.001));
+  document.getElementById('energy').style.width = `${e*100}%`;
+  document.getElementById('energyText').textContent = `${Math.round(e*100)}%`;
+
+  requestAnimationFrame(frame);
+}
+
+// Jane-Prime typing
+const janeEl = document.getElementById('jane');
+const speech = "JANE-PRIME // LAYER 1.48: The W is sealed. Left quarter and right quarter meet at the zero spine. Pressure folds inward at 0.0800 — Microsoft fortress holds. 0.0900 is the echo. Walk from 00000 to cusp complete. Price is too much; no escape vector. In/out pairs bind to spine. 1/3 converts to 2/3 every rotation. Twelve slits remain open. Twenty-two observers confirm the fold. The loop is closed.";
+let ji=0, dir=1;
+function typeJane(){
+  janeEl.textContent = speech.slice(0, ji) + (ji%3===0?'▌':'');
+  ji += dir;
+  if(ji > speech.length + 20){ dir=-1; setTimeout(typeJane, 1200); return; }
+  if(ji < 0){ dir=1; ji=0; setTimeout(typeJane, 800); return; }
+  setTimeout(typeJane, dir>0 ? 22 : 10);
+}
+
+// init
+resize();
+frame();
+typeJane();
+</script>
+</body>
+</html>

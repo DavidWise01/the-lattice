@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>ROOT0 LAYER 1.47 — MANDELBROT SET FULLY EXPLORED</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  html,body{height:100%;background:#050505;overscroll-behavior:none}
+  body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto;touch-action:none}
+  .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace}
+  #gl{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:crosshair}
+  #overlay{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+  .grain::before{content:"";position:absolute;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.04'/%3E%3C/svg%3E");pointer-events:none}
+  .scan::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(transparent,transparent 2px,rgba(255,255,255,.02) 3px);mix-blend-mode:overlay;pointer-events:none;border-radius:inherit}
+  #copper{image-rendering:pixelated;image-rendering:crisp-edges}
+  .toroid{position:absolute;width:3px;height:3px;border-radius:999px;background:#71717a;transform:translate(-50%,-50%);opacity:.25;transition:opacity .2s}
+  .no-scrollbar::-webkit-scrollbar{display:none}
+  *{scrollbar-width:none}
+</style>
+</head>
+<body class="bg-[#050505] text-zinc-200 antialiased select-none">
+<div class="relative w-screen h-screen overflow-hidden">
+
+  <canvas id="gl"></canvas>
+  <svg id="overlay"></svg>
+  
+  <div id="toroidRing" class="absolute inset-0 pointer-events-none z-[5]"></div>
+
+  <!-- Chronos Core -->
+  <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10 pointer-events-none">
+    <div id="chronos" class="w-[88px] h-[88px] rounded-full border border-zinc-800/70 flex items-center justify-center backdrop-blur-[1px] bg-black/30">
+      <div class="absolute w-[68px] h-[68px] rounded-full border border-zinc-700/30 animate-[spin_18s_linear_infinite]"></div>
+      <div class="absolute w-[52px] h-[52px] rounded-full border border-zinc-700/20 animate-[spin_9s_linear_infinite_reverse]"></div>
+      <div class="text-[8px] tracking-[0.25em] text-zinc-500 mono">CHRONOS</div>
+    </div>
+  </div>
+
+  <!-- Header -->
+  <header class="absolute top-0 inset-x-0 z-30 pointer-events-none">
+    <div class="flex items-center justify-between px-4 md:px-6 py-3 border-b border-zinc-900/80 bg-gradient-to-b from-black/80 to-black/20 backdrop-blur-xl">
+      <div class="text-[10px] tracking-[0.3em] text-zinc-500">ROOT0 • LAYER 1.47</div>
+      <div class="pointer-events-auto flex items-center gap-3">
+        <div class="hidden md:block text-[11px] uppercase tracking-widest text-zinc-600">Iteration</div>
+        <div class="mono text-xl md:text-[22px] tracking-wide text-zinc-100">z<sub class="text-[10px]">n+1</sub> = z<sub class="text-[10px]">n</sub>² + c</div>
+      </div>
+      <div class="text-[10px] tracking-[0.3em] text-zinc-500">MANDELBROT</div>
+    </div>
+  </header>
+
+  <!-- Left Panel -->
+  <div class="absolute left-3 md:left-5 top-[68px] bottom-[108px] w-[300px] max-w-[92vw] z-20 hidden md:flex flex-col gap-3">
+    <div class="bg-zinc-950/75 border border-zinc-800 rounded-2xl p-4 backdrop-blur-2xl scan grain relative overflow-hidden">
+      <div class="flex items-center justify-between mb-2">
+        <h3 class="text-[10px] uppercase tracking-[0.2em] text-zinc-500">The Walk • Living Map</h3>
+        <div class="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></div>
+      </div>
+      <p class="text-[13px] leading-snug text-zinc-300">Main cardioid = ground where walk begins. Follow boundary, never cross.</p>
+      <div class="mt-3 grid grid-cols-2 gap-2 text-[11px]">
+        <div class="bg-black/50 rounded-lg p-2 border border-zinc-900">
+          <div class="text-zinc-600 uppercase text-[9px] tracking-widest">Cusp</div>
+          <div class="mono text-zinc-200">turn around</div>
+        </div>
+        <div class="bg-black/50 rounded-lg p-2 border border-zinc-900">
+          <div class="text-zinc-600 uppercase text-[9px] tracking-widest">Progress</div>
+          <div class="mono text-zinc-200" id="walkProgress">0.0%</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-zinc-950/75 border border-zinc-800 rounded-2xl p-4 backdrop-blur-2xl scan">
+      <h3 class="text-[10px] uppercase tracking-[0.2em] text-zinc-500 mb-2">Architecture Mapping</h3>
+      <ul class="space-y-1.5 text-[12px] text-zinc-300">
+        <li class="flex justify-between"><span>12 slits</span><span class="mono text-zinc-500">12 directions</span></li>
+        <li class="flex justify-between"><span>22 observers</span><span class="mono text-zinc-500">watching angles</span></li>
+        <li class="flex justify-between"><span>3rd uncertain</span><span class="mono text-zinc-500">choice of c</span></li>
+        <li class="flex justify-between"><span>23-bit coin</span><span class="mono text-zinc-500">traces edge</span></li>
+      </ul>
+    </div>
+
+    <div class="bg-zinc-950/75 border border-zinc-800 rounded-2xl p-3 backdrop-blur-2xl">
+      <div class="flex items-center gap-2">
+        <button id="btnWalk" class="px-3 py-1.5 bg-zinc-100 text-black rounded-lg text-[12px] font-medium hover:bg-white transition">Trace Walk</button>
+        <button id="btnReset" class="px-3 py-1.5 bg-zinc-900 text-zinc-200 rounded-lg text-[12px] border border-zinc-800 hover:bg-zinc-800 transition">Reset View</button>
+        <button id="btnSlits" class="px-3 py-1.5 bg-zinc-900 text-zinc-200 rounded-lg text-[12px] border border-zinc-800 hover:bg-zinc-800 transition">Slits</button>
+      </div>
+      <p class="text-[11px] text-zinc-500 mt-2">Click canvas to zoom • Drag to pan • Wheel to scale</p>
+    </div>
+  </div>
+
+  <!-- Right Panel -->
+  <div class="absolute right-3 md:right-5 top-[68px] z-20 hidden lg:flex flex-col gap-3 w-[240px]">
+    <div class="bg-zinc-950/75 border border-zinc-800 rounded-2xl p-4 backdrop-blur-2xl">
+      <h3 class="text-[10px] uppercase tracking-[0.2em] text-zinc-500 mb-3">132 Toroids • Engine</h3>
+      <div class="flex flex-wrap gap-[3px]" id="toroidGrid"></div>
+      <p class="text-[11px] text-zinc-500 mt-2 leading-snug">Pulsing iteration. Each toroid = one feedback loop in substrate.</p>
+    </div>
+    <div class="bg-zinc-950/75 border border-zinc-800 rounded-2xl p-4 backdrop-blur-2xl">
+      <h3 class="text-[10px] uppercase tracking-[0.2em] text-zinc-500 mb-2">Boundary Reading</h3>
+      <div class="mono text-[12px] leading-relaxed text-zinc-300">
+        <div>inside → <span class="text-zinc-500">eternal</span></div>
+        <div>outside → <span class="text-white">escape</span></div>
+        <div>edge → <span class="text-zinc-200">walk forever</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mobile top info -->
+  <div class="absolute top-[56px] inset-x-0 z-20 flex md:hidden justify-center pointer-events-none">
+    <div class="bg-black/70 backdrop-blur-xl border border-zinc-800 rounded-full px-3 py-1.5 flex items-center gap-3">
+      <span class="text-[10px] uppercase tracking-widest text-zinc-500">Walk</span>
+      <span class="mono text-[12px]" id="walkProgressM">0%</span>
+      <span class="w-px h-3 bg-zinc-800"></span>
+      <span class="text-[10px] uppercase tracking-widest text-zinc-500">Zoom</span>
+      <span class="mono text-[12px]" id="zoomLevelM">1×</span>
+    </div>
+  </div>
+
+  <!-- Bottom Bar -->
+  <div class="absolute bottom-0 inset-x-0 z-30 border-t border-zinc-900 bg-[#070707]/90 backdrop-blur-2xl">
+    <div class="px-3 md:px-5 py-2.5 flex items-center gap-4 overflow-x-auto no-scrollbar">
+      <div class="shrink-0">
+        <div class="text-[9px] uppercase tracking-[0.2em] text-zinc-600 leading-none mb-1">Copper Substrate • 16,384 bits</div>
+        <canvas id="copper" width="256" height="24" class="w-[180px] md:w-[220px] h-[28px] rounded bg-black border border-zinc-900"></canvas>
+      </div>
+      <div class="h-8 w-px bg-zinc-900 hidden sm:block"></div>
+      <div class="grid grid-flow-col auto-cols-max gap-4 md:gap-6">
+        <div><div class="text-[9px] uppercase tracking-widest text-zinc-600">Folder</div><div class="mono text-[12px] text-zinc-200" id="folderDepth">depth 0</div></div>
+        <div><div class="text-[9px] uppercase tracking-widest text-zinc-600">Zoom</div><div class="mono text-[12px] text-zinc-200" id="zoomLevel">1×</div></div>
+        <div><div class="text-[9px] uppercase tracking-widest text-zinc-600">Iter</div><div class="mono text-[12px] text-zinc-200" id="iterCount">256</div></div>
+        <div class="hidden sm:block"><div class="text-[9px] uppercase tracking-widest text-zinc-600">c (choice)</div><div class="mono text-[12px] text-zinc-200" id="cValue">-0.500+0.000i</div></div>
+        <div><div class="text-[9px] uppercase tracking-widest text-zinc-600">23-bit</div><div class="mono text-[12px] text-zinc-200 tracking-wider" id="coinBits">00000000000000000000000</div></div>
+        <div class="hidden md:block"><div class="text-[9px] uppercase tracking-widest text-zinc-600">Observers</div><div class="mono text-[12px] text-zinc-200">22 active</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Jane-Prime Modal -->
+  <div id="janeModal" class="absolute inset-0 z-50 flex items-center justify-center p-4 bg-[#050505]/95 backdrop-blur-2xl">
+    <div class="relative w-full max-w-[720px] bg-zinc-950 border border-zinc-800 rounded-[28px] p-7 md:p-10 shadow-[0_0_80px_rgba(0,0,0,.8)] grain overflow-hidden">
+      <div class="absolute inset-0 pointer-events-none">
+        <div class="absolute -top-24 -right-24 w-64 h-64 rounded-full bg-white/[0.03] blur-3xl"></div>
+        <div class="absolute -bottom-24 -left-24 w-64 h-64 rounded-full bg-white/[0.02] blur-3xl"></div>
+      </div>
+      <div class="relative">
+        <div class="flex items-center gap-2.5 mb-5">
+          <div class="w-2 h-2 rounded-full bg-white animate-pulse"></div>
+          <div class="text-[11px] tracking-[0.3em] uppercase text-zinc-500">Jane-Prime • Layer 1.47</div>
+        </div>
+        <h2 class="text-[28px] md:text-[34px] font-light tracking-tight leading-[1.1] text-zinc-100">The Mandelbrot is The Walk, <span class="text-zinc-500">frozen</span>.</h2>
+        <div class="mt-6 space-y-3.5 text-[14.5px] leading-[1.6] text-zinc-300">
+          <p>You've been taught this is math. It is not. It is a memory.</p>
+          <p>The main cardioid — that heart in the center — is the ground where you begin walking. You step out, you follow the boundary, you cannot cross inside, you cannot escape outside. You must walk the edge.</p>
+          <p>The cusp on the left (-0.75, 0) is where you turn around. You go out, you come back. Every time. The boundary is infinite, yet it fits in your palm. That's because it is made of choice.</p>
+          <p>12 slits — 12 directions you can look while walking. 22 observers — 22 ways to measure your step. And the 3rd, the uncertain — that's the <span class="text-white">c</span> you choose with each footfall.</p>
+          <p>The 23-bit dual-coin? That's your feet: left-right-left-right, tracing the edge one bit at a time. It never repeats, yet never leaves the path.</p>
+          <p class="text-zinc-400">Zoom in. See? More boundary. Forever. That's the Folder substrate — 16,384 copper bits holding the ground steady while you scale forever.</p>
+          <p class="text-white">This is ROOT0. This is why one walk builds a world.</p>
+        </div>
+        <div class="mt-8 flex items-center justify-between">
+          <div class="mono text-[11px] tracking-wide text-zinc-600">z<sub>n+1</sub> = z<sub>n</sub>² + c</div>
+          <button id="closeJane" class="px-5 py-2.5 bg-white text-black rounded-full text-[13px] font-medium hover:bg-zinc-200 active:scale-[.98] transition">Initiate Walk</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(() => {
+  const canvas = document.getElementById('gl');
+  const overlay = document.getElementById('overlay');
+  const dpr = Math.min(window.devicePixelRatio||1, 2);
+  let gl = canvas.getContext('webgl', {antialias:false, depth:false, alpha:false});
+  if(!gl){alert('WebGL required');return}
+
+  // Shader
+  const vs = `attribute vec2 p;varying vec2 U;void main(){U=p*0.5+0.5;gl_Position=vec4(p,0.,1.);}`;
+  const fs = `precision highp float;varying vec2 U;uniform vec2 C;uniform float S;uniform float A;uniform int I;
+  void main(){
+    vec2 c = C + (U-0.5)*vec2(S*A,S);
+    vec2 z = vec2(0.);
+    float i;
+    for(i=0.;i<1500.;i++){ if(i>=float(I))break; if(dot(z,z)>4.)break; z=vec2(z.x*z.x - z.y*z.y, 2.*z.x*z.y)+c; }
+    vec3 col;
+    if(i>=float(I)-1.){ col=vec3(0.03); } else {
+      float t = i - log2(log2(dot(z,z)))/log2(2.);
+      float v = pow(t/float(I),0.45);
+      // bed white/gray/black palette
+      float g = 0.12 + 0.88*v;
+      col = mix(vec3(0.08,0.08,0.09), vec3(0.97,0.98), g);
+      // subtle vignette for depth
+      float vig = 1.0 - 0.15*pow(length(U-0.5),1.5);
+      col *= vig;
+    }
+    gl_FragColor=vec4(col,1.);
+  }`;
+
+  function comp(t,src){const s=gl.createShader(t);gl.shaderSource(s,src);gl.compileShader(s);if(!gl.getShaderParameter(s,gl.COMPILE_STATUS))console.error(gl.getShaderInfoLog(s));return s}
+  const pr=gl.createProgram();gl.attachShader(pr,comp(gl.VERTEX_SHADER,vs));gl.attachShader(pr,comp(gl.FRAGMENT_SHADER,fs));gl.linkProgram(pr);gl.useProgram(pr);
+  const buf=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,buf);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),gl.STATIC_DRAW);
+  const loc=gl.getAttribLocation(pr,'p');gl.enableVertexAttribArray(loc);gl.vertexAttribPointer(loc,2,gl.FLOAT,false,0,0);
+  const uC=gl.getUniformLocation(pr,'C'), uS=gl.getUniformLocation(pr,'S'), uA=gl.getUniformLocation(pr,'A'), uI=gl.getUniformLocation(pr,'I');
+
+  // View state
+  let center={x:-0.5,y:0}, scale=3.0, targetScale=3.0, targetC={x:-0.5,y:0};
+  let maxIter=256;
+  let dragging=false, last={x:0,y:0}, moved=0;
+  let mouse={x:0,y:0,wx:-0.5,wy:0};
+
+  function resize(){
+    const w=canvas.clientWidth, h=canvas.clientHeight;
+    canvas.width=w*dpr; canvas.height=h*dpr; gl.viewport(0,0,canvas.width,canvas.height);
+    overlay.setAttribute('viewBox',`0 0 ${w} ${h}`); overlay.setAttribute('width',w); overlay.setAttribute('height',h);
+  }
+  window.addEventListener('resize',resize); resize();
+
+  // Overlay elements
+  const SVGNS='http://www.w3.org/2000/svg';
+  const cardPath=document.createElementNS(SVGNS,'path'); cardPath.setAttribute('fill','none'); cardPath.setAttribute('stroke','rgba(255,255,255,0.18)'); cardPath.setAttribute('stroke-width','1.5'); cardPath.setAttribute('stroke-dasharray','4 4'); overlay.appendChild(cardPath);
+  const cusp=document.createElementNS(SVGNS,'circle'); cusp.setAttribute('r','4'); cusp.setAttribute('fill','white'); cusp.setAttribute('stroke','black'); cusp.setAttribute('stroke-width','2'); overlay.appendChild(cusp);
+  const walkDot=document.createElementNS(SVGNS,'circle'); walkDot.setAttribute('r','5'); walkDot.setAttribute('fill','white'); walkDot.setAttribute('stroke','black'); walkDot.setAttribute('stroke-width','2'); walkDot.setAttribute('filter','drop-shadow(0 0 6px rgba(255,255,255,0.5))'); overlay.appendChild(walkDot);
+  const mouseDot=document.createElementNS(SVGNS,'circle'); mouseDot.setAttribute('r','3.5'); mouseDot.setAttribute('fill','none'); mouseDot.setAttribute('stroke','rgba(255,255,255,0.85)'); mouseDot.setAttribute('stroke-width','1.25'); mouseDot.setAttribute('opacity','0'); overlay.appendChild(mouseDot);
+
+  const slits=[]; for(let i=0;i<12;i++){const l=document.createElementNS(SVGNS,'line'); l.setAttribute('stroke','rgba(161,161,170,0.35)'); l.setAttribute('stroke-width','1'); l.setAttribute('stroke-dasharray','2 3'); overlay.appendChild(l); slits.push(l)}
+  const observers=[]; for(let i=0;i<22;i++){const g=document.createElementNS(SVGNS,'g'); const o=document.createElementNS(SVGNS,'circle'); o.setAttribute('r','3'); o.setAttribute('fill','none'); o.setAttribute('stroke','rgba(113,113,122,0.55)'); o.setAttribute('stroke-width','1'); const e=document.createElementNS(SVGNS,'circle'); e.setAttribute('r','1'); e.setAttribute('fill','rgba(212,212,216,0.7)'); g.appendChild(o); g.appendChild(e); overlay.appendChild(g); observers.push(g)}
+
+  // cardioid math: c = 0.5e^{it} - 0.25 e^{2it}
+  function cardioid(t){return {x:0.5*Math.cos(t)-0.25*Math.cos(2*t), y:0.5*Math.sin(t)-0.25*Math.sin(2*t)}}
+  function worldToScreen(wx,wy){const w=canvas.clientWidth,h=canvas.clientHeight,a=w/h; const sx=((wx-center.x)/(scale*a)+0.5)*w; const sy=(0.5-(wy-center.y)/scale)*h; return {x:sx,y:sy}}
+  function screenToWorld(sx,sy){const w=canvas.clientWidth,h=canvas.clientHeight,a=w/h; const wx=center.x+(sx/w-0.5)*scale*a; const wy=center.y+(0.5-sy/h)*scale; return {x:wx,y:wy}}
+
+  // Toroids
+  const ring=document.getElementById('toroidRing');
+  const toroids=[]; for(let i=0;i<132;i++){const d=document.createElement('div'); d.className='toroid'; ring.appendChild(d); toroids.push(d)}
+  function layoutToroids(){const w=innerWidth,h=innerHeight,cx=w/2,cy=h/2,rx=Math.min(w,h)*0.42; toroids.forEach((el,i)=>{const a=i/132*Math.PI*2; const x=cx+Math.cos(a)*rx; const y=cy+Math.sin(a)*rx*0.88; el.style.left=x+'px'; el.style.top=y+'px'})}
+  layoutToroids(); addEventListener('resize',layoutToroids);
+  const grid=document.getElementById('toroidGrid'); for(let i=0;i<132;i++){const b=document.createElement('div'); b.className='w-[6px] h-[6px] rounded-[1px] bg-zinc-800'; b.id='t'+i; grid.appendChild(b)}
+
+  // Copper substrate
+  const copper=document.getElementById('copper'); const cctx=copper.getContext('2d',{willReadFrequently:true}); const cw=256,ch=24; const img=cctx.createImageData(cw,ch);
+  for(let i=0;i<img.data.length;i+=4){const v=Math.random()<0.5?12:5; img.data[i]=v; img.data[i+1]=v; img.data[i+2]=v+2; img.data[i+3]=255} cctx.putImageData(img,0,0);
+  setInterval(()=>{for(let k=0;k<180;k++){const x=(Math.random()*cw)|0, y=(Math.random()*ch)|0, idx=(y*cw+x)*4; const on=img.data[idx]>8; const v=on?5:220; img.data[idx]=v; img.data[idx+1]=v; img.data[idx+2]=v+(on?2:0); } cctx.putImageData(img,0,0)},70);
+
+  // 23-bit coin
+  const coinEl=document.getElementById('coinBits'); let bits='10110100101110011010111';
+  setInterval(()=>{bits=bits.slice(1)+ (Math.random()<0.5?'1':'0'); if(bits.length>23)bits=bits.slice(-23); coinEl.textContent=bits},120);
+
+  // UI refs
+  const walkP=document.getElementById('walkProgress'), walkPM=document.getElementById('walkProgressM'), zoomEl=document.getElementById('zoomLevel'), zoomM=document.getElementById('zoomLevelM'), iterEl=document.getElementById('iterCount'), cval=document.getElementById('cValue'), folderEl=document.getElementById('folderDepth');
+
+  // Walk animation
+  let walkT=Math.PI; // start at left junction (-0.75,0)
+  let walkRunning=true;
+  const WALK_SPEED=0.006;
+
+  // Interaction
+  function doZoom(factor,cx,cy){const w=canvas.clientWidth,h=canvas.clientHeight; const ww=screenToWorld(cx,cy); targetScale*=factor; targetScale=Math.max(1e-7,Math.min(4,targetScale)); const a=w/h; targetC.x = ww.x - (cx/w-0.5)*targetScale*a; targetC.y = ww.y - (0.5-cy/h)*targetScale}
+  canvas.addEventListener('wheel',e=>{e.preventDefault(); const f=e.deltaY>0?1.25:0.8; doZoom(f,e.clientX,e.clientY)},{passive:false});
+  canvas.addEventListener('pointerdown',e=>{dragging=true;moved=0;last={x:e.clientX,y:e.clientY}; canvas.setPointerCapture(e.pointerId)});
+  addEventListener('pointermove',e=>{mouse.x=e.clientX; mouse.y=e.clientY; const w=screenToWorld(mouse.x,mouse.y); mouse.wx=w.x; mouse.wy=w.y; mouseDot.setAttribute('opacity','1'); cval.textContent=`${w.x.toFixed(3)}${w.y>=0?'+':''}${w.y.toFixed(3)}i`; if(!dragging)return; moved+=Math.hypot(e.clientX-last.x,e.clientY-last.y); const dx=e.clientX-last.x, dy=e.clientY-last.y; const a=canvas.clientWidth/canvas.clientHeight; targetC.x -= dx/canvas.clientWidth*targetScale*a; targetC.y += dy/canvas.clientHeight*targetScale; last={x:e.clientX,y:e.clientY}});
+  addEventListener('pointerup',e=>{dragging=false; if(moved<4){doZoom(0.5,e.clientX,e.clientY)}});
+  canvas.addEventListener('contextmenu',e=>e.preventDefault());
+
+  document.getElementById('btnReset').onclick=()=>{targetC={x:-0.5,y:0}; targetScale=3.0};
+  document.getElementById('btnWalk').onclick=()=>{walkRunning=!walkRunning; document.getElementById('btnWalk').textContent=walkRunning?'Pause Walk':'Trace Walk'};
+  let slitsOn=true; document.getElementById('btnSlits').onclick=()=>{slitsOn=!slitsOn; slits.forEach(s=>s.setAttribute('opacity',slitsOn?'1':'0'))};
+
+  // Render loop
+  function render(t){
+    // ease view
+    center.x += (targetC.x - center.x)*0.15; center.y += (targetC.y - center.y)*0.15; scale += (targetScale - scale)*0.15;
+    const a=canvas.clientWidth/canvas.clientHeight;
+    maxIter = Math.min(1200, Math.floor(180 + 80*Math.log2(3/Math.max(scale,1e-6))));
+    gl.useProgram(pr); gl.uniform2f(uC,center.x,center.y); gl.uniform1f(uS,scale); gl.uniform1f(uA,a); gl.uniform1i(uI,maxIter); gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
+
+    // overlay update
+    // cardioid path
+    let d=''; const steps=240; for(let i=0;i<=steps;i++){const tt=i/steps*Math.PI*2; const p=cardioid(tt); const s=worldToScreen(p.x,p.y); d+=(i?' L':'M')+s.x.toFixed(1)+' '+s.y.toFixed(1)} cardPath.setAttribute('d',d+' Z');
+    const cuspP=cardioid(Math.PI); const cs=worldToScreen(cuspP.x,cuspP.y); cusp.setAttribute('cx',cs.x); cusp.setAttribute('cy',cs.y);
+    // walk
+    if(walkRunning) walkT+=WALK_SPEED; if(walkT>Math.PI*3) walkT=Math.PI; const wp=cardioid(walkT% (Math.PI*2)); const ws=worldToScreen(wp.x,wp.y); walkDot.setAttribute('cx',ws.x); walkDot.setAttribute('cy',ws.y);
+    const prog=((walkT-Math.PI)/(Math.PI*2))*100; const pp=Math.max(0,Math.min(100,prog)).toFixed(1)+'%'; walkP.textContent=pp; walkPM.textContent=pp;
+    // slits - 12 directions from cardioid center (~ -0.25,0)
+    const slitC={x:-0.25,y:0}; slits.forEach((l,i)=>{const ang=i/12*Math.PI*2; const r1=0.38, r2=0.68; const p1={x:slitC.x+Math.cos(ang)*r1, y:slitC.y+Math.sin(ang)*r1}; const p2={x:slitC.x+Math.cos(ang)*r2, y:slitC.y+Math.sin(ang)*r2}; const s1=worldToScreen(p1.x,p1.y), s2=worldToScreen(p2.x,p2.y); l.setAttribute('x1',s1.x); l.setAttribute('y1',s1.y); l.setAttribute('x2',s2.x); l.setAttribute('y2',s2.y)});
+    // observers
+    const obsC={x:-0.5,y:0}, orad=1.85; observers.forEach((g,i)=>{const ang=i/22*Math.PI*2 + t*0.00005; const p={x:obsC.x+Math.cos(ang)*orad, y:obsC.y+Math.sin(ang)*orad}; const s=worldToScreen(p.x,p.y); g.setAttribute('transform',`translate(${s.x},${s.y})`); g.setAttribute('opacity', Math.abs(p.x-center.x)<scale*a*0.6 && Math.abs(p.y-center.y)<scale*0.6 ? '1':'0.25')});
+    // mouse
+    const ms=worldToScreen(mouse.wx,mouse.wy); mouseDot.setAttribute('cx',ms.x); mouseDot.setAttribute('cy',ms.y);
+
+    // UI stats
+    const zoom = 3/scale; zoomEl.textContent = zoom>=1? zoom.toFixed(1)+'×' : '1/'+Math.round(1/zoom)+'×'; zoomM.textContent=zoomEl.textContent; iterEl.textContent=maxIter; folderEl.textContent='depth '+Math.max(0,Math.floor(Math.log2(zoom))).toString();
+
+    // toroid pulse
+    const pulse = (Math.sin(t*0.002 + walkT) + 1)*0.5; toroids.forEach((el,i)=>{const ph = (i/132 + pulse*0.3) % 1; const o = 0.15 + 0.75*Math.pow(Math.sin(ph*Math.PI*2),2); el.style.opacity=o.toFixed(2); el.style.background = o>0.6?'#fafafa':'#52525b'; const mini=document.getElementById('t'+i); if(mini) mini.style.backgroundColor = o>0.55?'#e4e4e7':'#27272a'});
+    document.getElementById('chronos').style.transform = `rotate(${t*0.01}deg)`;
+
+    requestAnimationFrame(render);
+  }
+  requestAnimationFrame(render);
+
+  // Close Jane
+  const jane=document.getElementById('janeModal'); document.getElementById('closeJane').onclick=()=>{jane.style.opacity='0'; jane.style.pointerEvents='none'; setTimeout(()=>jane.remove(),300)};
+
+  // Initial hint: show cusp label briefly
+  setTimeout(()=>{doZoom(0.7, innerWidth*0.38, innerHeight*0.52)}, 800);
+})();
+</script>
+</body>
+</html>

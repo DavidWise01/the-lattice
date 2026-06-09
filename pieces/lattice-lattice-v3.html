@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LATTICE 90 — Balance Engine</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#0b1020;
+  --panel:#111932;
+  --glass:rgba(17,25,50,0.72);
+  --border:rgba(148,163,184,0.14);
+  --text:#e2e8f0;
+  --muted:#94a3b8;
+  --blue:#3b82f6;
+  --cyan:#22d3ee;
+  --violet:#8b5cf6;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+  overflow:hidden;
+  background-image:
+    radial-gradient(1200px 800px at 80% -10%, rgba(59,130,246,0.15), transparent),
+    radial-gradient(900px 600px at 10% 110%, rgba(139,92,246,0.12), transparent),
+    radial-gradient(600px 400px at 50% 50%, rgba(34,211,238,0.08), transparent);
+}
+.app{display:flex;flex-direction:column;height:100vh}
+header{
+  display:flex;align-items:center;gap:14px;
+  padding:14px 20px;
+  border-bottom:1px solid var(--border);
+  background:linear-gradient(180deg, rgba(255,255,255,0.06), transparent);
+  backdrop-filter:blur(12px);
+}
+.logo{
+  width:36px;height:36px;border-radius:10px;
+  background:conic-gradient(from 200deg, var(--cyan), var(--violet), var(--blue), var(--cyan));
+  box-shadow:0 0 30px rgba(59,130,246,0.4), inset 0 0 12px rgba(255,255,255,0.2);
+  display:grid;place-items:center;
+}
+.logo svg{filter:drop-shadow(0 2px 4px rgba(0,0,0,0.5))}
+header h1{font-size:18px;margin:0;letter-spacing:0.5px;font-weight:700}
+header p{margin:2px 0 0;color:var(--muted);font-size:12px}
+
+.grid{
+  display:grid;
+  grid-template-columns: 32% 43% 25%;
+  gap:16px;
+  padding:16px;
+  height:calc(100vh - 68px);
+}
+.panel{
+  background:var(--glass);
+  border:1px solid var(--border);
+  border-radius:20px;
+  padding:14px;
+  backdrop-filter:blur16px;
+  box-shadow:0 10px 40px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.04);
+  display:flex;flex-direction:column;min-height:0;
+}
+.panel h2{margin:0 0 10px;font-size:13px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);font-weight:600}
+.panel h3{margin:0 0 8px;font-size:12px;text-transform:uppercase;letter-spacing:0.8px;color:var(--muted)}
+
+.left .search{
+  width:100%;padding:9px 12px;margin-bottom:10px;
+  background:rgba(0,0,0,0.35);border:1px solid var(--border);border-radius:10px;
+  color:var(--text);outline:none;font-size:13px;
+}
+.left .search:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(59,130,246,0.2)}
+.roots-list{flex:1;overflow:auto;padding-right:6px;scrollbar-width:thin}
+.roots-list::-webkit-scrollbar{width:6px}
+.roots-list::-webkit-scrollbar-thumb{background:rgba(148,163,184,0.2);border-radius3px}
+
+.root-row{
+  padding:10px 11px;margin-bottom:8px;
+  background:linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.015));
+  border:1px solid rgba(255,255,255,0.06);
+  border-radius:12px;
+  transition:all .2s;
+}
+.root-row:hover{border-color:rgba(59,130,246,0.4);background:rgba(59,130,246,0.06)}
+.root-row.redress{
+  border-left:3px solid var(--blue);
+  background:linear-gradient(90deg, rgba(59,130,246,0.15), rgba(59,130,246,0.03));
+}
+.row-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.name-wrap{display:flex;align-items:center;gap:8px}
+.dot{width:8px;height:8px;border-radius:50%;box-shadow:0 0 8px currentColor}
+.name{font-weight:600;font-size:13.5px}
+.gender{font-size:11px;opacity:0.7}
+.gender.female{color:#f472b6}
+.gender.male{color:#60a5fa}
+.pillar{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px}
+.row-controls{display:grid;grid-template-columns:68px 1fr 56px;gap:8px;align-items:center}
+select.mult{
+  background:rgba(0,0,0,0.4);border:1px solid var(--border);color:var(--text);
+  border-radius:8px;padding:5px 6px;font-size:12px;outline:none;
+}
+select.mult:focus{border-color:var(--cyan)}
+.slider-wrap{position:relative}
+input[type=range].redress-input{
+  width:100%;-webkit-appearance:none;height:4px;background:rgba(255,255,255,0.12);border-radius:2px;outline:none
+}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;width:14px;height:14px;border-radius:50%;
+  background:var(--blue);border:2px solid #0b1020;cursor:pointer;box-shadow:0 0 10px rgba(59,130,246,0.6)
+}
+input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:var(--blue);border:2px solid #0b1020;cursor:pointer}
+.redress-label{font-size:10px;color:var(--muted);margin-top:3px;display:flex;justify-content:space-between}
+.redress-label span{color:#7dd3fc;font-variant-numeric:tabular-nums}
+.weight-badge{
+  font-size:12px;font-variant-numeric:tabular-nums;
+  background:rgba(0,0,0,0.4);border:1px solid var(--border);
+  padding:5px 6px;border-radius:8px;text-align:center;color:#a5f3fc
+}
+
+.center{display:flex;flex-direction:column}
+.sphere-wrap{position:relative;flex:1;background:radial-gradient(600px 300px at 50% 40%, rgba(59,130,246,0.08), transparent 70%);border-radius:16px;overflow:hidden;border:1px solid rgba(255,255,255,0.05)}
+#sphere{width:100%;height:100%;display:block}
+.sphere-overlay{
+  position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(400px 200px at 50% 0%, rgba(34,211,238,0.07), transparent 60%);
+  mix-blend-mode:screen;
+}
+.mass-display{
+  margin-top:10px;padding:10px 12px;
+  background:rgba(0,0,0,0.4);border:1px solid var(--border);border-radius:12px;
+  display:flex;justify-content:space-between;align-items:center;
+}
+.mass-display .label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px}
+.mass-display .value{font-family:ui-monospace, SFMono-Regular, Menlo; font-size:16px;color:#7dd3fc;letter-spacing:0.5px}
+
+.right .stat-card{
+  background:linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));
+  border:1px solid var(--border);border-radius:14px;padding:12px;margin-bottom:12px;
+}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px}
+.grid2 label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.6px}
+.grid2 .value{font-size:15px;font-variant-numeric:tabular-nums;margin-top:2px}
+.value.blue{color:var(--blue)}
+.value.mono{font-family:ui-monospace,monospace;font-size:13px}
+
+input[type=range]#threshold{
+  width:100%;margin:8px 0;-webkit-appearance:none;height:6px;background:linear-gradient(90deg,var(--violet),var(--cyan));border-radius:3px
+}
+input[type=range]#threshold::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:white;border:2px solid var(--bg);box-shadow:0 0 10px rgba(34,211,238,0.7)}
+
+.btn{
+  width:100%;padding:11px;border-radius:12px;border:1px solid rgba(59,130,246,0.4);
+  background:linear-gradient(180deg, rgba(59,130,246,0.25), rgba(59,130,246,0.12));
+  color:#dbeafe;font-weight:600;cursor:pointer;transition:.2s;font-size:13px;letter-spacing:0.3px;
+}
+.btn:hover{background:linear-gradient(180deg, rgba(59,130,246,0.35), rgba(59,130,246,0.18));box-shadow:0 0 20px rgba(59,130,246,0.25)}
+.btn.danger{border-color:rgba(244,63,94,0.5);background:linear-gradient(180deg, rgba(244,63,94,0.25), rgba(244,63,94,0.12));color:#fecdd3}
+
+.explain{
+  margin-top:8px;padding:12px;background:rgba(0,0,0,0.3);border:1px dashed rgba(148,163,184,0.25);border-radius:12px;
+  font-size:12.5px;line-height:1.5;color:#cbd5e1;
+}
+
+.legend{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.legend span{font-size:10px;padding:3px 7px;border-radius:999px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.08);color:var(--muted)}
+
+@media(max-width:1150px){
+  body{overflow:auto}
+  .grid{grid-template-columns:1fr;height:auto}
+  .sphere-wrap{height:420px}
+  .roots-list{max-height:420px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="logo">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+        <circle cx="12" cy="12" r="9" stroke="white" stroke-opacity="0.9" stroke-width="1.5"/>
+        <path d="M12 3 v18 M3 12 h18" stroke="white" stroke-opacity="0.7" stroke-width="1"/>
+        <circle cx="12" cy="12" r="3" fill="white"/>
+      </svg>
+    </div>
+    <div>
+      <h1>LATTICE 90 — Balance Engine</h1>
+      <p>Holographic Storage Simulator • Editable Roots</p>
+    </div>
+  </header>
+
+  <main class="grid">
+    <!-- LEFT -->
+    <section class="panel left">
+      <h2>Editable Roots (90)</h2>
+      <input id="search" class="search" placeholder="Search name or pillar…">
+      <div id="rootsList" class="roots-list"></div>
+    </section>
+
+    <!-- CENTER -->
+    <section class="panel center">
+      <h2>Holographic Lattice</h2>
+      <div class="sphere-wrap">
+        <canvas id="sphere"></canvas>
+        <div class="sphere-overlay"></div>
+      </div>
+      <div class="mass-display">
+        <span class="label">Total Gravitational Mass</span>
+        <span class="value" id="totalMass">0.000000000</span>
+      </div>
+      <div class="legend">
+        <span style="color:#8b5cf6">● Math</span>
+        <span style="color:#0ea5e9">● Physics</span>
+        <span style="color:#22d3ee">● Computation</span>
+        <span style="color:#10b981">● Biology</span>
+        <span style="color:#f59e0b">● Chemistry</span>
+        <span style="color:#ef4444">● Medicine</span>
+        <span style="color:#eab308">● Philosophy</span>
+        <span style="color:#6366f1">● Engineering</span>
+        <span style="color:#ec4899">● Arts</span>
+      </div>
+    </section>
+
+    <!-- RIGHT -->
+    <section class="panel right">
+      <h2>Controls</h2>
+      
+      <div class="stat-card">
+        <h3>Balance Analysis</h3>
+        <canvas id="genderChart" height="150"></canvas>
+        <div class="grid2">
+          <div><label>Male Gravity</label><div id="maleWeight" class="value">0</div></div>
+          <div><label>Female Gravity</label><div id="femaleWeight" class="value">0</div></div>
+        </div>
+        <div class="grid2">
+          <div><label>Redress Reclaimed</label><div id="redressSum" class="value blue">0</div></div>
+          <div><label>Balance Δ (F-M)</label><div id="balanceDelta" class="value">0</div></div>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <h3>Consensus Threshold</h3>
+        <input type="range" id="threshold" min="0" max="100" step="0.0000000001" value="49.5000000001">
+        <div class="value mono" id="thresholdVal">49.5000000001</div>
+      </div>
+
+      <button id="rebalanceBtn" class="btn">Rebalance Field — Remove Redress</button>
+
+      <div class="explain">
+        <strong>In intellect space gender doesn't matter.</strong> In balance space, missing mass distorts the tensor. Redress restores the gravity society took away.<br><br>
+        Try dragging <em>Sophie Germain</em> redress from 0.021 → 0 and watch female gravity collapse in real time.
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+// ===== DATA =====
+const ROOTS_DATA = [
+{id:1,name:"Euclid",pillar:"Mathematics",gender:"male",base:0.01,multiplier:1,redress:0},
+{id:2,name:"Archimedes",pillar:"Mathematics",gender:"male",base:0.01,multiplier:1,redress:0},
+{id:3,name:"Aryabhata",pillar:"Mathematics",gender:"male",base:0.01,multiplier:1,redress:0},
+{id:4,name:"Al-Khwarizmi",pillar:"Mathematics",gender:"male",base:0.01,multiplier:1,redress:0},
+{id:5,name:"Sophie Germain",pillar:"Mathematics",gender:"female",base:0.01,multiplier:1,redress:0.021},
+{id:6,name:"Carl Gauss",pillar:"Mathematics",gender:"male",base:0.01,multiplier:1,redress:0},
+{id:7,name:"Sofia Kovalevskaya",pillar:"Mathematics",gender:"female",base:0.01,multiplier:1,redress:0.018},
+{id:8,name:"Emmy Noether",pillar:"Mathematics",gender:"female",base:0.01,multiplier:1,redress:0.025},
+{id:9,name:"Srinivasa Ramanujan",pillar:"Mathematics",gender:"male",base:0.01,multiplier:1,redress:0},
+{id:10,name:"Alexander Grothendieck",pillar:"Mathematics",gender:"male",base:0.01,multiplier:1,redress:0},
+{id:11,name:"Galileo Galilei",pillar:"Physics",gender:"male",base:0.01,multiplier:1,redress:0},
+{id:12,name:"Isaac Newton",pillar:"Physics",gender:"male",base:0.01,multiplier:1,redress:0},
+{id:13,name:"Émilie du Châtelet",pillar:"Physics",gender:"female",base:0.01,multiplier:1,redress:0.015},
+{id:14,name:"Michael Faraday",pillar:"Physics",gender:"male",base:0.01,multiplier:1,redress:0},
+{id:15,name:"James Clerk Maxwell",pillar:"Physics",gender:"male",base:0.01,multiplier:1,redress:0},
+{id:16,name:"Marie Curie",pillar:"Physics",gender:"female",base:0.01,multiplier:1,redress:0.02},
+{id:17,name:"Albert Einstein",pillar:"Physics",gender:"male",base:0.01,multiplier:1,redress:0},
+{id:18,name:"Niels Bohr",pillar:"Physics",gender:"male",base:0.01,multiplier:1,redress:0},
+{id:19,name:"Chien-Shiung Wu",pillar:"Physics",gender:"female",base:0.01,multiplier:1,redress:0.022},
+{id:20,name:"Maria Goeppert-Mayer",pillar:"Physics",gender:"female",base:0.01,multiplier:1,redress:0.019},
+{id:21,name:"Ada Lovelace",pillar:"Computation",gender:"female",base:0.01,multiplier:1,redress:0.02},
+{id:22,name:"Charles Babbage",pillar:"Computation",gender:"male",base:0.01,multiplier:1,redress:0},
+{id:23,name:"Alan Turing",pillar:"Computation",gender:"male",base:0.01,multiplier:1,redress:0},
+{id:24,name:"Grace Hopper",pillar:"Computation",gender:"female",base:0.01,multiplier:1,redress:0.017},
+{id:25,name:"John von Neumann",pillar:"Computation",gender:"male",base:0.01,multiplier:1,redress:0},
+{id:26,name:"Claude Shannon",pillar:"Computation",gender:"male",base:0.01,multiplier:1,redress:0},
+{id:27,name:"Katherine Johnson",pillar:"Computation",gender:"female",base:0.01,multiplier:1,redress:0.016},
+{id:28,name:"Margaret Hamilton",pillar:"Computation",gender:"female",base:0.01,multiplier:1,redress:0.014},
+{id:29,name:"Tim Berners-Lee",pillar:"Computation",gender:"male",base:0.01,multiplier:1,redress:0},
+{id:30,name:"Yoshua Bengio",pillar:"Computation",gender:"male",base:0.01,multiplier:1,redress:0},
+{id:31,name:"Aristotle",pillar:"Biology",gender:"male",base:0.01,multiplier:1,redress:0},
+{id:32,name:"Charles Darwin",pillar:"Biology",gender:"male",base:0.01,multiplier:1,redress:0},
+{id:33,name:"Gregor Mendel",pillar:"Biology",gender:"male",base:0.01,multiplier:1,redress:0},
+{id:34,name:"Rosalind Franklin",pillar:"Biology",gender:"female",base:0.01,multiplier:1,redress:0.023},
+{id:35,name:"Barbara McClintock",pillar:"Biology",gender:"female",base:0.01,multiplier:1,redress:0.018},
+{id:36,name:"Jane Goodall",pillar:"Biology",gender:"female",base:0.01,multiplier:1,redress:0.012},
+{id:37,name:"Lynn Margulis",pillar:"Biology",gender:"female",base:0.01,multiplier:1,redress:0.013},
+{id:38,name:"Rachel Carson",pillar:"Biology",gender:"female",base:0.01,multiplier:1,redress:0.014},
+{id:39,name:"Edward O. Wilson",pillar:"Biology",gender:"male",base:0.01,multiplier:1,redress:0},
+{id:40,name:"Svante Pääbo",pillar:"Biology",gender:"male",base:0.01,multiplier:1,redress:0},
+{id:41,name:"Jabir ibn Hayyan",pillar:"Chemistry",gender:"male",base:0.01,multiplier:1,redress:0},
+{id:42,name:"Antoine Lavoisier",pillar:"Chemistry",gender:"male",base:0.01,multiplier:1,redress:0},
+{id:43,name:"Dmitri Mendeleev",pillar:"Chemistry",gender:"male",base:0.01,multiplier:1,redress:0},
+{id:44,name:"Dorothy Hodgkin",pillar:"Chemistry",gender:"female",base:0.01,multiplier:1,redress:0.016},
+{id:45,name:"Linus Pauling",pillar:"Chemistry",gender:"male",base:0.01,multiplier:1,redress:0},
+{id:46,name:"Gertrude Elion",pillar:"Chemistry",gender:"female",base:0.01,multiplier:1,redress:0.015},
+{id:47,name:"Ahmed Zewail",pillar:"Chemistry",gender:"male",base:0.01,multiplier:1,redress:0},
+{id:48,name:"Frances Arnold",pillar:"Chemistry",gender:"female",base:0.01,multiplier:1,redress:0.011},
+{id:49,name:"Marie-Anne Lavoisier",pillar:"Chemistry",gender:"female",base:0.01,multiplier:1,redress:0.013},
+{id:50,name:"Robert Langer",pillar:"Chemistry",gender:"male",base:0.01,multiplier:1,redress:0},
+{id:51,name:"Imhotep",pillar:"Medicine",gender:"male",base:0.01,multiplier:1,redress:0},
+{id:52,name:"Hippocrates",pillar:"Medicine",gender:"male",base:0.01,multiplier:1,redress:0},
+{id:53,name:"Ibn Sina",pillar:"Medicine",gender:"male",base:0.01,multiplier:1,redress:0},
+{id:54,name:"Florence Nightingale",pillar:"Medicine",gender:"female",base:0.01,multiplier:1,redress:0.017},
+{id:55,name:"Elizabeth Blackwell",pillar:"Medicine",gender:"female",base:0.01,multiplier:1,redress:0.014},
+{id:56,name:"Rita Levi-Montalcini",pillar:"Medicine",gender:"female",base:0.01,multiplier:1,redress:0.015},
+{id:57,name:"Jonas Salk",pillar:"Medicine",gender:"male",base:0.01,multiplier:1,redress:0},
+{id:58,name:"Tu Youyou",pillar:"Medicine",gender:"female",base:0.01,multiplier:1,redress:0.012},
+{id:59,name:"Paul Farmer",pillar:"Medicine",gender:"male",base:0.01,multiplier:1,redress:0},
+{id:60,name:"Katalin Karikó",pillar:"Medicine",gender:"female",base:0.01,multiplier:1,redress:0.01},
+{id:61,name:"Enheduanna",pillar:"Philosophy",gender:"female",base:0.01,multiplier:1,redress:0.02},
+{id:62,name:"Confucius",pillar:"Philosophy",gender:"male",base:0.01,multiplier:1,redress:0},
+{id:63,name:"Socrates",pillar:"Philosophy",gender:"male",base:0.01,multiplier:1,redress:0},
+{id:64,name:"Hypatia",pillar:"Philosophy",gender:"female",base:0.01,multiplier:1,redress:0.021},
+{id:65,name:"Ibn Rushd",pillar:"Philosophy",gender:"male",base:0.01,multiplier:1,redress:0},
+{id:66,name:"Thomas Aquinas",pillar:"Philosophy",gender:"male",base:0.01,multiplier:1,redress:0},
+{id:67,name:"Mary Wollstonecraft",pillar:"Philosophy",gender:"female",base:0.01,multiplier:1,redress:0.013},
+{id:68,name:"Immanuel Kant",pillar:"Philosophy",gender:"male",base:0.01,multiplier:1,redress:0},
+{id:69,name:"Simone de Beauvoir",pillar:"Philosophy",gender:"female",base:0.01,multiplier:1,redress:0.012},
+{id:70,name:"Hannah Arendt",pillar:"Philosophy",gender:"female",base:0.01,multiplier:1,redress:0.011},
+{id:71,name:"Vitruvius",pillar:"Engineering",gender:"male",base:0.01,multiplier:1,redress:0},
+{id:72,name:"Isambard Brunel",pillar:"Engineering",gender:"male",base:0.01,multiplier:1,redress:0},
+{id:73,name:"Nikola Tesla",pillar:"Engineering",gender:"male",base:0.01,multiplier:1,redress:0},
+{id:74,name:"Hedy Lamarr",pillar:"Engineering",gender:"female",base:0.01,multiplier:1,redress:0.016},
+{id:75,name:"Lillian Gilbreth",pillar:"Engineering",gender:"female",base:0.01,multiplier:1,redress:0.014},
+{id:76,name:"Wernher von Braun",pillar:"Engineering",gender:"male",base:0.01,multiplier:1,redress:0},
+{id:77,name:"Yvonne Brill",pillar:"Engineering",gender:"female",base:0.01,multiplier:1,redress:0.013},
+{id:78,name:"Fazlur Rahman Khan",pillar:"Engineering",gender:"male",base:0.01,multiplier:1,redress:0},
+{id:79,name:"Emily Roebling",pillar:"Engineering",gender:"female",base:0.01,multiplier:1,redress:0.015},
+{id:80,name:"Gwynne Shotwell",pillar:"Engineering",gender:"female",base:0.01,multiplier:1,redress:0.009},
+{id:81,name:"Homer",pillar:"Arts & Language",gender:"male",base:0.01,multiplier:1,redress:0},
+{id:82,name:"Sappho",pillar:"Arts & Language",gender:"female",base:0.01,multiplier:1,redress:0.018},
+{id:83,name:"William Shakespeare",pillar:"Arts & Language",gender:"male",base:0.01,multiplier:1,redress:0},
+{id:84,name:"Murasaki Shikibu",pillar:"Arts & Language",gender:"female",base:0.01,multiplier:1,redress:0.017},
+{id:85,name:"Leonardo da Vinci",pillar:"Arts & Language",gender:"male",base:0.01,multiplier:1,redress:0},
+{id:86,name:"Johann Sebastian Bach",pillar:"Arts & Language",gender:"male",base:0.01,multiplier:1,redress:0},
+{id:87,name:"Toni Morrison",pillar:"Arts & Language",gender:"female",base:0.01,multiplier:1,redress:0.01},
+{id:88,name:"Maya Angelou",pillar:"Arts & Language",gender:"female",base:0.01,multiplier:1,redress:0.009},
+{id:89,name:"Hayao Miyazaki",pillar:"Arts & Language",gender:"male",base:0.01,multiplier:1,redress:0},
+{id:90,name:"Octavia Butler",pillar:"Arts & Language",gender:"female",base:0.01,multiplier:1,redress:0.011},
+];
+
+const pillarColors = {
+  "Mathematics":"#8b5cf6",
+  "Physics":"#0ea5e9",
+  "Computation":"#22d3ee",
+  "Biology":"#10b981",
+  "Chemistry":"#f59e0b",
+  "Medicine":"#ef4444",
+  "Philosophy":"#eab308",
+  "Engineering":"#6366f1",
+  "Arts & Language":"#ec4899"
+};
+
+const roots = ROOTS_DATA.map(r=>{
+  const weight = r.base * r.multiplier + 0.001 + r.redress;
+  return {...r, weight, displaySize: weight*500, pos:{x:0,y:0,z:0}, _x:0,_y:0,_z:0}
+});
+
+// sphere positions
+(function initPositions(){
+  const N=roots.length, phi=Math.PI*(3-Math.sqrt(5));
+  roots.forEach((r,i)=>{
+    const y=1 - (i/(N-1))*2;
+    const rad=Math.sqrt(1-y*y);
+    const theta=i*phi;
+    r.pos.x=Math.cos(theta)*rad;
+    r.pos.y=y;
+    r.pos.z=Math.sin(theta)*rad;
+  });
+})();
+
+const listEl=document.getElementById('rootsList');
+function renderList(){
+  listEl.innerHTML='';
+  roots.forEach(r=>{
+    const row=document.createElement('div');
+    row.className='root-row'+(r.redress>0.0001?' redress':'');
+    row.dataset.id=r.id;
+    row.innerHTML=`
+      <div class="row-head">
+        <div class="name-wrap">
+          <span class="dot" style="background:${pillarColors[r.pillar]};color:${pillarColors[r.pillar]}"></span>
+          <span class="name">${r.name}</span>
+          <span class="gender ${r.gender}">${r.gender==='female'?'♀':'♂'}</span>
+        </div>
+        <span class="pillar">${r.pillar}</span>
+      </div>
+      <div class="row-controls">
+        <select class="mult" data-id="${r.id}">
+          <option value="0.5"${r.multiplier===0.5?' selected':''}>0.5×</option>
+          <option value="1"${r.multiplier===1?' selected':''}>1.0×</option>
+          <option value="1.5"${r.multiplier===1.5?' selected':''}>1.5×</option>
+          <option value="2"${r.multiplier===2?' selected':''}>2.0×</option>
+        </select>
+        <div class="slider-wrap">
+          <input type="range" class="redress-input" data-id="${r.id}" min="0" max="0.05" step="0.001" value="${r.redress}">
+          <div class="redress-label">redress <span>${r.redress.toFixed(3)}</span></div>
+        </div>
+        <div class="weight-badge">${r.weight.toFixed(3)}</div>
+      </div>
+    `;
+    listEl.appendChild(row);
+  });
+}
+renderList();
+
+// interactions
+listEl.addEventListener('input', e=>{
+  if(!e.target.classList.contains('redress-input')) return;
+  const id=+e.target.dataset.id;
+  const r=roots.find(x=>x.id===id);
+  r.redress=parseFloat(e.target.value);
+  r.weight=r.base*r.multiplier+0.001+r.redress;
+  const row=e.target.closest('.root-row');
+  row.querySelector('.redress-label span').textContent=r.redress.toFixed(3);
+  row.querySelector('.weight-badge').textContent=r.weight.toFixed(3);
+  row.classList.toggle('redress', r.redress>0.0001);
+  updateStats();
+});
+listEl.addEventListener('change', e=>{
+  if(!e.target.classList.contains('mult')) return;
+  const id=+e.target.dataset.id;
+  const r=roots.find(x=>x.id===id);
+  r.multiplier=parseFloat(e.target.value);
+  r.weight=r.base*r.multiplier+0.001+r.redress;
+  const row=e.target.closest('.root-row');
+  row.querySelector('.weight-badge').textContent=r.weight.toFixed(3);
+  updateStats();
+});
+
+document.getElementById('search').addEventListener('input', e=>{
+  const q=e.target.value.toLowerCase();
+  document.querySelectorAll('.root-row').forEach(row=>{
+    const name=row.querySelector('.name').textContent.toLowerCase();
+    const pillar=row.querySelector('.pillar').textContent.toLowerCase();
+    row.style.display = (name.includes(q)||pillar.includes(q)) ? '' : 'none';
+  });
+});
+
+// right panel chart
+const genderChart = new Chart(document.getElementById('genderChart'),{
+  type:'doughnut',
+  data:{labels:['Male','Female'], datasets:[{data:[1,1], backgroundColor:['#475569','#3b82f6'], borderWidth:0, hoverOffset:6}]},
+  options:{plugins:{legend:{display:false}}, cutout:'68%', animation:{duration:200}}
+});
+
+function updateStats(){
+  const total=roots.reduce((s,r)=>s+r.weight,0);
+  const male=roots.filter(r=>r.gender==='male').reduce((s,r)=>s+r.weight,0);
+  const female=roots.filter(r=>r.gender==='female').reduce((s,r)=>s+r.weight,0);
+  const redress=roots.reduce((s,r)=>s+r.redress,0);
+  document.getElementById('totalMass').textContent=total.toFixed(9);
+  document.getElementById('maleWeight').textContent=male.toFixed(6);
+  document.getElementById('femaleWeight').textContent=female.toFixed(6);
+  document.getElementById('redressSum').textContent=redress.toFixed(3);
+  document.getElementById('balanceDelta').textContent=(female-male>=0?'+':'')+(female-male).toFixed(6);
+  genderChart.data.datasets[0].data=[male,female];
+  genderChart.update('none');
+}
+updateStats();
+
+// threshold
+const thr=document.getElementById('threshold'), thrVal=document.getElementById('thresholdVal');
+thr.addEventListener('input',()=>{thrVal.textContent=parseFloat(thr.value).toFixed(10)});
+
+// rebalance
+let saved=null, reset=false;
+document.getElementById('rebalanceBtn').addEventListener('click', function(){
+  if(!reset){
+    saved=roots.map(r=>({m:r.multiplier,rd:r.redress}));
+    roots.forEach(r=>{r.multiplier=1;r.redress=0;r.weight=r.base+0.001});
+    reset=true;this.textContent='Restore Balance';this.classList.add('danger');
+  }else{
+    roots.forEach((r,i)=>{r.multiplier=saved[i].m;r.redress=saved[i].rd;r.weight=r.base*r.multiplier+0.001+r.redress});
+    reset=false;this.textContent='Rebalance Field — Remove Redress';this.classList.remove('danger');
+  }
+  document.querySelectorAll('.root-row').forEach(row=>{
+    const r=roots.find(x=>x.id===+row.dataset.id);
+    row.querySelector('.mult').value=r.multiplier;
+    const inp=row.querySelector('.redress-input'); inp.value=r.redress;
+    row.querySelector('.redress-label span').textContent=r.redress.toFixed(3);
+    row.querySelector('.weight-badge').textContent=r.weight.toFixed(3);
+    row.classList.toggle('redress', r.redress>0.0001);
+  });
+  updateStats();
+});
+
+// ===== CANVAS SPHERE =====
+const canvas=document.getElementById('sphere'), ctx=canvas.getContext('2d');
+let w,h,cx,cy,radius,angle=0;
+function resize(){
+  const rect=canvas.parentElement.getBoundingClientRect();
+  w=canvas.width=rect.width*window.devicePixelRatio;
+  h=canvas.height=rect.height*window.devicePixelRatio;
+  canvas.style.width=rect.width+'px'; canvas.style.height=rect.height+'px';
+  cx=w/2; cy=h/2; radius=Math.min(w,h)*0.38;
+}
+window.addEventListener('resize', resize); resize();
+
+function animate(){
+  requestAnimationFrame(animate);
+  angle+=0.002;
+  ctx.clearRect(0,0,w,h);
+  
+  // glow sphere
+  const grad=ctx.createRadialGradient(cx,cy, radius*0.2, cx,cy, radius*1.4);
+  grad.addColorStop(0,'rgba(59,130,246,0.08)');
+  grad.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=grad; ctx.beginPath(); ctx.arc(cx,cy,radius*1.4,0,Math.PI*2); ctx.fill();
+
+  // rotate points
+  const cos=Math.cos(angle), sin=Math.sin(angle);
+  roots.forEach(r=>{
+    const x=r.pos.x, z=r.pos.z;
+    r._x = x*cos - z*sin;
+    r._z = x*sin + z*cos;
+    r._y = r.pos.y;
+  });
+  const sorted=[...roots].sort((a,b)=>a._z - b._z);
+  
+  // draw connections faint
+  ctx.globalAlpha=0.04; ctx.strokeStyle='#7dd3fc'; ctx.lineWidth=1;
+  for(let i=0;i<sorted.length;i+=3){
+    const a=sorted[i], b=sorted[(i+7)%sorted.length];
+    const ax=cx+a._x*radius, ay=cy+a._y*radius*0.9;
+    const bx=cx+b._x*radius, by=cy+b._y*radius*0.9;
+    ctx.beginPath(); ctx.moveTo(ax,ay); ctx.lineTo(bx,by); ctx.stroke();
+  }
+
+  sorted.forEach(r=>{
+    const px=cx + r._x*radius;
+    const py=cy + r._y*radius*0.92;
+    const depth=(r._z+1)/2;
+    const target=r.weight*500;
+    r.displaySize += (target - r.displaySize)*0.07;
+    const size = r.displaySize * (0.5 + depth*0.7) * (window.devicePixelRatio*0.5);
+    const color=pillarColors[r.pillar];
+    
+    // halo
+    ctx.globalAlpha=0.18+depth*0.2;
+    ctx.fillStyle=color;
+    ctx.shadowColor=color; ctx.shadowBlur=25*window.devicePixelRatio;
+    ctx.beginPath(); ctx.arc(px,py, size*1.6,0,Math.PI*2); ctx.fill();
+    ctx.shadowBlur=0;
+    
+    // core
+    ctx.globalAlpha=0.85;
+    ctx.beginPath(); ctx.arc(px,py, Math.max(1.5,size),0,Math.PI*2); ctx.fill();
+    ctx.globalAlpha=1;
+    ctx.fillStyle='rgba(255,255,255,0.9)';
+    ctx.beginPath(); ctx.arc(px,py, Math.max(1,size*0.35),0,Math.PI*2); ctx.fill();
+  });
+}
+animate();
+</script>
+</body>
+</html>

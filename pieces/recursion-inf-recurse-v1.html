@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Playables SDK -->
+<script>// Playables SDK v1.0.0
+// Game lifecycle bridge: rAF-based game-ready detection + event communication
+(function() {
+  'use strict';
+
+  // Idempotency: skip if already initialized (e.g., server-side injection
+  // followed by client-side inject-javascript via the Bloks webview component).
+  if (window.playablesSDK) return;
+
+  var HANDLER_NAME = 'playablesGameEventHandler';
+  var ANDROID_BRIDGE_NAME = '_MetaPlayablesBridge';
+  var RAF_FRAME_THRESHOLD = 3;
+
+  var gameReadySent = false;
+  var firstInteractionSent = false;
+  var errorSent = false;
+  var frameCount = 0;
+  var originalRAF = window.requestAnimationFrame;
+
+  // --- Transport Layer ---
+
+  function hasIOSBridge() {
+    return !!(window.webkit &&
+              window.webkit.messageHandlers &&
+              window.webkit.messageHandlers[HANDLER_NAME]);
+  }
+
+  function hasAndroidBridge() {
+    return !!(window[ANDROID_BRIDGE_NAME] &&
+              typeof window[ANDROID_BRIDGE_NAME].postEvent === 'function');
+  }
+
+  function isInIframe() {
+    return !!(window.parent && window.parent !== window);
+  }
+
+  function sendEvent(eventName, payload) {
+    var message = {
+      type: eventName,
+      payload: payload || {},
+      timestamp: Date.now()
+    };
+
+    if (hasIOSBridge()) {
+      try {
+        window.webkit.messageHandlers[HANDLER_NAME].postMessage(message);
+      } catch (e) { /* ignore */ }
+      return;
+    }
+
+    if (hasAndroidBridge()) {
+    try {
+      var p = payload || {};
+      p.__secureToken = window.__fbAndroidBridgeAuthToken || '';
+      window[ANDROID_BRIDGE_NAME].postEvent(
+        eventName,
+        JSON.stringify(p)
+      );
+    } catch (e) { /* ignore */ }
+    return;
+  }
+
+    if (isInIframe()) {
+      try {
+        window.parent.postMessage(message, '*');
+      } catch (e) { /* ignore */ }
+      return;
+    }
+  }
+
+  // --- rAF Game-Ready Detection ---
+
+  function onFrame() {
+    if (gameReadySent) return;
+
+    frameCount++;
+    if (frameCount >= RAF_FRAME_THRESHOLD) {
+      gameReadySent = true;
+      sendEvent('game_ready', {
+        frame_count: frameCount,
+        detected_at: Date.now()
+      });
+      return;
+    }
+
+    originalRAF.call(window, onFrame);
+  }
+
+  if (originalRAF) {
+    window.requestAnimationFrame = function(callback) {
+      if (!gameReadySent) {
+        return originalRAF.call(window, function(timestamp) {
+          frameCount++;
+          if (frameCount >= RAF_FRAME_THRESHOLD && !gameReadySent) {
+            gameReadySent = true;
+            sendEvent('game_ready', {
+              frame_count: frameCount,
+              detected_at: Date.now()
+            });
+          }
+          callback(timestamp);
+        });
+      }
+      return originalRAF.call(window, callback);
+    };
+  }
+
+  // --- First User Interaction Detection ---
+
+  function setupFirstInteractionDetection() {
+    var events = ['touchstart', 'mousedown', 'keydown'];
+
+    function onFirstInteraction() {
+      if (firstInteractionSent) return;
+      firstInteractionSent = true;
+      sendEvent('user_interaction_start', null);
+
+      for (var i = 0; i < events.length; i++) {
+        document.removeEventListener(events[i], onFirstInteraction, true);
+      }
+    }
+
+    for (var i = 0; i < events.length; i++) {
+      document.addEventListener(events[i], onFirstInteraction, true);
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setupFirstInteractionDetection);
+  } else {
+    setupFirstInteractionDetection();
+  }
+
+  // --- Auto Error Capture ---
+
+  window.addEventListener('error', function(event) {
+    if (errorSent) return;
+    errorSent = true;
+    sendEvent('error', {
+      message: event.message || 'Unknown error',
+      source: event.filename || '',
+      lineno: event.lineno || 0,
+      colno: event.colno || 0,
+      auto_captured: true
+    });
+  });
+
+  window.addEventListener('unhandledrejection', function(event) {
+    if (errorSent) return;
+    errorSent = true;
+    var reason = event.reason;
+    sendEvent('error', {
+      message: (reason instanceof Error) ? reason.message : String(reason),
+      type: 'unhandled_promise_rejection',
+      auto_captured: true
+    });
+  });
+
+  // --- Public API ---
+
+  window.playablesSDK = {
+    complete: function(score) {
+      sendEvent('game_ended', {
+        score: score,
+        completed: true
+      });
+    },
+
+    error: function(message) {
+      if (errorSent) return;
+      errorSent = true;
+      sendEvent('error', {
+        message: message || 'Unknown error',
+        auto_captured: false
+      });
+    },
+
+    sendEvent: function(eventName, payload) {
+      if (!eventName || typeof eventName !== 'string') return;
+      sendEvent(eventName, payload);
+    }
+  };
+
+  // Kick off rAF detection in case no game code calls rAF immediately
+  if (originalRAF) {
+    originalRAF.call(window, onFrame);
+  }
+})();</script>
+<script>window.Intl=window.Intl||{};Intl.t=function(s){return(Intl._locale&&Intl._locale[s])||s;};</script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>INFINITE RECURSION SYSTEM</title>
+<style>
+:root{--gold:#c4a832;--bg:#050505;--fg:#c4a832;--panel:#0a0a0a}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;background:var(--bg);color:var(--fg);font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;overflow:hidden}
+body.inverted{--bg:#c4a832;--fg:#0a0a0a;--panel:#d1b23a;--gold:#000}
+body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,rgba(0,0,0,0)0 2px,rgba(196,168,50,.05)2px 3px);pointer-events:none;z-index:999;mix-blend-mode:overlay;opacity:.6}
+body.inverted::before{opacity:.12}
+.genesis{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-11deg);width:92vw;max-width:1200px;text-align:center;font-size:12px;line-height:1.8;letter-spacing:2px;color:var(--gold);opacity:.04;pointer-events:none;user-select:none;word-break:break-all;z-index:0;font-weight:600}
+header{position:relative;z-index:10;padding:14px 10px 12px;text-align:center;border-bottom:1px solid var(--gold);background:linear-gradient(180deg,rgba(196,168,50,.12),transparent 70%)}
+h1{margin:0;font-size:clamp(20px,4vw,34px);letter-spacing:.18em;font-weight:700;text-shadow:0 0 14px color-mix(in srgb,var(--gold) 70%,transparent)}
+.subtitle{margin-top:5px;font-size:11px;opacity:.72;letter-spacing:.22em;text-transform:uppercase}
+main{display:grid;grid-template-columns:1.15fr .85fr;gap:10px;padding:10px;height:calc(100vh - 160px);position:relative;z-index:5}
+@media(max-width:900px){main{grid-template-columns:1fr;height:auto}}
+.panel{border:1px solid var(--gold);background:var(--panel);position:relative;overflow:hidden;box-shadow:inset 0 0 40px rgba(0,0,0,.6),0 0 24px rgba(0,0,0,.5)}
+.left{min-height:340px}
+canvas{width:100%;height:100%;display:block;cursor:crosshair}
+.depth-overlay{position:absolute;top:8px;left:8px;background:rgba(0,0,0,.75);border:1px solid var(--gold);padding:4px 9px;font-size:11px;letter-spacing:1px;backdrop-filter:blur(3px);text-shadow:0 0 6px var(--gold)}
+body.inverted .depth-overlay{background:rgba(196,168,50,.85);color:#000;border-color:#000;text-shadow:none}
+.right{display:flex;flex-direction:column;min-height:260px}
+.code-header{padding:7px 10px;border-bottom:1px solid var(--gold);font-size:11px;letter-spacing:.1em;background:rgba(196,168,50,.07);text-transform:uppercase}
+body.inverted .code-header{background:rgba(0,0,0,.08)}
+#code{margin:0;padding:12px;overflow:auto;flex:1;font-size:12px;line-height:1.55;white-space:pre;color:var(--fg);text-shadow:0 0 5px color-mix(in srgb,var(--gold) 25%,transparent)}
+.controls{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;padding:9px 10px;border-top:1px solid color-mix(in srgb,var(--gold) 30%,transparent);border-bottom:1px solid color-mix(in srgb,var(--gold) 30%,transparent);background:rgba(0,0,0,.35);position:relative;z-index:10}
+button{background:#0e0e0e;color:var(--gold);border:1px solid var(--gold);padding:8px 14px;font:inherit;font-size:11px;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;transition:.15s;box-shadow:0 0 0 transparent}
+button:hover{background:var(--gold);color:#000;box-shadow:0 0 14px var(--gold)}
+button:active{transform:translateY(1px)}
+body.inverted button{background:var(--panel);color:#000;border-color:#000}
+body.inverted button:hover{background:#000;color:var(--gold);box-shadow:0 0 12px #000}
+.status{position:fixed;bottom:0;left:0;right:0;display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:7px 12px;background:#070707;border-top:1px solid var(--gold);font-size:11px;z-index:50;letter-spacing:.05em}
+body.inverted .status{background:#b3911f;color:#000;border-top-color:#000}
+.status div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.status span{opacity:.55;margin-right:7px;text-transform:uppercase;font-size:10px}
+.status b{font-weight:600;text-shadow:0 0 6px color-mix(in srgb,var(--gold) 50%,transparent)}
+.disclaimer{position:fixed;bottom:30px;right:12px;font-size:9px;opacity:.4;letter-spacing:.12em;pointer-events:none;z-index:60;text-transform:uppercase}
+.portal{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;font-size:clamp(48px,20vw,240px);font-weight:900;letter-spacing:.02em;color:var(--gold);opacity:0;pointer-events:none;transform:scale(.85);transition:opacity .25s,transform .4s;text-shadow:0 0 20px var(--gold),0 0 70px var(--gold),0 0 140px color-mix(in srgb,var(--gold) 80%,transparent);z-index:200;mix-blend-mode:screen}
+.portal.show{opacity:.94;transform:scale(1)}
+@media(max-width:600px){.status{grid-template-columns:repeat(2,1fr);gap:4px}.disclaimer{display:none}}
+</style>
+</head>
+<body>
+<div class="genesis">000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f</div>
+
+<header>
+  <h1>INFINITE RECURSION SYSTEM</h1>
+  <div class="subtitle">fork on forks // 1111 ↔ -1111 // honeybadger protocol</div>
+</header>
+
+<main>
+  <section class="panel left">
+    <canvas id="fractal"></canvas>
+    <div class="depth-overlay">DEPTH: <span id="depthDisp">0</span></div>
+  </section>
+  <section class="panel right">
+    <div class="code-header">live_recursion.js // system rewriting</div>
+    <pre id="code"></pre>
+  </section>
+</main>
+
+<div class="controls">
+  <button id="btnPause">STOP ALL FORKS</button>
+  <button id="btnFork">FORK ON FORKS</button>
+  <button id="btnInvert">INVERT (-1111)</button>
+  <button id="btnReset">RESET DEPTH</button>
+</div>
+
+<div class="disclaimer">SIMULATION ONLY — CEREMONIAL ARTIFACT</div>
+
+<footer class="status">
+  <div><span>DEPTH</span><b id="statDepth">0</b></div>
+  <div><span>ACTIVE FORKS</span><b id="statForks">0</b></div>
+  <div><span>ITERATIONS/SEC</span><b id="statIter">0</b></div>
+  <div><span>MODE</span><b id="statMode">1111</b></div>
+</footer>
+
+<div id="portal" class="portal">PORTAL</div>
+
+<script>
+(()=>{const canvas=document.getElementById('fractal');const ctx=canvas.getContext('2d',{alpha:false});let w=0,h=0,zx=0,zy=0,dpr=1;function resize(){dpr=Math.min(window.devicePixelRatio||1,2);w=canvas.width=Math.floor(canvas.offsetWidth*dpr);h=canvas.height=Math.floor(canvas.offsetHeight*dpr);zx=w*0.5;zy=h*0.5;resetSystem();}window.addEventListener('resize',resize);let squares=[];let paused=false;let forkRate=1;let inverted=false;let vDepth=0;let lastInt=0;let iterations=0;let iterPerSec=0;let lastSample=performance.now();let lastCode=0;function resetSystem(){squares=[{x:zx,y:zy,s:18*dpr,d:0}];vDepth=0;lastInt=0;forkRate=1;document.getElementById('btnPause').textContent='STOP ALL FORKS';}function forkSquare(sq){const ns=sq.s*0.465;const off=sq.s*0.5;const nd=sq.d+1;squares.push({x:sq.x-off,y:sq.y-off,s:ns,d:nd});squares.push({x:sq.x+off,y:sq.y-off,s:ns,d:nd});squares.push({x:sq.x-off,y:sq.y+off,s:ns,d:nd});squares.push({x:sq.x+off,y:sq.y+off,s:ns,d:nd});}function showPortal(){const p=document.getElementById('portal');p.classList.add('show');setTimeout(()=>p.classList.remove('show'),1400);}function updateCode(depth,forks){const L=[];L.push('// INFINITE RECURSION SYSTEM // honeybadger');L.push('function fork(depth){');L.push('  // no base case — intentional');if(Math.random()<0.35)L.push('  // FORK ON FORKS');L.push(`  if(depth % 111 === 0) audit(); // ${depth}`);L.push('  const children = [];');L.push('  for(let i=0;i<4;i++){');L.push('    // spawn at corner');L.push('    children.push({');L.push(`      id: 'f_'+depth+'_'+i,`);L.push('      fork: ()=> fork(depth+1)');L.push('    });');L.push('  }');if(forks>200)L.push(`  // ACTIVE FORKS: ${forks} — pressure high`);if(depth>900)L.push('  // approaching limit...');if(depth>=1111)L.push('  // PORTAL // 1111 ↔ -1111');L.push('  return children;');L.push('}');L.push(`fork(${Math.max(0,depth-2)}); // INIT`);if(Math.random()<0.2)L.push('// 000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f');const out=L.map((t,i)=>String(i+1).padStart(2,'0')+' | '+t).join('\n');document.getElementById('code').textContent=out;}let lastTime=performance.now();function animate(now){requestAnimationFrame(animate);const dt=Math.min(33,now-lastTime);lastTime=now;if(!paused){vDepth+=0.035*forkRate;const dInt=Math.floor(vDepth);if(dInt>lastInt){if(dInt===1111)showPortal();let central=null;let best=1e9;for(const s of squares){const dist=Math.hypot(s.x-zx,s.y-zy);if(dist<best){best=dist;central=s;}}if(central){const idx=squares.indexOf(central);if(idx>=0)squares.splice(idx,1);forkSquare(central);}lastInt=dInt;}const expand=1+0.011*forkRate;for(let i=squares.length-1;i>=0;i--){const s=squares[i];s.x=zx+(s.x-zx)*expand;s.y=zy+(s.y-zy)*expand;s.s*=expand;if(s.x<-150||s.x>w+150||s.y<-150||s.y>h+150||s.s>Math.max(w,h)*1.4||squares.length>1200){squares.splice(i,1);continue;}}if(Math.random()<0.018*forkRate && squares.length<900){const s=squares[(Math.random()*squares.length)|0];if(s&&s.s>22*dpr){const idx=squares.indexOf(s);if(idx>=0)squares.splice(idx,1);forkSquare(s);iterations+=4;}}iterations+=squares.length;}ctx.fillStyle=inverted?'#c4a832':'#020202';ctx.fillRect(0,0,w,h);ctx.lineWidth=Math.max(1,1.4*dpr);ctx.strokeStyle=inverted?'#000':'#c4a832';ctx.shadowColor=inverted?'transparent':'#c4a832';ctx.shadowBlur=inverted?0:7*dpr;for(const s of squares){const a=Math.max(0.12,1-s.d*0.0018);ctx.globalAlpha=a;const hs=s.s*0.5;ctx.strokeRect(s.x-hs,s.y-hs,s.s,s.s);ctx.beginPath();ctx.moveTo(s.x-hs*0.5,s.y);ctx.lineTo(s.x+hs*0.5,s.y);ctx.moveTo(s.x,s.y-hs*0.5);ctx.lineTo(s.x,s.y+hs*0.5);ctx.stroke();const cs=s.s*0.22;ctx.globalAlpha=a*0.5;ctx.strokeRect(s.x-cs,s.y-cs,cs*2,cs*2);}ctx.globalAlpha=1;ctx.shadowBlur=0;document.getElementById('depthDisp').textContent=lastInt.toLocaleString();document.getElementById('statDepth').textContent=lastInt;document.getElementById('statForks').textContent=squares.length.toLocaleString();document.getElementById('statMode').textContent=inverted?'-1111':'1111';if(now-lastSample>1000){iterPerSec=iterations;iterations=0;lastSample=now;document.getElementById('statIter').textContent=iterPerSec.toLocaleString();}if(now-lastCode>160){updateCode(lastInt,squares.length);lastCode=now;}}document.getElementById('btnPause').onclick=()=>{paused=!paused;document.getElementById('btnPause').textContent=paused?'RESUME FORKS':'STOP ALL FORKS';};document.getElementById('btnFork').onclick=()=>{forkRate=Math.min(8,forkRate*1.7+0.3);};document.getElementById('btnInvert').onclick=()=>{inverted=!inverted;document.body.classList.toggle('inverted',inverted);};document.getElementById('btnReset').onclick=()=>{resetSystem();};resize();updateCode(0,1);requestAnimationFrame(animate);})();
+</script>
+</body>
+</html>

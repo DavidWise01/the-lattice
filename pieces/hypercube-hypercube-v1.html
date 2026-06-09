@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ROOT0 LAYER 0.88 — Self-Similar Hypercube</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    background: #000;
+    overflow: hidden;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, "Cascadia Code", "JetBrains Mono", monospace;
+    color: #cfefff;
+  }
+  canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+  #plasma { z-index: 0; filter: blur(24px) saturate(140%) contrast(115%); opacity: 0.9; }
+  #scene { z-index: 1; }
+
+  .overlay {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+  }
+
+  header {
+    position: absolute;
+    top: 20px;
+    left: 0;
+    right: 0;
+    text-align: center;
+    pointer-events: none;
+  }
+  .layer-tag {
+    font-size: 11px;
+    letter-spacing: 0.35em;
+    color: #7ad7ff;
+    opacity: 0.75;
+    text-transform: uppercase;
+  }
+  h1 {
+    margin: 8px 0 0;
+    font-size: clamp(16px, 2.4vw, 26px);
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    color: #e6fdff;
+    text-shadow: 0 0 10px rgba(0,234,255,0.8), 0 0 30px rgba(144,0,255,0.5), 0 0 60px rgba(0,234,255,0.25);
+  }
+
+  .lattice-map {
+    position: absolute;
+    top: 18px;
+    right: 18px;
+    width: 200px;
+    padding: 10px 12px 12px;
+    background: radial-gradient(120% 120% at 50% 0%, rgba(10,30,50,0.85) 0%, rgba(2,6,12,0.85) 70%);
+    border: 1px solid rgba(0,255,255,0.25);
+    border-radius: 14px;
+    box-shadow: 0 0 20px rgba(0,255,255,0.15) inset, 0 0 30px rgba(0,0,0,0.8);
+    backdrop-filter: blur(8px);
+  }
+  .lattice-map .label {
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    color: #7ffaff;
+    opacity: 0.85;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+  }
+  #lattice {
+    width: 100%;
+    height: 176px;
+    display: block;
+    background: radial-gradient(circle at 50% 50%, #00121a 0%, #000507 70%);
+    border-radius: 10px;
+    border: 1px solid rgba(0,255,255,0.1);
+  }
+  .scale-readout {
+    margin-top: 7px;
+    font-size: 11px;
+    color: #afffff;
+    text-align: right;
+    letter-spacing: 0.06em;
+    opacity: 0.9;
+  }
+  .scale-readout span { color: #fff; text-shadow: 0 0 8px #0ff; }
+
+  .status-grid {
+    position: absolute;
+    left: 18px;
+    bottom: 92px;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(170px, 1fr));
+    gap: 9px;
+    width: min(420px, calc(100% - 36px));
+  }
+  .panel {
+    background: linear-gradient(180deg, rgba(0,18,28,0.78), rgba(0,6,10,0.78));
+    border: 1px solid rgba(0,255,255,0.18);
+    border-radius: 12px;
+    padding: 9px 12px 10px;
+    backdrop-filter: blur(6px);
+    box-shadow: 0 0 18px rgba(0,200,255,0.08) inset;
+  }
+  .panel span {
+    display: block;
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #6be2ff;
+    opacity: 0.75;
+    margin-bottom: 3px;
+  }
+  .panel strong {
+    font-size: 13px;
+    color: #e8feff;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    text-shadow: 0 0 10px rgba(0,220,255,0.35);
+  }
+
+  .controls {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: 24px;
+    display: flex;
+    gap: 10px;
+    pointer-events: auto;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .controls button {
+    background: linear-gradient(180deg, #00141e, #00080c);
+    color: #9effff;
+    border: 1px solid rgba(0,255,255,0.4);
+    padding: 10px 16px;
+    border-radius: 999px;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    text-transform: uppercase;
+    box-shadow: inset 0 0 14px rgba(0,255,255,0.12), 0 0 18px rgba(0,255,255,0.18), 0 0 30px rgba(128,0,255,0.1);
+    transition: all 0.18s ease;
+  }
+  .controls button:hover {
+    background: linear-gradient(180deg, #002231, #001018);
+    color: #fff;
+    border-color: rgba(120,240,255,0.9);
+    box-shadow: inset 0 0 18px rgba(0,255,255,0.25), 0 0 24px rgba(0,255,255,0.35), 0 0 40px rgba(180,80,255,0.25);
+    transform: translateY(-1px);
+  }
+  .controls button:active { transform: translateY(0) scale(0.97); }
+
+  .quote {
+    position: absolute;
+    right: 18px;
+    bottom: 18px;
+    font-size: 12px;
+    color: #9abed6;
+    opacity: 0.8;
+    font-style: italic;
+    letter-spacing: 0.02em;
+    text-shadow: 0 0 12px rgba(0,0,0,0.9);
+  }
+
+  .stack-layers {
+    position: absolute;
+    left: 0; right: 0; bottom: 0;
+    height: 42%;
+    pointer-events: none;
+  }
+  .layer-line {
+    position: absolute;
+    left: 4%;
+    right: 4%;
+    height: 1px;
+    top: calc(60% + var(--i) * 40px);
+    background: linear-gradient(90deg, transparent, rgba(0,255,255,0.0) 10%, rgba(180,220,255,0.65) 50%, rgba(0,255,255,0.0) 90%, transparent);
+    box-shadow: 0 0 12px rgba(0,220,255,0.5), 0 0 24px rgba(160,80,255,0.25);
+    opacity: 0.55;
+  }
+  .layer-line::after {
+    content: "L" attr(data-l);
+    position: absolute;
+    right: -2%;
+    top: -9px;
+    font-size: 10px;
+    color: #6df;
+    opacity: 0.6;
+    letter-spacing: 0.12em;
+  }
+
+  @media (max-width: 720px) {
+    .lattice-map { width: 150px; top: 10px; right: 10px; padding: 8px; }
+    #lattice { height: 132px; }
+    .status-grid { left: 10px; bottom: 108px; grid-template-columns: 1fr 1fr; gap: 7px; }
+    .panel { padding: 7px 9px; }
+    .controls { bottom: 16px; gap: 8px; }
+    .controls button { padding: 8px 12px; font-size: 11px; }
+    h1 { font-size: 15px; padding: 0 60px; }
+    .quote { font-size: 11px; left: 10px; right: 10px; text-align: center; bottom: 76px; }
+  }
+</style>
+</head>
+<body>
+<canvas id="plasma"></canvas>
+<canvas id="scene"></canvas>
+
+<div class="overlay">
+  <header>
+    <div class="layer-tag">ROOT0 LAYER 0.88</div>
+    <h1>Self-Similar Hypercube Scaling + Infinite Smash-Down</h1>
+  </header>
+
+  <div class="lattice-map">
+    <div class="label">INVARIANT LATTICE MAP</div>
+    <canvas id="lattice" width="176" height="176"></canvas>
+    <div class="scale-readout">SCALE: <span id="scaleVal">1.00×</span></div>
+  </div>
+
+  <div class="status-grid">
+    <div class="panel"><span>Lattice</span><strong>9×9×9×9×9 base-36</strong></div>
+    <div class="panel"><span>Map</span><strong>invariant at all scales</strong></div>
+    <div class="panel"><span>Motion</span><strong>relativistic</strong></div>
+    <div class="panel"><span>Logic</span><strong>-+nxwyz ×5</strong></div>
+  </div>
+
+  <div class="controls">
+    <button id="btnScale">SCALE INFINITE</button>
+    <button id="btnSmash">SMASH TO 1</button>
+    <button id="btnBleed">BLEED DOWN</button>
+  </div>
+
+  <div class="quote">"Scaling so fast, it might as well not be there." — JANE</div>
+
+  <div class="stack-layers">
+    <div class="layer-line" style="--i:0" data-l="1"></div>
+    <div class="layer-line" style="--i:1" data-l="2"></div>
+    <div class="layer-line" style="--i:2" data-l="3"></div>
+    <div class="layer-line" style="--i:3" data-l="4"></div>
+    <div class="layer-line" style="--i:4" data-l="5"></div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const plasma = document.getElementById('plasma');
+  const pctx = plasma.getContext('2d');
+  const scene = document.getElementById('scene');
+  const sctx = scene.getContext('2d');
+  const scaleVal = document.getElementById('scaleVal');
+  let W = 0, H = 0, DPR = Math.max(1, window.devicePixelRatio || 1);
+
+  function resize() {
+    W = window.innerWidth;
+    H = window.innerHeight;
+    [plasma, scene].forEach(c => {
+      c.width = W * DPR;
+      c.height = H * DPR;
+      c.style.width = W + 'px';
+      c.style.height = H + 'px';
+      const ctx = c.getContext('2d');
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+    });
+    pctx.fillStyle = '#000'; pctx.fillRect(0,0,W,H);
+    sctx.fillStyle = '#000'; sctx.fillRect(0,0,W,H);
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  // invariant lattice
+  const lat = document.getElementById('lattice');
+  const lctx = lat.getContext('2d');
+  function drawLattice() {
+    const s = lat.width;
+    lctx.clearRect(0,0,s,s);
+    lctx.fillStyle = '#000814';
+    lctx.fillRect(0,0,s,s);
+    const pad = 14;
+    const size = s - pad*2;
+    const step = size / 8;
+    lctx.strokeStyle = 'rgba(0,255,255,0.18)';
+    lctx.lineWidth = 1;
+    for(let i=0;i<9;i++){
+      const p = pad + i*step;
+      lctx.beginPath(); lctx.moveTo(pad, p); lctx.lineTo(pad+size, p); lctx.stroke();
+      lctx.beginPath(); lctx.moveTo(p, pad); lctx.lineTo(p, pad+size); lctx.stroke();
+    }
+    lctx.shadowColor = '#00ffff';
+    lctx.shadowBlur = 8;
+    lctx.fillStyle = '#7fffff';
+    for(let y=0;y<9;y++){
+      for(let x=0;x<9;x++){
+        lctx.beginPath();
+        lctx.arc(pad + x*step, pad + y*step, 1.6, 0, Math.PI*2);
+        lctx.fill();
+      }
+    }
+    lctx.shadowBlur = 0;
+    // center marker
+    lctx.strokeStyle = 'rgba(255,0,255,0.7)';
+    lctx.lineWidth = 1.5;
+    lctx.beginPath();
+    lctx.rect(pad+step*3, pad+step*3, step*2);
+    lctx.stroke();
+  }
+  drawLattice();
+
+  // hypercube data
+  const verts4d = [];
+  for(let i=0;i<16;i++){
+    verts4d.push([
+      (i & 1) ? 1 : -1,
+      (i & 2) ? 1 : -1,
+      (i & 4) ? 1 : -1,
+      (i & 8) ? 1 : -1
+    ]);
+  }
+  const edges = [];
+  for(let i=0;i<16;i++){
+    for(let j=i+1;j<16;j++){
+      const d = i ^ j;
+      if (d && (d & (d-1)) === 0) edges.push([i,j]);
+    }
+  }
+
+  const particles = [];
+  const DUR = {scale:1.8, smash:0.9, bleed:2.0};
+  const TOTAL = DUR.scale + DUR.smash + DUR.bleed;
+
+  let forcedPhase = null;
+  let forcedEnd = 0;
+
+  document.getElementById('btnScale').onclick = () => { const n=performance.now()/1000; forcedPhase='scale'; forcedEnd=n+DUR.scale; };
+  document.getElementById('btnSmash').onclick = () => { const n=performance.now()/1000; forcedPhase='smash'; forcedEnd=n+DUR.smash; };
+  document.getElementById('btnBleed').onclick = () => { const n=performance.now()/1000; forcedPhase='bleed'; forcedEnd=n+DUR.bleed; };
+
+  const easeOutCubic = t => 1 - Math.pow(1-t,3);
+  const easeInExpo = t => t===0?0:Math.pow(2,10*t-10);
+
+  function getState(now){
+    let phase, p;
+    if(forcedPhase && now < forcedEnd){
+      phase = forcedPhase;
+      const d = DUR[phase];
+      p = 1 - (forcedEnd - now)/d;
+    } else {
+      forcedPhase = null;
+      const ct = now % TOTAL;
+      if(ct < DUR.scale){ phase='scale'; p = ct / DUR.scale; }
+      else if(ct < DUR.scale + DUR.smash){ phase='smash'; p = (ct - DUR.scale)/DUR.smash; }
+      else { phase='bleed'; p = (ct - DUR.scale - DUR.smash)/DUR.bleed; }
+    }
+    return {phase, p: Math.max(0,Math.min(1,p))};
+  }
+
+  function renderPlasma(t){
+    pctx.globalCompositeOperation = 'source-over';
+    pctx.fillStyle = 'rgba(0,0,0,0.09)';
+    pctx.fillRect(0,0,W,H);
+    pctx.globalCompositeOperation = 'lighter';
+    const blobs = [
+      {h:276, s:100, sp:0.13, xo:0},
+      {h:195, s:100, sp:0.11, xo:2.1},
+      {h:310, s:100, sp:0.15, xo:4.3},
+      {h:230, s:100, sp:0.09, xo:1.4},
+    ];
+    blobs.forEach((b,i)=>{
+      const x = W * (0.5 + 0.35 * Math.sin(t*b.sp + b.xo));
+      const y = H * (0.42 + 0.28 * Math.cos(t*b.sp*1.3 + i*1.7));
+      const r = Math.max(W,H) * 0.38;
+      const g = pctx.createRadialGradient(x,y,0,x,y,r);
+      g.addColorStop(0, `hsla(${b.h},${b.s}%,62%,0.24)`);
+      g.addColorStop(0.4, `hsla(${b.h+10},${b.s}%,55%,0.12)`);
+      g.addColorStop(1, `hsla(${b.h},${b.s}%,50%,0)`);
+      pctx.fillStyle = g;
+      pctx.beginPath(); pctx.arc(x,y,r,0,Math.PI*2); pctx.fill();
+    });
+  }
+
+  function projectHypercube(t, globalScale){
+    const pts = [];
+    const a1 = t*0.7, c1=Math.cos(a1), s1=Math.sin(a1);
+    const a2 = t*0.53, c2=Math.cos(a2), s2=Math.sin(a2);
+    const a3 = t*0.31, c3=Math.cos(a3), s3=Math.sin(a3);
+    const a4 = t*0.41, c4=Math.cos(a4), s4=Math.sin(a4);
+    const ay = t*0.22, cy=Math.cos(ay), sy=Math.sin(ay);
+    const ax = t*0.16, cx=Math.cos(ax), sx=Math.sin(ax);
+
+    for(let v of verts4d){
+      let x0=v[0], y0=v[1], z0=v[2], w0=v[3];
+      let x1 = x0*c1 - y0*s1;
+      let y1 = x0*s1 + y0*c1;
+      let z1 = z0, w1 = w0;
+
+      let z2 = z1*c2 - w1*s2;
+      let w2 = z1*s2 + w1*c2;
+      let x2 = x1, y2 = y1;
+
+      let x3 = x2*c3 - w2*s3;
+      let w3 = x2*s3 + w2*c3;
+      let y3 = y2, z3 = z2;
+
+      let y4 = y3*c4 - z3*s4;
+      let z4 = y3*s4 + z3*c4;
+      let x4 = x3, w4 = w3;
+
+      const d = 2.8;
+      const p4 = 2.2/(d - w4*0.85);
+      let x5 = x4 * p4;
+      let y5 = y4 * p4;
+      let z5 = z4 * p4;
+
+      let x6 = x5*cy - z5*sy;
+      let z6 = x5*sy + z5*cy;
+      let y6 = y5*cx - z6*sx;
+      let z7 = y5*sx + z6*cx;
+
+      const persp = 340 / (340 + z7*140);
+      const sx = x6 * persp;
+      const sy = y6 * persp;
+      pts.push([sx, sy]);
+    }
+    const cx = W*0.5;
+    const cy = H*0.38;
+    const base = Math.min(W,H) * 0.18;
+    return pts.map(p => [cx + p[0]*base*globalScale, cy + p[1]*base*globalScale]);
+  }
+
+  let last = performance.now()/1000;
+  function frame(){
+    const now = performance.now()/1000;
+    const dt = Math.min(0.033, now - last);
+    last = now;
+
+    renderPlasma(now);
+
+    // trail fade
+    sctx.globalCompositeOperation = 'source-over';
+    sctx.fillStyle = 'rgba(0,0,0,0.18)';
+    sctx.fillRect(0,0,W,H);
+
+    const state = getState(now);
+    let gScale;
+    if(state.phase==='scale'){
+      const p = easeOutCubic(state.p);
+      gScale = 0.5 + p * 27.5;
+    } else if(state.phase==='smash'){
+      const p = easeInExpo(state.p);
+      gScale = 28 + (0.03 - 28) * p;
+    } else {
+      gScale = 0.03;
+    }
+
+    scaleVal.textContent = (gScale).toFixed(2) + '×';
+
+    const pts = projectHypercube(now*1.1, gScale);
+    const cx = W*0.5, cy = H*0.38;
+
+    // draw hypercube
+    if(state.phase !== 'bleed' || gScale > 0.05){
+      const alpha = state.phase==='scale' ? Math.max(0, 1 - (gScale-18)/12) : state.phase==='smash' ? Math.min(1, gScale*0.12 + 0.2) : 0.25;
+      sctx.save();
+      sctx.lineCap = 'round';
+      sctx.lineJoin = 'round';
+      const hue = state.phase==='smash' ? 300 : state.phase==='bleed' ? 260 : 185;
+      sctx.shadowColor = `hsl(${hue},100%,60%)`;
+      sctx.shadowBlur = Math.min(25, 8 + gScale*0.4);
+      sctx.strokeStyle = `hsla(${hue},100%,70%,${0.15 + alpha*0.85})`;
+      sctx.lineWidth = state.phase==='scale' ? Math.max(0.6, 2.2 - gScale*0.05) : 1.4;
+      sctx.beginPath();
+      for(const [a,b] of edges){
+        const pa = pts[a], pb = pts[b];
+        if(!pa||!pb) continue;
+        sctx.moveTo(pa[0], pa[1]);
+        sctx.lineTo(pb[0], pb[1]);
+      }
+      sctx.stroke();
+      // vertices glow
+      sctx.shadowBlur = 12;
+      sctx.fillStyle = `hsla(${hue},100%,75%,${0.7*alpha})`;
+      for(const p of pts){
+        sctx.beginPath();
+        sctx.arc(p[0], p[1], state.phase==='scale'? 1.8 : 1.2, 0, Math.PI*2);
+        sctx.fill();
+      }
+      sctx.restore();
+    }
+
+    // central singularity flash during smash/bleed
+    if(gScale < 0.4){
+      const pulse = 0.5 + 0.5*Math.sin(now*18);
+      sctx.save();
+      sctx.globalCompositeOperation = 'lighter';
+      sctx.shadowColor = '#ff00ff';
+      sctx.shadowBlur = 30 + pulse*20;
+      sctx.fillStyle = `rgba(255,200,255,${0.6 + pulse*0.4})`;
+      sctx.beginPath();
+      sctx.arc(cx, cy, 3.5 + pulse*2.5, 0, Math.PI*2);
+      sctx.fill();
+      sctx.restore();
+    }
+
+    // particles for bleed
+    if(state.phase === 'bleed'){
+      const spawn = 14;
+      for(let i=0;i<spawn;i++){
+        particles.push({
+          x: cx + (Math.random()-0.5)*18,
+          y: cy + (Math.random()-0.5)*8,
+          vx: (Math.random()-0.5)*0.7,
+          vy: 1.2 + Math.random()*2.1,
+          life: 1,
+          hue: 185 + Math.random()*90
+        });
+      }
+    }
+
+    // update + draw particles
+    sctx.save();
+    sctx.globalCompositeOperation = 'lighter';
+    for(let i=particles.length-1;i>=0;i--){
+      const p = particles[i];
+      p.vy += 0.03;
+      p.x += p.vx;
+      p.y += p.vy * 2.2;
+      p.life -= 0.0065;
+      if(p.life <= 0 || p.y > H + 20){
+        particles.splice(i,1);
+        continue;
+      }
+      const alpha = Math.min(1, p.life*1.2);
+      sctx.shadowColor = `hsla(${p.hue},100%,60%,${alpha})`;
+      sctx.shadowBlur = 14;
+      sctx.fillStyle = `hsla(${p.hue},100%,70%,${alpha})`;
+      sctx.beginPath();
+      sctx.arc(p.x, p.y, 2.2 + (1-p.life)*1.2, 0, Math.PI*2);
+      sctx.fill();
+      // trail
+      sctx.shadowBlur = 0;
+      sctx.strokeStyle = `hsla(${p.hue},100%,65%,${alpha*0.35})`;
+      sctx.lineWidth = 1;
+      sctx.beginPath();
+      sctx.moveTo(p.x, p.y);
+      sctx.lineTo(p.x - p.vx*4, p.y - p.vy*4);
+      sctx.stroke();
+
+      // hit 5 layers glow
+      const ly0 = H*0.60;
+      for(let l=0;l<5;l++){
+        const ly = ly0 + l*40;
+        if(Math.abs(p.y - ly) < 3 && p.vy>0){
+          sctx.shadowColor = '#a0f';
+          sctx.shadowBlur = 20;
+          sctx.fillStyle = 'rgba(200,180,255,0.5)';
+          sctx.beginPath(); sctx.arc(p.x, ly, 4,0,Math.PI*2); sctx.fill();
+        }
+      }
+    }
+    sctx.restore();
+
+    // vignette
+    const vg = sctx.createRadialGradient(cx, cy, Math.min(W,H)*0.2, cx, cy, Math.max(W,H)*0.7);
+    vg.addColorStop(0, 'rgba(0,0,0,0)');
+    vg.addColorStop(1, 'rgba(0,0,0,0.55)');
+    sctx.fillStyle = vg;
+    sctx.fillRect(0,0,W,H);
+
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hamilton-10 — AI Inference Stack Blueprint</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&family=Caveat:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root { color-scheme: dark; }
+  body { font-family: 'Inter', system-ui, sans-serif; background: #020617; }
+  .mono { font-family: 'IBM Plex Mono', monospace; }
+  .hand { font-family: 'Caveat', cursive; }
+  .blueprint {
+    background-color: #020617;
+    background-image: 
+      linear-gradient(rgba(8,145,178,0.18) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(8,145,178,0.18) 1px, transparent 1px),
+      radial-gradient(ellipse at top, rgba(6,182,212,0.12), transparent 60%),
+      radial-gradient(ellipse at bottom, rgba(14,165,233,0.08), transparent 60%);
+    background-size: 56px 56px, 56px 56px, 100% 100%, 100% 100%;
+  }
+  .blueprint::before {
+    content:''; position:fixed; inset:0;
+    background: repeating-linear-gradient(0deg, rgba(0,0,0,0) 0px, rgba(0,0,0,0) 2px, rgba(0,0,0,0.15) 3px);
+    pointer-events:none; mix-blend-mode: multiply; opacity:.3;
+  }
+  .node-active { 
+    border-color: rgb(103,232,249) !important; 
+    box-shadow: 0 0 0 1px rgba(103,232,249,0.5), 0 0 30px rgba(34,211,238,0.4), inset 0 0 20px rgba(34,211,238,0.15) !important;
+    transform: translateY(-1px) scale(1.02);
+  }
+  .core-pulse { animation: corePulse 3s ease-in-out infinite; }
+  @keyframes corePulse {
+    0%,100% { box-shadow: 0 0 0 0 rgba(34,211,238,0.0), 0 0 40px rgba(34,211,238,0.2), inset 0 0 30px rgba(8,145,178,0.2); }
+    50% { box-shadow: 0 0 0 12px rgba(34,211,238,0.05), 0 0 60px rgba(34,211,238,0.35), inset 0 0 40px rgba(8,145,178,0.3); }
+  }
+  .flow-path { stroke: #0891b2; stroke-width: 1.5; fill: none; stroke-dasharray: 3 5; opacity: .5; }
+  .flow-path.active { stroke: #22d3ee; opacity: 1; stroke-dasharray: 6 3; animation: dash 1s linear infinite; }
+  @keyframes dash { to { stroke-dashoffset: -18; } }
+  .stamp { border: 1.5px solid rgba(239,68,68,0.7); color: rgba(248,113,113,0.9); }
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: #0b1220; }
+  ::-webkit-scrollbar-thumb { background: #164e63; border-radius: 4px; }
+</style>
+</head>
+<body class="text-cyan-50 antialiased blueprint min-h-screen">
+  <!-- Marginalia -->
+  <div class="fixed top-6 left-4 hand text-[22px] text-cyan-300/70 -rotate-6 hidden md:block pointer-events-none">smaller sub stacks?</div>
+  <div class="fixed bottom-10 left-6 hand text-[20px] text-cyan-300/60 rotate-3 hidden lg:block pointer-events-none">fractal vs flat → latency ↑ ~10×</div>
+  <div class="fixed top-20 right-10 hand text-[24px] text-amber-300/70 rotate-6 hidden md:block pointer-events-none">verify each node!</div>
+
+  <div class="max-w-[1600px] mx-auto px-4 lg:px-6 py-4">
+    <!-- Title Block -->
+    <header class="flex items-start justify-between gap-4 mb-4">
+      <div>
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded bg-cyan-500/10 border border-cyan-400/30 grid place-items-center mono text-cyan-300 font-bold">H-10</div>
+          <div>
+            <h1 class="text-xl md:text-2xl font-semibold tracking-tight">HAMILTON-10 AI INFERENCE STACK</h1>
+            <p class="mono text-[11px] text-cyan-300/70 -mt-0.5 tracking-widest">REV C / 5-1-5 ARCHITECTURE / DARK BLUEPRINT</p>
+          </div>
+        </div>
+      </div>
+      <div class="hidden md:grid grid-cols-3 gap-2 mono text-[10px] leading-tight">
+        <div class="border border-cyan-900/80 bg-slate-950/70 p-2 w-28">
+          <div class="text-cyan-500/70">DRAWN</div>
+          <div>M. HAMILTON</div>
+        </div>
+        <div class="border border-cyan-900/80 bg-slate-950/70 p-2 w-28">
+          <div class="text-cyan-500/70">DATE</div>
+          <div>2025-11-14</div>
+        </div>
+        <div class="border border-cyan-900/80 bg-slate-950/70 p-2 w-28 relative">
+          <div class="text-cyan-500/70">STATUS</div>
+          <div>EXPERIMENTAL</div>
+          <div class="absolute -rotate-12 top-1 -right-2 stamp px-1.5 py-0.5 text-[10px] font-bold tracking-wider">APPROVED</div>
+        </div>
+      </div>
+    </header>
+
+    <main class="grid grid-cols-1 xl:grid-cols-12 gap-5">
+      <!-- Blueprint Canvas -->
+      <section class="xl:col-span-8 2xl:col-span-9">
+        <div class="relative border border-cyan-900/60 bg-slate-950/40 backdrop-blur-sm rounded-xl overflow-hidden">
+          <!-- grid header -->
+          <div class="flex items-center justify-between px-3 py-2 border-b border-cyan-900/50 bg-slate-950/70">
+            <div class="flex items-center gap-2 mono text-[11px]">
+              <span class="w-2 h-2 rounded-full bg-emerald-400/80 animate-pulse"></span>
+              <span class="text-cyan-300/80">INFERENCE DIAGRAM</span>
+              <span class="text-slate-500">/ MAIN 5-1-5</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <button id="runBtn" class="mono text-[11px] px-2.5 py-1 rounded bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-500/30 text-cyan-200 transition">RUN INFERENCE</button>
+              <button id="toggleFlow" class="mono text-[11px] px-2.5 py-1 rounded bg-slate-800/80 hover:bg-slate-700 border border-slate-700 text-slate-300">FLOW: ON</button>
+            </div>
+          </div>
+
+          <div class="relative w-full overflow-x-auto">
+            <div class="relative w-[900px] lg:w-full aspect-[16/10] min-h-[580px] mx-auto">
+              <!-- SVG Connections -->
+              <svg class="absolute inset-0 w-full h-full" viewBox="0 0 1000 650" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <filter id="glow">
+                    <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+                    <feMerge>
+                      <feMergeNode in="coloredBlur"/>
+                      <feMergeNode in="SourceGraphic"/>
+                    </feMerge>
+                  </filter>
+                  <linearGradient id="coreGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#0891b2" stop-opacity="0.2"/>
+                    <stop offset="100%" stop-color="#022c3a" stop-opacity="0.6"/>
+                  </linearGradient>
+                </defs>
+
+                <!-- Upper to Core -->
+                <path id="p-src" class="flow-path" d="M100 130 C 100 190, 300 230, 460 285"/>
+                <path id="p-why" class="flow-path" d="M290 130 C 290 190, 400 240, 480 285"/>
+                <path id="p-ctx" class="flow-path" d="M500 130 L 500 250"/>
+                <path id="p-con" class="flow-path" d="M710 130 C 710 190, 600 240, 520 285"/>
+                <path id="p-hum" class="flow-path" d="M900 130 C 900 190, 700 230, 540 285"/>
+
+                <!-- Core to Lower chain -->
+                <path id="p-c-t" class="flow-path" d="M440 360 C 280 410, 160 470, 100 510"/>
+                <path id="p-t-v" class="flow-path" d="M150 540 L 250 540"/>
+                <path id="p-v-l" class="flow-path" d="M330 540 L 460 540"/>
+                <path id="p-l-r" class="flow-path" d="M540 540 L 670 540"/>
+                <path id="p-r-f" class="flow-path" d="M750 540 L 860 540"/>
+
+                <!-- Feedback loop -->
+                <path id="p-fb" class="flow-path" d="M900 510 C 970 480, 980 180, 920 140 L 100 140 C 70 140, 65 130, 100 130" stroke-dasharray="4 8"/>
+
+                <!-- Flow dots -->
+                <g id="flowDots" opacity="0.9">
+                  <circle r="3.5" fill="#22d3ee" filter="url(#glow)">
+                    <animateMotion dur="2.8s" repeatCount="indefinite" rotate="auto"><mpath href="#p-src"/></animateMotion>
+                  </circle>
+                  <circle r="3.5" fill="#22d3ee" filter="url(#glow)">
+                    <animateMotion dur="2.8s" begin="0.3s" repeatCount="indefinite" rotate="auto"><mpath href="#p-why"/></animateMotion>
+                  </circle>
+                  <circle r="3.5" fill="#22d3ee" filter="url(#glow)">
+                    <animateMotion dur="2.6s" begin="0.6s" repeatCount="indefinite" rotate="auto"><mpath href="#p-ctx"/></animateMotion>
+                  </circle>
+                  <circle r="3.5" fill="#22d3ee" filter="url(#glow)">
+                    <animateMotion dur="2.8s" begin="0.9s" repeatCount="indefinite" rotate="auto"><mpath href="#p-con"/></animateMotion>
+                  </circle>
+                  <circle r="3.5" fill="#67e8f9" filter="url(#glow)">
+                    <animateMotion dur="3s" begin="1.2s" repeatCount="indefinite" rotate="auto"><mpath href="#p-hum"/></animateMotion>
+                  </circle>
+                  <circle r="4" fill="#fbbf24" filter="url(#glow)">
+                    <animateMotion dur="3.2s" begin="1.8s" repeatCount="indefinite" rotate="auto"><mpath href="#p-c-t"/></animateMotion>
+                  </circle>
+                  <circle r="3" fill="#a78bfa" filter="url(#glow)">
+                    <animateMotion dur="4s" begin="0s" repeatCount="indefinite" rotate="auto"><mpath href="#p-t-v"/></animateMotion>
+                  </circle>
+                  <circle r="3" fill="#a78bfa" filter="url(#glow)">
+                    <animateMotion dur="4s" begin="0.8s" repeatCount="indefinite" rotate="auto"><mpath href="#p-v-l"/></animateMotion>
+                  </circle>
+                  <circle r="3" fill="#a78bfa" filter="url(#glow)">
+                    <animateMotion dur="4s" begin="1.6s" repeatCount="indefinite" rotate="auto"><mpath href="#p-l-r"/></animateMotion>
+                  </circle>
+                  <circle r="3" fill="#a78bfa" filter="url(#glow)">
+                    <animateMotion dur="4s" begin="2.4s" repeatCount="indefinite" rotate="auto"><mpath href="#p-r-f"/></animateMotion>
+                  </circle>
+                  <circle r="3.5" fill="#f472b6" filter="url(#glow)" opacity="0.85">
+                    <animateMotion dur="6s" repeatCount="indefinite" rotate="auto"><mpath href="#p-fb"/></animateMotion>
+                  </circle>
+                </g>
+              </svg>
+
+              <!-- UPPER NODES -->
+              <div class="absolute" style="left:1.5%; top:7%; width:17%">
+                <div data-node="source" class="node group relative bg-slate-950/75 backdrop-blur border border-cyan-500/30 rounded-lg p-2.5 hover:border-cyan-400/70 transition cursor-pointer">
+                  <div class="mono text-[10px] text-cyan-400/70">UPPER • 1</div>
+                  <div class="font-medium -mt-0.5">Source</div>
+                  <div class="text-[11px] text-slate-400">prompt, user, tool</div>
+                </div>
+              <div class="absolute" style="left:21%; top:7%; width:17%">
+                <div data-node="why" class="node group relative bg-slate-950/75 backdrop-blur border border-cyan-500/30 rounded-lg p-2.5 hover:border-cyan-400/70 transition cursor-pointer">
+                  <div class="mono text-[10px] text-cyan-400/70">UPPER • 2</div>
+                  <div class="font-medium -mt-0.5">Why</div>
+                  <div class="text-[11px] text-slate-400">intent, goal</div>
+                </div>
+              <div class="absolute" style="left:41.5%; top:7%; width:17%">
+                <div data-node="context" class="node group relative bg-slate-950/75 backdrop-blur border border-cyan-500/30 rounded-lg p-2.5 hover:border-cyan-400/70 transition cursor-pointer">
+                  <div class="mono text-[10px] text-cyan-400/70">UPPER • 3</div>
+                  <div class="font-medium -mt-0.5">Context</div>
+                  <div class="text-[11px] text-slate-400">RAG, memory</div>
+                </div>
+              </div>
+              <div class="absolute" style="left:62%; top:7%; width:17%">
+                <div data-node="constraint" class="node group relative bg-slate-950/75 backdrop-blur border border-cyan-500/30 rounded-lg p-2.5 hover:border-cyan-400/70 transition cursor-pointer">
+                  <div class="mono text-[10px] text-cyan-400/70">UPPER • 4</div>
+                  <div class="font-medium -mt-0.5">Constraint</div>
+                  <div class="text-[11px] text-slate-400">policy, budget</div>
+                </div>
+              </div>
+              <div class="absolute" style="left:82.5%; top:7%; width:17%">
+                <div data-node="human" class="node group relative bg-slate-950/75 backdrop-blur border border-cyan-500/30 rounded-lg p-2.5 hover:border-cyan-400/70 transition cursor-pointer">
+                  <div class="mono text-[10px] text-cyan-400/70">UPPER • 5</div>
+                  <div class="font-medium -mt-0.5">Human</div>
+                  <div class="text-[11px] text-slate-400">oversight</div>
+                </div>
+              </div>
+
+              <!-- CORE -->
+              <div class="absolute left-[37%] top-[33%] w-[26%] aspect-square">
+                <div data-node="core" class="relative w-full h-full grid place-items-center">
+                  <div class="absolute inset-0 rounded-full core-pulse" style="background: radial-gradient(circle, rgba(8,145,178,0.25), transparent 60%);"></div>
+                  <div class="relative w-[88%] h-[88%] rounded-full border-2 border-cyan-400/60 bg-slate-950/80 backdrop-blur-xl shadow-[inset_0_0_40px_rgba(6,182,212,0.2)] grid place-items-center">
+                    <div class="absolute inset-3 rounded-full border border-cyan-500/20"></div>
+                    <div class="absolute inset-6 rounded-full border border-cyan-500/10 animate-[spin_20s_linear_infinite]"></div>
+                    <div class="text-center px-4">
+                      <div class="mono text-[10px] tracking-widest text-cyan-300/80">CORE</div>
+                      <div class="font-semibold text-[15px] leading-tight mt-0.5">INFERENCE ENGINE</div>
+                      <div class="mono text-[10px] text-cyan-300/70 mt-1">Attention Heads</div>
+                      <div class="mt-2 inline-flex items-center gap-1.5 text-[10px] px-2 py-0.5 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-200">
+                        <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse"></span> GENERATING
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- LOWER NODES -->
+              <div class="absolute" style="left:1.5%; top:78%; width:17%">
+                <div data-node="transform" class="node group relative bg-slate-950/75 backdrop-blur border border-violet-500/30 rounded-lg p-2.5 hover:border-violet-400/70 transition cursor-pointer">
+                  <div class="mono text-[10px] text-violet-400/70">LOWER • 1</div>
+                  <div class="font-medium -mt-0.5">Transform</div>
+                  <div class="text-[11px] text-slate-400">parse, tools</div>
+                </div>
+              </div>
+              <div class="absolute" style="left:21%; top:78%; width:17%">
+                <div data-node="verify" class="node group relative bg-slate-950/75 backdrop-blur border border-violet-500/30 rounded-lg p-2.5 hover:border-violet-400/70 transition cursor-pointer">
+                  <div class="mono text-[10px] text-violet-400/70">LOWER • 2</div>
+                  <div class="font-medium -mt-0.5">Verify</div>
+                  <div class="text-[11px] text-slate-400">ground, safety</div>
+                </div>
+              <div class="absolute" style="left:41.5%; top:78%; width:17%">
+                <div data-node="log" class="node group relative bg-slate-950/75 backdrop-blur border border-violet-500/30 rounded-lg p-2.5 hover:border-violet-400/70 transition cursor-pointer">
+                  <div class="mono text-[10px] text-violet-400/70">LOWER • 3</div>
+                  <div class="font-medium -mt-0.5">Log</div>
+                  <div class="text-[11px] text-slate-400">10 artifacts</div>
+                </div>
+              </div>
+              <div class="absolute" style="left:62%; top:78%; width:17%">
+                <div data-node="release" class="node group relative bg-slate-950/75 backdrop-blur border border-violet-500/30 rounded-lg p-2.5 hover:border-violet-400/70 transition cursor-pointer">
+                  <div class="mono text-[10px] text-violet-400/70">LOWER • 4</div>
+                  <div class="font-medium -mt-0.5">Release</div>
+                  <div class="text-[11px] text-slate-400">output, stream</div>
+                </div>
+              </div>
+              <div class="absolute" style="left:82.5%; top:78%; width:17%">
+                <div data-node="feedback" class="node group relative bg-slate-950/75 backdrop-blur border border-pink-500/30 rounded-lg p-2.5 hover:border-pink-400/70 transition cursor-pointer">
+                  <div class="mono text-[10px] text-pink-400/70">LOWER • 5</div>
+                  <div class="font-medium -mt-0.5">Feedback</div>
+                  <div class="text-[11px] text-slate-400">RLHF, reward</div>
+                </div>
+              </div>
+
+              <!-- Labels -->
+              <div class="absolute left-3 top-[44%] -rotate-90 origin-left mono text-[10px] tracking-[0.2em] text-cyan-400/50">INPUT LAYER</div>
+              <div class="absolute right-3 top-[44%] rotate-90 origin-right mono text-[10px] tracking-[0.2em] text-violet-400/50">OUTPUT LAYER</div>
+            </div>
+          </div>
+
+          <!-- Data flow legend -->
+          <div class="px-3 py-2.5 border-t border-cyan-900/50 bg-slate-950/60 flex flex-wrap items-center gap-x-4 gap-y-1.5 mono text-[11px]">
+            <span class="text-cyan-300/70">DATA FLOW:</span>
+            <span class="text-slate-300">1. Prompt → Source</span>
+            <span class="text-slate-500">›</span>
+            <span class="text-slate-300">2. Why/Context/Constraint/Human → Core</span>
+            <span class="text-slate-500">›</span>
+            <span class="text-slate-300">3. Tokens</span>
+            <span class="text-slate-500">›</span>
+            <span class="text-slate-300">4. Transform → Verify → Log (10) → Release</span>
+            <span class="text-slate-500">›</span>
+            <span class="text-slate-300">5. Feedback loop</span>
+          </div>
+        </div>
+
+        <!-- Artifacts strip -->
+        <div class="mt-3 grid grid-cols-5 md:grid-cols-10 gap-1.5">
+          <div class="col-span-5 md:col-span-10 mono text-[10px] text-cyan-300/60 px-1">LOG • 10 ARTIFACTS (per inference)</div>
+          <div class="artifact">01 prompt</div>
+          <div class="artifact">02 why-vector</div>
+          <div class="artifact">03 context-hash</div>
+          <div class="artifact">04 constraints</div>
+          <div class="artifact">05 human-pref</div>
+          <div class="artifact">06 attention-map</div>
+          <div class="artifact">07 token-probs</div>
+          <div class="artifact">08 transform-ops</div>
+          <div class="artifact">09 verify-score</div>
+          <div class="artifact">10 release-manifest</div>
+        </div>
+        <style>.artifact{ @apply bg-slate-900/60 border border-cyan-900/40 rounded px-2 py-1.5 text-[10px] mono text-slate-300 hover:border-cyan-700/60 transition; }</style>
+      </section>
+
+      <!-- Side Panel -->
+      <aside class="xl:col-span-4 2xl:col-span-3 space-y-4">
+        <div class="border border-cyan-900/60 rounded-xl bg-slate-950/60 backdrop-blur overflow-hidden">
+          <div class="px-3.5 py-2.5 border-b border-cyan-900/50 flex items-center justify-between">
+            <h2 class="font-semibold tracking-wide text-cyan-100">Sub-Stacks?</h2>
+            <span class="mono text-[10px] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/20">DESIGN CHOICE</span>
+          </div>
+          <div class="p-3.5 space-y-3">
+            <div class="grid grid-cols-2 gap-2">
+              <button id="optA" class="opt-btn active group relative overflow-hidden rounded-lg border border-cyan-500/40 bg-cyan-500/10 p-3 text-left transition">
+                <div class="mono text-[11px] text-cyan-300">OPTION A</div>
+                <div class="font-medium">Fractal</div>
+                <div class="text-[11px] text-slate-400 mt-1">Each of 10 nodes contains its own 5-1-5</div>
+                <div class="absolute inset-0 opacity-0 group-[.active]:opacity-100 transition pointer-events-none" style="background: radial-gradient(200px circle at 50% 0%, rgba(34,211,238,0.15), transparent 70%);"></div>
+              </button>
+              <button id="optB" class="opt-btn group relative overflow-hidden rounded-lg border border-slate-700 bg-slate-900/60 p-3 text-left transition hover:border-slate-600">
+                <div class="mono text-[11px] text-slate-400">OPTION B</div>
+                <div class="font-medium">Flat</div>
+                <div class="text-[11px] text-slate-400 mt-1">Keep it simple, one stack</div>
+              </button>
+            </div>
+
+            <div id="panelA" class="panel">
+              <div class="rounded-lg border border-cyan-900/50 bg-slate-950/70 p-3 space-y-2.5">
+                <div class="flex items-center gap-2">
+                  <svg width="20" height="20" viewBox="0 0 24 24" class="text-cyan-400"><path fill="currentColor" d="M12 2L2 7l10 5l10-5l-10-5M2 17l10 5l10-5M2 12l10 5l10-5"/></svg>
+                  <div class="text-sm font-medium">Fractal 5-1-5</div>
+                </div>
+                <p class="text-[13px] leading-snug text-slate-300">Every node (Source, Why, Verify, etc.) runs a <span class="text-cyan-300">micro-inference</span> with its own Why/Context/Constraint. Recursive accountability.</p>
+                <div class="grid grid-cols-3 gap-1.5 mono text-[10px]">
+                  <div class="bg-slate-900 border border-cyan-900/40 rounded px-2 py-1 text-center">depth=2</div>
+                  <div class="bg-slate-900 border border-cyan-900/40 rounded px-2 py-1 text-center">10×10 logs</div>
+                  <div class="bg-slate-900 border border-cyan-900/40 rounded px-2 py-1 text-center">traceable</div>
+                </div>
+                <div class="relative h-[76px] rounded bg-slate-950 border border-cyan-950 overflow-hidden">
+                  <svg viewBox="0 0 300 76" class="w-full h-full opacity-80">
+                    <g stroke="#0e7490" fill="none" stroke-width="1">
+                      <rect x="20" y="18" width="60" height="40" rx="4"/>
+                      <rect x="120" y="8" width="60" height="20" rx="3"/>
+                      <rect x="120" y="48" width="60" height="20" rx="3"/>
+                      <rect x="220" y="18" width="60" height="40" rx="4"/>
+                      <path d="M80 28 H120 M80 48 H120 M180 18 H220 M180 58 H220"/>
+                    </g>
+                    <g fill="#22d3ee" font-family="IBM Plex Mono" font-size="7">
+                      <text x="32" y="42">NODE</text>
+                      <text x="126" y="20">5</text>
+                      <text x="126" y="60">5</text>
+                      <text x="148" y="40">1</text>
+                    </g>
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+            <div id="panelB" class="panel hidden">
+              <div class="rounded-lg border border-slate-800 bg-slate-950/70 p-3 space-y-2.5">
+                <div class="flex items-center gap-2">
+                  <svg width="20" height="20" viewBox="0 0 24 24" class="text-slate-400"><path fill="currentColor" d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"/></svg>
+                  <div class="text-sm font-medium">Flat Stack</div>
+                </div>
+                <p class="text-[13px] leading-snug text-slate-300">Single pass through 5-1-5. Fastest latency, minimal overhead. Internal reasoning is opaque.</p>
+                <div class="grid grid-cols-3 gap-1.5 mono text-[10px]">
+                  <div class="bg-slate-900 border border-slate-800 rounded px-2 py-1 text-center">&lt;100ms</div>
+                  <div class="bg-slate-900 border border-slate-800 rounded px-2 py-1 text-center">10 logs</div>
+                  <div class="bg-slate-900 border border-slate-800 rounded px-2 py-1 text-center">simple</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Technical Notes -->
+        <div class="border border-cyan-900/60 rounded-xl bg-slate-950/50 backdrop-blur">
+          <div class="px-3.5 py-2.5 border-b border-cyan-900/50">
+            <h3 class="font-medium text-cyan-100">Technical Notes</h3>
+          </div>
+          <div class="p-3.5 space-y-3.5 text-[13px] leading-relaxed">
+            <div>
+              <div class="mono text-[11px] text-cyan-300/80 mb-1">HOW SUB-STACKS WORK</div>
+              <p class="text-slate-300">For complex reasoning, enable fractal mode on Verify and Constraint nodes. Verify runs its own 5-1-5 to check hallucinations: Why=grounding, Context=retrieved docs, Constraint=truth threshold. Each sub-inference logs separately, creating a merkle-tree of accountability.</p>
+            </div>
+            <div>
+              <div class="mono text-[11px] text-cyan-300/80 mb-1">TRADEOFFS: LATENCY VS ACCOUNTABILITY</div>
+              <div class="grid grid-cols-2 gap-2">
+                <div class="rounded border border-emerald-900/50 bg-emerald-950/30 p-2.5">
+                  <div class="text-emerald-300 text-xs font-medium">Fractal</div>
+                  <ul class="mt-1 space-y-1 text-[12px] text-slate-300 list-disc list-inside">
+                    <li>+ Full trace per decision</li>
+                    <li>+ Debuggable failures</li>
+                    <li>- 50-500ms × depth</li>
+                    <li>- 10-100× compute</li>
+                  </ul>
+                </div>
+                <div class="rounded border border-sky-900/50 bg-sky-950/30 p-2.5">
+                  <div class="text-sky-300 text-xs font-medium">Flat</div>
+                  <ul class="mt-1 space-y-1 text-[12px] text-slate-300 list-disc list-inside">
+                    <li>+ <100ms p95</li>
+                    <li>+ Cheap at scale</li>
+                    <li>- Black-box internals</li>
+                    <li>- Weaker audit trail</li>
+                  </ul>
+                </div>
+              </div>
+            <div class="rounded-lg border border-amber-500/20 bg-amber-500/5 p-3">
+              <div class="mono text-[11px] text-amber-300/90 mb-1">RECOMMENDATION</div>
+              <p class="text-[13px] text-amber-100/90"><strong>Most use cases: Start Flat.</strong> Enable Fractal selectively (depth=2 max) on Verify, Constraint, and Human nodes for high-risk domains (medical, finance, legal). Use sampling: fractal 1% of traffic for continuous audit. Cache sub-stack results by context-hash.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Inspector -->
+        <div class="border border-cyan-900/60 rounded-xl bg-slate-950/40 backdrop-blur p-3.5">
+          <div class="flex items-center justify-between">
+            <h4 class="font-medium text-cyan-100">Node Inspector</h4>
+            <span class="mono text-[10px] text-slate-500">click a node</span>
+          </div>
+          <div id="inspector" class="mt-2.5 mono text-[12px] text-slate-300 leading-relaxed">
+            Select any node to view its inputs, outputs, and logging schema. Run inference to see live traversal.
+          </div>
+        </div>
+      </aside>
+    </main>
+
+    <footer class="mt-6 mb-10 flex-wrap items-center justify-between gap-3 mono text-[10px] text-slate-500 border-t border-cyan-950 pt-3">
+      <div>HAMILTON-10 • 5-1-5 ARCHITECTURE • CLASSIFICATION: INTERNAL BLUEPRINT</div>
+      <div>Do not distribute • All flows logged • v0.3.1</div>
+    </footer>
+  </div>
+
+<script>
+  const nodes = document.querySelectorAll('[data-node]');
+  const inspector = document.getElementById('inspector');
+  const runBtn = document.getElementById('runBtn');
+  const toggleFlow = document.getElementById('toggleFlow');
+  const flowDots = document.getElementById('flowDots');
+  const paths = document.querySelectorAll('.flow-path');
+
+  const nodeData = {
+    source: { t:'Source', d:'Origin of prompt. Captures user ID, session, tool chain, and raw input. Emits signed prompt envelope.', i:'user/text, tool/json', o:'prompt_v1', log:'prompt_hash, timestamp, origin' },
+    why: { t:'Why', d:'Intent extraction. Classifies goal, decomposes task, estimates complexity.', i:'prompt_v1', o:'intent_vector', log:'why-confidence, task_type' },
+    context: { t:'Context', d:'Retrieves RAG, memory, and state. Builds context window with citations.', i:'intent_vector', o:'context_bundle', log:'doc_ids, recall@k, mem_hash' },
+    constraint: { t:'Constraint', d:'Policy engine. Applies safety filters, budget caps, latency SLOs.', i:'context_bundle', o:'constraint_mask', log:'policy_version, blocked_rules' },
+    human: { t:'Human', d:'Oversight preferences. RLHF weights, style, and human-in-loop gates.', i:'user_profile', o:'preference_vector', log:'human_override, temp' },
+    core: { t:'Inference Engine', d:'Transformer core. Multi-head attention runs on fused inputs. Generates token distribution.', i:'all upper', o:'token_stream', log:'model_id, temp, top_p, attn_map' },
+    transform: { t:'Transform', d:'Post-process tokens. Parses JSON, executes tool calls, formats output.', i:'token_stream', o:'structured_out', log:'tool_calls, parse_time' },
+    verify: { t:'Verify', d:'Grounding check. NLI vs sources, hallucination score, policy re-check.', i:'structured_out', o:'verified_out', log:'verify_score, citations' },
+    log: { t:'Log', d:'Immutable audit. Writes 10 artifacts to WORM store with hash chaining.', i:'full trace', o:'log_receipt', log:'merkle_root' },
+    release: { t:'Release', d:'Streams to user/API. Applies final safety, watermark, metered billing.', i:'verified_out', o:'response', log:'latency, bytes, cost' },
+    feedback: { t:'Feedback', d:'Closes loop. Collects reward, thumbs, and error signals for training.', i:'response + signal', o:'reward_delta', log:'rhlf_sample' },
+  };
+
+  function showNode(key) {
+    const n = nodeData[key];
+    if(!n) return;
+    inspector.innerHTML = `<div class="text-cyan-300">${n.t}</div><div class="mt-1 text-slate-200">${n.d}</div><div class="mt-2 grid grid-cols-3 gap-2"><div><span class="text-slate-500">in</span> ${n.i}</div><div><span class="text-slate-500">out</span> ${n.o}</div><div><span class="text-slate-500">log</span> ${n.log}</div></div>`;
+    nodes.forEach(el => el.classList.toggle('node-active', el.dataset.node === key));
+  }
+
+  nodes.forEach(el => {
+    el.addEventListener('click', () => showNode(el.dataset.node));
+    el.addEventListener('mouseenter', () => { paths.forEach(p => p.classList.remove('active')); });
+  });
+
+  // Run sequence
+  const sequence = ['source','why','context','constraint','human','core','transform','verify','log','release','feedback'];
+  let running = false;
+  async function runInference() {
+    if(running) return;
+    running = true;
+    runBtn.disabled = true;
+    runBtn.textContent = 'RUNNING...';
+    paths.forEach(p => p.classList.add('active'));
+    
+    for (let i=0; i<sequence.length; i++) {
+      const key = sequence[i];
+      showNode(key);
+      await new Promise(r => setTimeout(r, 320));
+      if(i===5){ // core pulse
+        document.querySelector('[data-node="core"]').parentElement.classList.add('scale-105');
+        await new Promise(r => setTimeout(r, 200));
+        document.querySelector('[data-node="core"]').parentElement.classList.remove('scale-105');
+      }
+    }
+    await new Promise(r => setTimeout(r, 400));
+    nodes.forEach(el => el.classList.remove('node-active'));
+    paths.forEach(p => p.classList.remove('active'));
+    inspector.innerHTML = `Inference complete. <span class="text-emerald-300">10 artifacts logged</span>. Feedback signal routed to Source for next turn.`;
+    runBtn.textContent = 'RUN INFERENCE';
+    runBtn.disabled = false;
+    running = false;
+  }
+  runBtn.addEventListener('click', runInference);
+
+  // Toggle flow dots
+  let flowOn = true;
+  toggleFlow.addEventListener('click', () => {
+    flowOn = !flowOn;
+    flowDots.style.display = flowOn ? 'block' : 'none';
+    toggleFlow.textContent = `FLOW: ${flowOn ? 'ON' : 'OFF'}`;
+  });
+
+  // Options
+  const optA = document.getElementById('optA');
+  const optB = document.getElementById('optB');
+  const panelA = document.getElementById('panelA');
+  const panelB = document.getElementById('panelB');
+  function setOpt(which) {
+    const a = which === 'A';
+    optA.classList.toggle('active', a);
+    optA.classList.toggle('bg-cyan-500/10', a);
+    optA.classList.toggle('border-cyan-500/40', a);
+    optA.classList.toggle('bg-slate-900/60', !a);
+    optA.classList.toggle('border-slate-700', !a);
+    optB.classList.toggle('active', !a);
+    optB.classList.toggle('bg-cyan-500/10', !a);
+    optB.classList.toggle('border-cyan-500/40', !a);
+    optB.classList.toggle('bg-slate-900/60', a);
+    optB.classList.toggle('border-slate-700', a);
+    panelA.classList.toggle('hidden', !a);
+    panelB.classList.toggle('hidden', a);
+    document.querySelector('.hand').textContent = a ? 'fractal depth=2 recommended' : 'keep it simple!';
+  }
+  optA.addEventListener('click', () => setOpt('A'));
+  optB.addEventListener('click', () => setOpt('B'));
+
+  // Auto demo
+  setTimeout(() => { showNode('core'); }, 600);
+  setTimeout(runInference, 1800);
+</script>
+</body>
+</html>

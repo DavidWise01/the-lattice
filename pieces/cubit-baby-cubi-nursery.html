@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>BABY CUBITS · Sarah's Nursery</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Quicksand:wght@300;400;500;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&display=swap');
+:root{
+  --bg:#041424;--bg2:#061e34;--bg3:#082844;--bg4:#0a3254;
+  --co:#2266cc;--co-l:#3388ee;--co-ll:#55aaff;--co-d:#1a4e99;--co-dd:#123a77;--co-glow:rgba(34,102,204,.35);
+  --gold:#d4a84c;--gold-l:#e8c86c;--gold-d:#b08830;--gold-glow:rgba(212,168,76,.3);
+  --soft:#aaccee;--soft-d:#6699bb;
+  --w:#e0eaf4;--t:rgba(224,234,244,.6);--td:rgba(224,234,244,.3);--tdd:rgba(224,234,244,.1);
+  --green:#44dd88;--green-glow:rgba(68,221,136,.3);
+  --pink:#ff88aa;--pink-glow:rgba(255,136,170,.25);
+  --line:rgba(34,102,204,.15);
+  --alert:#ff6644;--alert-glow:rgba(255,102,68,.3);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--w);font-family:'Quicksand',sans-serif;min-height:100vh;overflow-x:hidden;user-select:none}
+::selection{background:var(--co-d);color:#fff}
+button{font-family:'Quicksand';cursor:pointer;border:none;outline:none}
+
+/* GRAIN */
+body::after{content:'';position:fixed;inset:0;background:url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='512' height='512' filter='url(%23n)' opacity='0.02'/%3E%3C/svg%3E");pointer-events:none;z-index:9999;opacity:.4}
+
+/* HEADER */
+.header{text-align:center;padding:20px 16px 14px;position:relative}
+.header::after{content:'';position:absolute;bottom:0;left:8%;right:8%;height:1px;background:linear-gradient(90deg,transparent,var(--co),var(--co-l),var(--co),transparent)}
+
+/* ANTENNA SVG */
+.antenna-wrap{display:flex;justify-content:center;margin-bottom:8px}
+.antenna-wrap svg{filter:drop-shadow(0 0 12px var(--co-glow))}
+
+.header h1{font-family:'Orbitron';font-size:clamp(18px,4vw,28px);font-weight:700;letter-spacing:6px;color:var(--co-l);text-shadow:0 0 25px var(--co-glow)}
+.header .sub{font-family:'Cormorant Garamond';font-size:clamp(12px,2.5vw,16px);color:var(--gold);font-style:italic;margin-top:2px;letter-spacing:1px}
+.header .status{font-family:'Orbitron';font-size:9px;letter-spacing:3px;color:var(--td);margin-top:6px;display:flex;align-items:center;justify-content:center;gap:6px}
+.header .status .pulse{width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green-glow);animation:pulse 2s ease infinite}
+@keyframes pulse{0%,100%{opacity:.5;transform:scale(.9)}50%{opacity:1;transform:scale(1.1)}}
+
+/* DASHBOARD */
+.dash{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:12px 16px;max-width:800px;margin:0 auto}
+@media(max-width:600px){.dash{grid-template-columns:1fr;}}
+.dash.full{grid-template-columns:1fr}
+
+/* PANELS */
+.panel{background:var(--bg2);border:1px solid var(--line);padding:14px;position:relative;overflow:hidden;border-radius:4px}
+.panel::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--co),transparent)}
+.panel-t{font-family:'Orbitron';font-size:9px;letter-spacing:2.5px;color:var(--co);display:flex;align-items:center;gap:6px;margin-bottom:10px}
+.panel-t .ico{font-size:14px}
+
+/* MONITOR */
+.monitor-ring{width:180px;height:180px;margin:0 auto;position:relative}
+.monitor-ring canvas{width:100%;height:100%}
+.monitor-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.monitor-db{font-family:'Orbitron';font-size:32px;font-weight:900;color:var(--co-l);text-shadow:0 0 20px var(--co-glow);transition:color .3s}
+.monitor-db.loud{color:var(--alert);text-shadow:0 0 20px var(--alert-glow)}
+.monitor-db.medium{color:var(--gold);text-shadow:0 0 20px var(--gold-glow)}
+.monitor-label{font-family:'Orbitron';font-size:7px;letter-spacing:2px;color:var(--td);margin-top:2px}
+.monitor-state{font-family:'Orbitron';font-size:8px;letter-spacing:2px;margin-top:4px;padding:2px 8px;border:1px solid var(--tdd);border-radius:2px}
+.monitor-state.sleeping{color:var(--co);border-color:var(--co-dd)}
+.monitor-state.stirring{color:var(--gold);border-color:var(--gold-d)}
+.monitor-state.awake{color:var(--pink);border-color:var(--pink-glow)}
+.monitor-state.crying{color:var(--alert);border-color:var(--alert)}
+
+/* WAVEFORM */
+.waveform{height:50px;width:100%;margin-top:10px;position:relative;overflow:hidden;border:1px solid var(--tdd);border-radius:2px;background:var(--bg)}
+.waveform canvas{width:100%;height:100%}
+
+/* BUTTONS */
+.btn{background:var(--bg3);border:1px solid var(--co-dd);color:var(--co-l);font-family:'Orbitron';font-size:8px;letter-spacing:2px;padding:8px 14px;border-radius:3px;transition:all .2s;display:flex;align-items:center;gap:6px}
+.btn:hover{background:var(--bg4);border-color:var(--co);box-shadow:0 0 10px var(--co-glow)}
+.btn:active{transform:scale(.97)}
+.btn.active{background:var(--co-dd);border-color:var(--co-l);color:var(--w)}
+.btn.big{padding:12px 20px;font-size:10px}
+.btn.danger{border-color:var(--alert);color:var(--alert)}
+.btn.danger:hover{background:rgba(255,102,68,.1)}
+.btn-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}
+
+/* TIMERS */
+.timer-display{font-family:'Orbitron';font-size:28px;font-weight:700;text-align:center;color:var(--co-l);text-shadow:0 0 15px var(--co-glow);padding:8px 0}
+.timer-label{font-family:'Orbitron';font-size:7px;letter-spacing:2px;color:var(--td);text-align:center;margin-bottom:4px}
+.timer-row{display:flex;gap:6px;margin-top:6px}
+.timer-row .btn{flex:1;justify-content:center}
+
+/* WHITE NOISE / LULLABY */
+.sound-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:6px}
+.sound-btn{background:var(--bg);border:1px solid var(--tdd);padding:10px 6px;text-align:center;border-radius:3px;cursor:pointer;transition:all .2s}
+.sound-btn:hover{border-color:var(--co);background:var(--bg3)}
+.sound-btn.playing{border-color:var(--co-l);background:var(--co-dd);box-shadow:0 0 8px var(--co-glow)}
+.sound-btn .s-ico{font-size:18px;display:block;margin-bottom:4px}
+.sound-btn .s-name{font-family:'Orbitron';font-size:7px;letter-spacing:1px;color:var(--td)}
+.sound-btn.playing .s-name{color:var(--co-l)}
+
+/* VOLUME SLIDER */
+.vol-wrap{display:flex;align-items:center;gap:8px;margin-top:8px}
+.vol-wrap label{font-family:'Orbitron';font-size:7px;letter-spacing:1px;color:var(--td)}
+.vol-wrap input[type=range]{flex:1;-webkit-appearance:none;height:4px;background:var(--bg);border-radius:2px;outline:none}
+.vol-wrap input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--co-l);cursor:pointer;box-shadow:0 0 6px var(--co-glow)}
+
+/* LOG */
+.log-list{max-height:140px;overflow-y:auto;font-size:11px;line-height:1.8}
+.log-list::-webkit-scrollbar{width:3px}
+.log-list::-webkit-scrollbar-track{background:var(--bg)}
+.log-list::-webkit-scrollbar-thumb{background:var(--co-dd);border-radius:2px}
+.log-entry{padding:2px 0;border-bottom:1px solid var(--tdd);display:flex;gap:8px;align-items:center}
+.log-entry .log-time{font-family:'Orbitron';font-size:8px;color:var(--co);min-width:55px}
+.log-entry .log-msg{font-family:'Quicksand';font-size:10px;color:var(--t)}
+.log-entry .log-ico{font-size:12px}
+
+/* CUBIT COUNTER */
+.cubit-bar{display:flex;align-items:center;justify-content:center;gap:12px;padding:8px;margin-top:8px;border:1px solid var(--tdd);border-radius:3px;background:var(--bg)}
+.cubit-bar .cb-val{font-family:'Orbitron';font-size:22px;font-weight:900;color:var(--gold);text-shadow:0 0 15px var(--gold-glow)}
+.cubit-bar .cb-label{font-family:'Orbitron';font-size:7px;letter-spacing:2px;color:var(--td)}
+
+/* FOOTER */
+.footer{text-align:center;padding:14px 16px 20px;margin-top:8px}
+.footer p{font-family:'Orbitron';font-size:7px;letter-spacing:2px;color:var(--tdd)}
+.footer .sig{font-family:'Cormorant Garamond';font-size:11px;color:var(--co-d);font-style:italic;margin-top:4px}
+
+/* ANIMATIONS */
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.panel{animation:fadeUp .5s ease both}
+.panel:nth-child(1){animation-delay:.05s}.panel:nth-child(2){animation-delay:.1s}
+.panel:nth-child(3){animation-delay:.15s}.panel:nth-child(4){animation-delay:.2s}
+.panel:nth-child(5){animation-delay:.25s}.panel:nth-child(6){animation-delay:.3s}
+
+@keyframes antennaWave{0%,100%{opacity:.3}50%{opacity:.9}}
+.aw1{animation:antennaWave 2s ease infinite}
+.aw2{animation:antennaWave 2s ease infinite .4s}
+.aw3{animation:antennaWave 2s ease infinite .8s}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="antenna-wrap">
+    <svg width="80" height="60" viewBox="0 0 80 60">
+      <!-- Antenna base -->
+      <rect x="37" y="35" width="6" height="18" rx="2" fill="#2266cc" opacity=".8"/>
+      <circle cx="40" cy="33" r="5" fill="#3388ee" stroke="#55aaff" stroke-width="1"/>
+      <!-- Signal waves -->
+      <path d="M40 28 Q30 18 22 22" fill="none" stroke="#3388ee" stroke-width="1.5" stroke-linecap="round" class="aw1"/>
+      <path d="M40 28 Q26 12 14 18" fill="none" stroke="#3388ee" stroke-width="1.2" stroke-linecap="round" class="aw2"/>
+      <path d="M40 28 Q22 4 6 14" fill="none" stroke="#3388ee" stroke-width="1" stroke-linecap="round" class="aw3"/>
+      <path d="M40 28 Q50 18 58 22" fill="none" stroke="#3388ee" stroke-width="1.5" stroke-linecap="round" class="aw1"/>
+      <path d="M40 28 Q54 12 66 18" fill="none" stroke="#3388ee" stroke-width="1.2" stroke-linecap="round" class="aw2"/>
+      <path d="M40 28 Q58 4 74 14" fill="none" stroke="#3388ee" stroke-width="1" stroke-linecap="round" class="aw3"/>
+      <!-- Center glow -->
+      <circle cx="40" cy="33" r="3" fill="#55aaff" opacity=".6"/>
+    </svg>
+  </div>
+  <h1>BABY CUBITS</h1>
+  <div class="sub">Sarah's Nursery · TriPod LLC</div>
+  <div class="status">
+    <span class="pulse"></span>
+    <span id="connStatus">STANDBY · TAP LISTEN TO CONNECT</span>
+  </div>
+</div>
+
+<div class="dash">
+
+  <!-- SOUND MONITOR -->
+  <div class="panel" id="monitorPanel">
+    <div class="panel-t"><span class="ico">📡</span> SOUND MONITOR</div>
+    <div class="monitor-ring">
+      <canvas id="ringCanvas" width="360" height="360"></canvas>
+      <div class="monitor-center">
+        <div class="monitor-db" id="dbDisplay">—</div>
+        <div class="monitor-label">DECIBELS</div>
+        <div class="monitor-state sleeping" id="babyState">STANDBY</div>
+      </div>
+    </div>
+    <div class="waveform"><canvas id="waveCanvas"></canvas></div>
+    <div class="btn-grid" style="margin-top:10px">
+      <button class="btn big" id="listenBtn" onclick="toggleListen()">
+        <span id="listenIco">🎙</span>
+        <span id="listenTxt">LISTEN</span>
+      </button>
+      <button class="btn big" id="muteBtn" onclick="toggleMute()">
+        <span>🔇</span> MUTE ALERTS
+      </button>
+    </div>
+  </div>
+
+  <!-- SOUNDS -->
+  <div class="panel">
+    <div class="panel-t"><span class="ico">🌙</span> SOOTHE SOUNDS</div>
+    <div class="sound-grid">
+      <div class="sound-btn" onclick="toggleSound('white')" id="sndWhite">
+        <span class="s-ico">🌊</span>
+        <span class="s-name">WHITE NOISE</span>
+      </div>
+      <div class="sound-btn" onclick="toggleSound('brown')" id="sndBrown">
+        <span class="s-ico">🌧</span>
+        <span class="s-name">BROWN NOISE</span>
+      </div>
+      <div class="sound-btn" onclick="toggleSound('pink')" id="sndPink">
+        <span class="s-ico">🌸</span>
+        <span class="s-name">PINK NOISE</span>
+      </div>
+      <div class="sound-btn" onclick="toggleSound('heartbeat')" id="sndHeartbeat">
+        <span class="s-ico">💗</span>
+        <span class="s-name">HEARTBEAT</span>
+      </div>
+      <div class="sound-btn" onclick="toggleSound('lullaby')" id="sndLullaby">
+        <span class="s-ico">✨</span>
+        <span class="s-name">LULLABY</span>
+      </div>
+      <div class="sound-btn" onclick="toggleSound('shush')" id="sndShush">
+        <span class="s-ico">🤫</span>
+        <span class="s-name">SHUSH</span>
+      </div>
+    </div>
+    <div class="vol-wrap">
+      <label>VOL</label>
+      <input type="range" id="volSlider" min="0" max="100" value="30" oninput="setVolume(this.value)">
+      <label id="volVal">30%</label>
+    </div>
+    <div style="margin-top:8px;text-align:center">
+      <button class="btn" style="margin:0 auto;display:inline-flex" onclick="stopAllSounds()">
+        <span>⏹</span> STOP ALL
+      </button>
+    </div>
+  </div>
+
+  <!-- NAP TIMER -->
+  <div class="panel">
+    <div class="panel-t"><span class="ico">😴</span> NAP TIMER</div>
+    <div class="timer-label">DURATION</div>
+    <div class="timer-display" id="napTime">00:00:00</div>
+    <div class="timer-row">
+      <button class="btn" onclick="toggleNap()" id="napBtn">▶ START</button>
+      <button class="btn" onclick="resetNap()">↺ RESET</button>
+    </div>
+    <div style="margin-top:8px;padding:6px;border:1px solid var(--tdd);border-radius:2px;background:var(--bg)">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span style="font-family:'Orbitron';font-size:7px;letter-spacing:1px;color:var(--td)">LAST NAP</span>
+        <span style="font-family:'Orbitron';font-size:10px;color:var(--co-l)" id="lastNap">—</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- FEED TIMER -->
+  <div class="panel">
+    <div class="panel-t"><span class="ico">🍼</span> FEED TIMER</div>
+    <div class="timer-label">SINCE LAST FEED</div>
+    <div class="timer-display" id="feedTime">00:00:00</div>
+    <div class="timer-row">
+      <button class="btn" onclick="logFeed('left')" id="feedL">◀ LEFT</button>
+      <button class="btn" onclick="logFeed('bottle')">🍼 BOTTLE</button>
+      <button class="btn" onclick="logFeed('right')" id="feedR">RIGHT ▶</button>
+    </div>
+    <div style="margin-top:8px;padding:6px;border:1px solid var(--tdd);border-radius:2px;background:var(--bg)">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span style="font-family:'Orbitron';font-size:7px;letter-spacing:1px;color:var(--td)">LAST FEED</span>
+        <span style="font-family:'Orbitron';font-size:10px;color:var(--gold)" id="lastFeed">—</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- LOG -->
+  <div class="panel" style="grid-column:1/-1">
+    <div class="panel-t"><span class="ico">📋</span> NURSERY LOG</div>
+    <div class="log-list" id="logList"></div>
+    <div class="cubit-bar">
+      <div>
+        <div class="cb-val" id="cubitCount">0</div>
+        <div class="cb-label">BABY CUBITS</div>
+      </div>
+      <div style="font-family:'Cormorant Garamond';font-size:12px;color:var(--t);font-style:italic;max-width:200px;text-align:left;line-height:1.3">
+        Every moment measured with love.<br>Each cubit = one act of care.
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="footer">
+  <p>BABY CUBITS · SARAH'S NURSERY · COBALT ANTENNA · TriPod LLC</p>
+  <div class="sig">the smallest cubits are the ones that matter most · for Sarah · 2/13/26</div>
+</div>
+
+<script>
+// === AUDIO CONTEXT ===
+let audioCtx = null;
+let analyser = null;
+let micStream = null;
+let listening = false;
+let muted = false;
+let dataArray, bufferLength;
+
+// === SOUND GENERATORS ===
+let activeSound = null;
+let soundNode = null;
+let gainNode = null;
+let volume = 0.3;
+
+function getAudioCtx() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
+
+// LISTEN (microphone)
+async function toggleListen() {
+  if (listening) {
+    stopListening();
+    return;
+  }
+  try {
+    const ctx = getAudioCtx();
+    micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    const source = ctx.createMediaStreamSource(micStream);
+    analyser = ctx.createAnalyser();
+    analyser.fftSize = 2048;
+    bufferLength = analyser.frequencyBinCount;
+    dataArray = new Uint8Array(bufferLength);
+    source.connect(analyser);
+    listening = true;
+    document.getElementById('listenBtn').classList.add('active');
+    document.getElementById('listenTxt').textContent = 'LISTENING';
+    document.getElementById('connStatus').textContent = 'CONNECTED · MONITORING';
+    addLog('📡', 'Monitor connected — listening');
+    addCubit();
+  } catch (e) {
+    document.getElementById('connStatus').textContent = 'MIC ACCESS DENIED';
+    addLog('⚠️', 'Microphone access denied');
+  }
+}
+
+function stopListening() {
+  if (micStream) micStream.getTracks().forEach(t => t.stop());
+  micStream = null;
+  analyser = null;
+  listening = false;
+  document.getElementById('listenBtn').classList.remove('active');
+  document.getElementById('listenTxt').textContent = 'LISTEN';
+  document.getElementById('connStatus').textContent = 'STANDBY';
+  document.getElementById('dbDisplay').textContent = '—';
+  document.getElementById('babyState').textContent = 'STANDBY';
+  document.getElementById('babyState').className = 'monitor-state sleeping';
+  document.getElementById('dbDisplay').className = 'monitor-db';
+  addLog('📡', 'Monitor disconnected');
+}
+
+function toggleMute() {
+  muted = !muted;
+  document.getElementById('muteBtn').classList.toggle('active', muted);
+  addLog(muted ? '🔇' : '🔊', muted ? 'Alerts muted' : 'Alerts enabled');
+}
+
+// === SOUND GENERATION ===
+function toggleSound(type) {
+  if (activeSound === type) { stopAllSounds(); return; }
+  stopAllSounds();
+  const ctx = getAudioCtx();
+  gainNode = ctx.createGain();
+  gainNode.gain.value = volume;
+  gainNode.connect(ctx.destination);
+
+  if (type === 'white') {
+    soundNode = createNoise(ctx, 'white');
+  } else if (type === 'brown') {
+    soundNode = createNoise(ctx, 'brown');
+  } else if (type === 'pink') {
+    soundNode = createNoise(ctx, 'pink');
+  } else if (type === 'heartbeat') {
+    soundNode = createHeartbeat(ctx);
+  } else if (type === 'lullaby') {
+    soundNode = createLullaby(ctx);
+  } else if (type === 'shush') {
+    soundNode = createNoise(ctx, 'shush');
+  }
+
+  activeSound = type;
+  document.getElementById('snd' + type.charAt(0).toUpperCase() + type.slice(1)).classList.add('playing');
+  addLog('🎵', `Playing: ${type}`);
+  addCubit();
+}
+
+function createNoise(ctx, type) {
+  const bufferSize = 2 * ctx.sampleRate;
+  const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
+  const output = buffer.getChannelData(0);
+
+  if (type === 'white' || type === 'shush') {
+    for (let i = 0; i < bufferSize; i++) {
+      output[i] = (Math.random() * 2 - 1) * (type === 'shush' ? 0.3 : 1);
+    }
+  } else if (type === 'brown') {
+    let last = 0;
+    for (let i = 0; i < bufferSize; i++) {
+      const w = Math.random() * 2 - 1;
+      output[i] = (last + 0.02 * w) / 1.02;
+      last = output[i];
+      output[i] *= 3.5;
+    }
+  } else if (type === 'pink') {
+    let b0=0,b1=0,b2=0,b3=0,b4=0,b5=0,b6=0;
+    for (let i = 0; i < bufferSize; i++) {
+      const w = Math.random() * 2 - 1;
+      b0 = 0.99886*b0 + w*0.0555179;
+      b1 = 0.99332*b1 + w*0.0750759;
+      b2 = 0.96900*b2 + w*0.1538520;
+      b3 = 0.86650*b3 + w*0.3104856;
+      b4 = 0.55000*b4 + w*0.5329522;
+      b5 = -0.7616*b5 - w*0.0168980;
+      output[i] = (b0+b1+b2+b3+b4+b5+b6+w*0.5362)*0.11;
+      b6 = w*0.115926;
+    }
+  }
+
+  const node = ctx.createBufferSource();
+  node.buffer = buffer;
+  node.loop = true;
+
+  if (type === 'shush') {
+    // Rhythmic shushing with LFO
+    const lfo = ctx.createOscillator();
+    const lfoGain = ctx.createGain();
+    lfo.frequency.value = 0.8;
+    lfoGain.gain.value = 0.4;
+    lfo.connect(lfoGain);
+    lfoGain.connect(gainNode.gain);
+    lfo.start();
+    node._lfo = lfo;
+  }
+
+  node.connect(gainNode);
+  node.start();
+  return node;
+}
+
+function createHeartbeat(ctx) {
+  const osc = ctx.createOscillator();
+  const oscGain = ctx.createGain();
+  osc.type = 'sine';
+  osc.frequency.value = 60;
+  oscGain.gain.value = 0;
+  osc.connect(oscGain);
+  oscGain.connect(gainNode);
+  osc.start();
+
+  // Heartbeat pattern
+  function beat() {
+    if (activeSound !== 'heartbeat') return;
+    const now = ctx.currentTime;
+    oscGain.gain.cancelScheduledValues(now);
+    // lub
+    oscGain.gain.setValueAtTime(0, now);
+    oscGain.gain.linearRampToValueAtTime(0.8, now + 0.04);
+    oscGain.gain.linearRampToValueAtTime(0, now + 0.12);
+    // dub
+    oscGain.gain.linearRampToValueAtTime(0.5, now + 0.22);
+    oscGain.gain.linearRampToValueAtTime(0, now + 0.32);
+    setTimeout(beat, 750);
+  }
+  beat();
+  return osc;
+}
+
+function createLullaby(ctx) {
+  // Gentle pentatonic melody
+  const notes = [392, 440, 494, 523, 587, 523, 494, 440, 392, 330, 294, 330, 392, 440, 392, 330];
+  const osc = ctx.createOscillator();
+  const oscGain = ctx.createGain();
+  osc.type = 'sine';
+  oscGain.gain.value = 0.3;
+  osc.connect(oscGain);
+  oscGain.connect(gainNode);
+  osc.start();
+
+  let idx = 0;
+  function playNote() {
+    if (activeSound !== 'lullaby') return;
+    const now = ctx.currentTime;
+    osc.frequency.setValueAtTime(notes[idx % notes.length], now);
+    oscGain.gain.cancelScheduledValues(now);
+    oscGain.gain.setValueAtTime(0.3, now);
+    oscGain.gain.linearRampToValueAtTime(0.1, now + 0.5);
+    idx++;
+    setTimeout(playNote, 600);
+  }
+  playNote();
+  return osc;
+}
+
+function stopAllSounds() {
+  if (soundNode) {
+    try {
+      if (soundNode._lfo) soundNode._lfo.stop();
+      soundNode.stop();
+    } catch(e) {}
+    soundNode = null;
+  }
+  if (gainNode) { gainNode.disconnect(); gainNode = null; }
+  activeSound = null;
+  document.querySelectorAll('.sound-btn').forEach(b => b.classList.remove('playing'));
+}
+
+function setVolume(v) {
+  volume = v / 100;
+  if (gainNode) gainNode.gain.value = volume;
+  document.getElementById('volVal').textContent = v + '%';
+}
+
+// === TIMERS ===
+let napRunning = false, napStart = 0, napElapsed = 0;
+let feedStart = Date.now();
+
+function toggleNap() {
+  if (napRunning) {
+    napRunning = false;
+    napElapsed += Date.now() - napStart;
+    document.getElementById('napBtn').textContent = '▶ RESUME';
+    document.getElementById('lastNap').textContent = formatTime(napElapsed);
+    addLog('😴', `Nap paused: ${formatTime(napElapsed)}`);
+  } else {
+    napRunning = true;
+    napStart = Date.now();
+    document.getElementById('napBtn').textContent = '⏸ PAUSE';
+    document.getElementById('napBtn').classList.add('active');
+    addLog('😴', 'Nap started');
+    addCubit();
+  }
+}
+
+function resetNap() {
+  const total = napElapsed + (napRunning ? Date.now() - napStart : 0);
+  if (total > 0) {
+    document.getElementById('lastNap').textContent = formatTime(total);
+    addLog('😴', `Nap ended: ${formatTime(total)}`);
+  }
+  napRunning = false;
+  napElapsed = 0;
+  document.getElementById('napBtn').textContent = '▶ START';
+  document.getElementById('napBtn').classList.remove('active');
+  document.getElementById('napTime').textContent = '00:00:00';
+}
+
+function logFeed(type) {
+  const elapsed = Date.now() - feedStart;
+  const label = type === 'left' ? 'Left side' : type === 'right' ? 'Right side' : 'Bottle';
+  document.getElementById('lastFeed').textContent = `${label} · ${formatTime(elapsed)} ago`;
+  addLog('🍼', `Feed logged: ${label}`);
+  feedStart = Date.now();
+  addCubit();
+}
+
+function formatTime(ms) {
+  const s = Math.floor(ms / 1000);
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = s % 60;
+  return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+}
+
+// === CUBIT COUNTER ===
+let cubitCount = 0;
+function addCubit() {
+  cubitCount++;
+  document.getElementById('cubitCount').textContent = cubitCount;
+}
+
+// === LOG ===
+function addLog(ico, msg) {
+  const list = document.getElementById('logList');
+  const now = new Date();
+  const time = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+  const entry = document.createElement('div');
+  entry.className = 'log-entry';
+  entry.innerHTML = `<span class="log-ico">${ico}</span><span class="log-time">${time}</span><span class="log-msg">${msg}</span>`;
+  list.insertBefore(entry, list.firstChild);
+  if (list.children.length > 50) list.lastChild.remove();
+}
+
+// === VISUALIZATION ===
+const ringCanvas = document.getElementById('ringCanvas');
+const ringCtx = ringCanvas.getContext('2d');
+const waveCanvas = document.getElementById('waveCanvas');
+const waveCtx = waveCanvas.getContext('2d');
+let waveW, waveH;
+
+function resizeWave() {
+  const r = waveCanvas.parentElement.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  waveCanvas.width = r.width * dpr;
+  waveCanvas.height = r.height * dpr;
+  waveCtx.scale(dpr, dpr);
+  waveW = r.width;
+  waveH = r.height;
+}
+
+function drawRing(level) {
+  const w = 360, h = 360, cx = 180, cy = 180, r = 75;
+  ringCtx.clearRect(0, 0, w, h);
+
+  // Background ring
+  ringCtx.strokeStyle = 'rgba(34,102,204,.1)';
+  ringCtx.lineWidth = 8;
+  ringCtx.beginPath(); ringCtx.arc(cx, cy, r, 0, Math.PI * 2); ringCtx.stroke();
+
+  // Level arc
+  const pct = Math.min(level / 100, 1);
+  const endAngle = -Math.PI / 2 + pct * Math.PI * 2;
+  let color;
+  if (pct < 0.3) color = '#2266cc';
+  else if (pct < 0.5) color = '#3388ee';
+  else if (pct < 0.7) color = '#d4a84c';
+  else color = '#ff6644';
+
+  const grad = ringCtx.createConicGradient(-Math.PI / 2, cx, cy);
+  grad.addColorStop(0, '#2266cc');
+  grad.addColorStop(Math.min(pct, 0.99), color);
+  grad.addColorStop(1, 'rgba(34,102,204,.05)');
+
+  ringCtx.strokeStyle = grad;
+  ringCtx.lineWidth = 8;
+  ringCtx.lineCap = 'round';
+  ringCtx.beginPath();
+  ringCtx.arc(cx, cy, r, -Math.PI / 2, endAngle);
+  ringCtx.stroke();
+
+  // Glow
+  ringCtx.shadowColor = color;
+  ringCtx.shadowBlur = 15;
+  ringCtx.strokeStyle = color;
+  ringCtx.lineWidth = 2;
+  ringCtx.beginPath();
+  ringCtx.arc(cx, cy, r, endAngle - 0.1, endAngle);
+  ringCtx.stroke();
+  ringCtx.shadowBlur = 0;
+
+  // Tick marks
+  ringCtx.strokeStyle = 'rgba(224,234,244,.08)';
+  ringCtx.lineWidth = 1;
+  for (let i = 0; i < 60; i++) {
+    const a = (i / 60) * Math.PI * 2 - Math.PI / 2;
+    const inner = i % 5 === 0 ? r - 12 : r - 6;
+    ringCtx.beginPath();
+    ringCtx.moveTo(cx + inner * Math.cos(a), cy + inner * Math.sin(a));
+    ringCtx.lineTo(cx + (r - 2) * Math.cos(a), cy + (r - 2) * Math.sin(a));
+    ringCtx.stroke();
+  }
+}
+
+function drawWaveform() {
+  waveCtx.clearRect(0, 0, waveW, waveH);
+  waveCtx.fillStyle = 'rgba(4,20,36,.3)';
+  waveCtx.fillRect(0, 0, waveW, waveH);
+
+  if (!listening || !analyser) {
+    // Flat line
+    waveCtx.strokeStyle = 'rgba(34,102,204,.2)';
+    waveCtx.lineWidth = 1;
+    waveCtx.beginPath();
+    waveCtx.moveTo(0, waveH / 2);
+    waveCtx.lineTo(waveW, waveH / 2);
+    waveCtx.stroke();
+    return;
+  }
+
+  analyser.getByteTimeDomainData(dataArray);
+  waveCtx.lineWidth = 1.5;
+  waveCtx.strokeStyle = '#3388ee';
+  waveCtx.shadowColor = 'rgba(34,102,204,.5)';
+  waveCtx.shadowBlur = 4;
+  waveCtx.beginPath();
+
+  const sliceWidth = waveW / bufferLength;
+  let x = 0;
+  for (let i = 0; i < bufferLength; i++) {
+    const v = dataArray[i] / 128.0;
+    const y = v * waveH / 2;
+    if (i === 0) waveCtx.moveTo(x, y);
+    else waveCtx.lineTo(x, y);
+    x += sliceWidth;
+  }
+  waveCtx.lineTo(waveW, waveH / 2);
+  waveCtx.stroke();
+  waveCtx.shadowBlur = 0;
+}
+
+function getLevel() {
+  if (!listening || !analyser) return 0;
+  analyser.getByteFrequencyData(dataArray);
+  let sum = 0;
+  for (let i = 0; i < bufferLength; i++) sum += dataArray[i];
+  return (sum / bufferLength) / 2.56; // 0-100
+}
+
+function updateBabyState(level) {
+  const dbEl = document.getElementById('dbDisplay');
+  const stateEl = document.getElementById('babyState');
+  if (!listening) return;
+
+  const db = Math.round(level);
+  dbEl.textContent = db;
+
+  if (level < 15) {
+    stateEl.textContent = 'SLEEPING'; stateEl.className = 'monitor-state sleeping';
+    dbEl.className = 'monitor-db';
+  } else if (level < 35) {
+    stateEl.textContent = 'STIRRING'; stateEl.className = 'monitor-state stirring';
+    dbEl.className = 'monitor-db medium';
+  } else if (level < 55) {
+    stateEl.textContent = 'AWAKE'; stateEl.className = 'monitor-state awake';
+    dbEl.className = 'monitor-db medium';
+  } else {
+    stateEl.textContent = 'CRYING'; stateEl.className = 'monitor-state crying';
+    dbEl.className = 'monitor-db loud';
+  }
+}
+
+// === MAIN LOOP ===
+function tick() {
+  // Timers
+  if (napRunning) {
+    const total = napElapsed + (Date.now() - napStart);
+    document.getElementById('napTime').textContent = formatTime(total);
+  }
+  document.getElementById('feedTime').textContent = formatTime(Date.now() - feedStart);
+
+  // Audio
+  const level = getLevel();
+  drawRing(level);
+  drawWaveform();
+  updateBabyState(level);
+
+  requestAnimationFrame(tick);
+}
+
+// INIT
+window.addEventListener('resize', resizeWave);
+resizeWave();
+addLog('🏠', 'Baby Cubits initialized — Sarah\'s Nursery');
+addLog('💙', 'Cobalt antenna online');
+drawRing(0);
+tick();
+</script>
+</body>
+</html>

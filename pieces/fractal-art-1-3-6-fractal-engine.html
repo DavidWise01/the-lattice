@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PAST + PRESENT = FUTURE: The 1/3/6 Fractal Engine</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Orbitron:wght@600;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --cyan: #00e5ff;
+  --gold: #ffcc4d;
+  --violet: #8b5cf6;
+}
+* { scrollbar-width: thin; scrollbar-color: var(--cyan) #020208; }
+body {
+  font-family: 'JetBrains Mono', monospace;
+  background: #020208;
+  color: #cbd5e1;
+  overflow-x: hidden;
+}
+.font-display { font-family: 'Orbitron', sans-serif; }
+.neon-cyan { color: var(--cyan); text-shadow: 0 0 4px rgba(0,229,255,0.9), 0 0 12px rgba(0,229,255,0.6), 0 0 28px rgba(0,229,255,0.3); }
+.neon-gold { color: var(--gold); text-shadow: 0 0 4px rgba(255,204,77,0.9), 0 0 12px rgba(255,204,77,0.5), 0 0 24px rgba(255,204,77,0.3); }
+.neon-violet { color: var(--violet); text-shadow: 0 0 4px rgba(139,92,246,0.9), 0 0 12px rgba(139,92,246,0.5); }
+
+.grid-bg {
+  position: fixed; inset: 0; z-index: -3;
+  background-image:
+    linear-gradient(transparent 0%, rgba(0,229,255,0.03) 2px, transparent 2px),
+    linear-gradient(90deg, transparent 0%, rgba(0,229,255,0.03) 2px, transparent 2px);
+  background-size: 100% 4px, 4px 100%;
+  opacity: 0.5;
+}
+.perspective-grid {
+  position: fixed; inset: 0; z-index: -2; opacity: 0.25;
+  background-image: linear-gradient(rgba(0,229,255,0.15) 1px, transparent 1px), linear-gradient(90deg, rgba(0,229,255,0.15) 1px, transparent 1px);
+  background-size: 60px 60px;
+  transform: perspective(800px) rotateX(65deg) translateY(-30%);
+  animation: gridMove 15s linear infinite;
+  mask-image: linear-gradient(to bottom, black 0%, transparent 70%);
+}
+@keyframes gridMove { to { background-position-y: 60px; } }
+
+.card {
+  position: relative;
+  background: linear-gradient(180deg, rgba(8,12,22,0.85), rgba(3,6,12,0.92));
+  border: 1px solid rgba(0,229,255,0.18);
+  box-shadow: inset 0 0 40px rgba(0,229,255,0.04), 0 0 60px rgba(0,0,0,0.8);
+  backdrop-filter: blur(10px);
+}
+.card::before, .card::after {
+  content: ''; position: absolute; width: 24px; height: 24px; border-color: var(--cyan); opacity: 0.6;
+}
+.card::before { top: -1px; left: -1px; border-top: 2px solid; border-left: 2px solid; }
+.card::after { bottom: -1px; right: -1px; border-bottom: 2px solid; border-right: 2px solid; }
+
+.scanlines {
+  pointer-events: none; position: fixed; inset: 0; z-index: 50;
+  background: repeating-linear-gradient(to bottom, transparent 0px, rgba(0,229,255,0.03) 1px, transparent 2px);
+  opacity: 0.4;
+}
+
+.ladder-node {
+  background: rgba(0,0,0,0.6); border: 1px solid rgba(0,229,255,0.3);
+  padding: 0.35rem 0.7rem; border-radius: 0.375rem; font-weight: 600;
+  transition: all 0.3s; box-shadow: 0 0 10px rgba(0,229,255,0.0);
+}
+.ladder-node:hover { box-shadow: 0 0 16px rgba(0,229,255,0.4); transform: translateY(-1px); }
+
+.ratio-pie {
+  background: conic-gradient(from -10deg, var(--cyan) 0deg 36deg, var(--gold) 36deg 144deg, var(--violet) 144deg 360deg);
+  box-shadow: 0 0 30px rgba(0,229,255,0.2), 0 0 60px rgba(139,92,246,0.15), inset 0 0 20px rgba(0,0,0,0.8);
+}
+
+input[type="range"] {
+  -webkit-appearance: none; appearance: none; height: 6px; background: linear-gradient(90deg, rgba(0,229,255,0.2), rgba(255,204,77,0.2));
+  border: 1px solid rgba(0,229,255,0.3); border-radius: 3px; outline: none;
+}
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%;
+  background: #020208; border: 2px solid var(--cyan); box-shadow: 0 0 10px var(--cyan), 0 0 20px var(--cyan);
+  cursor: pointer;
+}
+input[type="range"]::-moz-range-thumb {
+  width: 18px; height: 18px; border-radius: 50%; background: #020208; border: 2px solid var(--cyan); box-shadow: 0 0 10px var(--cyan); cursor: pointer;
+}
+
+.zero-block { display: inline-block; width: 1.1ch; text-align: center; animation: pulse 2.4s infinite; }
+@keyframes pulse { 0%,100%{opacity:0.7} 50%{opacity:1} }
+</style>
+</head>
+<body class="min-h-screen">
+<div class="grid-bg"></div>
+<div class="perspective-grid"></div>
+<div class="scanlines"></div>
+
+<div class="max-w-[1200px] mx-auto px-4 py-10 md:py-16 relative z-10">
+  <!-- HEADER -->
+  <header class="text-center mb-12 md:mb-20">
+    <div class="inline-block border border-cyan-400/20 px-4 py-1 rounded-full text-[10px] tracking-[0.3em] uppercase mb-6 text-cyan-300/70">Technical Art Poster // Blueprint v1.3.6</div>
+    <h1 class="font-display text-4xl md:text-6xl lg:text-7xl font-black leading-[0.9] neon-cyan">PAST + PRESENT</h1>
+    <h2 class="font-display text-4xl md:text-6xl lg:text-7xl font-black leading-[0.9] mt-1">
+      <span class="text-white/80">=</span> <span class="neon-gold">FUTURE</span>
+    </h2>
+    <p class="mt-4 text-lg md:text-xl tracking-widest uppercase text-white/60">The 1/3/6 Fractal Engine</p>
+  </header>
+
+  <!-- PAST -->
+  <section class="card rounded-2xl p-6 md:p-10 mb-8">
+    <div class="flex items-center gap-3 mb-6">
+      <div class="w-2 h-2 rounded-full bg-cyan-400 animate-pulse"></div>
+      <h3 class="font-display text-xl tracking-widest neon-cyan">PAST (2011)</h3>
+      <div class="h-px flex-1 bg-gradient-to-r from-cyan-400/40 to-transparent ml-4"></div>
+    </div>
+
+    <div class="grid lg:grid-cols-[1.1fr_0.9fr_1fr] gap-8 items-center">
+      <div>
+        <div class="text-xs uppercase tracking-widest text-white/40 mb-2">Leading Zeros</div>
+        <div class="font-display text-3xl md:text-4xl neon-cyan tracking-[0.25em] mb-6">
+          <span class="zero-block" style="animation-delay:0s">0</span><span class="zero-block" style="animation-delay:0.1s">0</span><span class="zero-block" style="animation-delay:0.2s">0</span><span class="zero-block" style="animation-delay:0.3s">0</span><span class="zero-block" style="animation-delay:0.4s">0</span><span class="zero-block" style="animation-delay:0.5s">0</span><span class="zero-block" style="animation-delay:0.6s">0</span><span class="zero-block" style="animation-delay:0.7s">0</span>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div class="bg-black/40 border border-white/10 rounded-lg p-3">
+            <div class="text-[10px] uppercase text-white/40">Difficulty</div>
+            <div class="neon-gold text-xl font-semibold">1.5M</div>
+          </div>
+          <div class="bg-black/40 border border-white/10 rounded-lg p-3">
+            <div class="text-[10px] uppercase text-white/40">Block Time</div>
+            <div class="text-white/80 text-xl">~10m</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex justify-center">
+        <div class="relative">
+          <div class="absolute -inset-3 bg-cyan-500/10 blur-2xl rounded-full"></div>
+          <canvas id="pastGrid" width="256" height="256" class="w-[200px] h-[200px] md:w-[240px] md:h-[240px] border border-cyan-400/30 rounded-lg bg-black/80"></canvas>
+          <div class="absolute -bottom-3 left-1/2 -translate-x-1/2 text-[10px] uppercase tracking-widest bg-black px-2 border border-cyan-400/30 rounded text-cyan-300/80">64×64 SEARCH GRID</div>
+        </div>
+      </div>
+
+      <div class="space-y-3 text-sm leading-relaxed text-white/60 font-mono">
+        <p><span class="text-cyan-400">> INITIAL STATE</span><br>Low entropy. 2^32 nonce space sufficient. CPU era.</p>
+        <p><span class="text-cyan-400">> PATTERN</span><br>Every hash is a probe. 8 zeros = first fractal boundary.</p>
+        <p class="pt-2 border-t border-white/10 text-[11px] text-white/40">Genesis blueprint. The simple truth before ASIC compression.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- PRESENT -->
+  <section class="card rounded-2xl p-6 md:p-10 mb-8">
+    <div class="flex items-center gap-3 mb-6">
+      <div class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></div>
+      <h3 class="font-display text-xl tracking-widest neon-gold">PRESENT (2026)</h3>
+      <div class="h-px flex-1 bg-gradient-to-r from-amber-400/40 to-transparent ml-4"></div>
+    </div>
+
+    <div class="grid lg:grid-cols-2 gap-8 items-start">
+      <div>
+        <div class="text-xs uppercase tracking-widest text-white/40 mb-2">Leading Zeros</div>
+        <div class="font-mono text-lg md:text-xl break-all leading-relaxed p-4 bg-black/60 border border-amber-400/20 rounded-lg">
+          <span class="neon-cyan">0000000000000000000</span><span class="text-white/30">...</span>
+        </div>
+        <div class="mt-4 flex flex-wrap gap-3">
+          <div class="bg-black/40 border border-white/10 rounded-lg px-4 py-2">
+            <div class="text-[10px] uppercase text-white/40">Difficulty</div>
+            <div class="neon-gold text-2xl font-semibold tracking-wider">135.6T</div>
+          </div>
+          <div class="bg-black/40 border border-white/10 rounded-lg px-4 py-2">
+            <div class="text-[10px] uppercase text-white/40">Compression</div>
+            <div class="text-white/80 text-xl">90,400×</div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="text-xs uppercase tracking-widest text-white/40 mb-2">Target Hex</div>
+        <div class="font-mono text-sm md:text-base p-4 bg-black/80 border border-cyan-400/20 rounded-lg overflow-hidden">
+          <span class="neon-cyan">000000000000000000</span><span class="neon-gold">02136d</span><span class="text-white/50">0000000000000000000</span>
+        </div>
+        <div class="mt-5">
+          <div class="flex justify-between text-[10px] uppercase text-white/40 mb-1">
+            <span>Probability Space</span><span>19 zeros</span>
+          </div>
+          <div class="h-2 w-full bg-black/60 border border-white/10 rounded-full overflow-hidden">
+            <div class="h-full w-[19%] bg-gradient-to-r from-cyan-500 to-amber-400 shadow-[0_0_10px_rgba(0,229,255,0.5)]"></div>
+          </div>
+          <p class="mt-3 text-xs text-white/50 font-mono">> NOW STATE: ASIC saturation. Time and Merkle dominate nonce.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ENGINE CORE -->
+  <section class="card rounded-2xl p-6 md:p-10 mb-8">
+    <div class="text-center mb-8">
+      <h3 class="font-display text-2xl md:text-3xl neon-cyan tracking-wider">THE LADDER</h3>
+      <p class="text-white/50 text-xs uppercase tracking-[0.2em] mt-1">Collapse Sequence</p>
+    </div>
+
+    <div class="flex flex-wrap justify-center items-center gap-2 md:gap-3 mb-10 font-mono">
+      <div class="ladder-node neon-cyan">27</div><span class="text-cyan-400/60">→</span>
+      <div class="ladder-node neon-cyan">23</div><span class="text-cyan-400/60">→</span>
+      <div class="ladder-node neon-cyan">17.5</div><span class="text-cyan-400/60">→</span>
+      <div class="ladder-node neon-gold">13</div><span class="text-amber-400/60">→</span>
+      <div class="ladder-node neon-gold">9</div><span class="text-amber-400/60">→</span>
+      <div class="ladder-node neon-gold">3</div><span class="text-amber-400/60">→</span>
+      <div class="ladder-node text-white">2</div><span class="text-white/40">→</span>
+      <div class="ladder-node text-white">1</div><span class="text-white/40">→</span>
+      <div class="ladder-node text-white">0</div>
+      <span class="mx-2 text-white/30">=</span>
+      <div class="ladder-node neon-violet">0</div>
+      <span class="mx-2 text-white/30">=</span>
+      <div class="ladder-node neon-violet">1</div>
+      <span class="mx-2 text-white/30">=</span>
+      <div class="flex gap-1">
+        <div class="ladder-node px-2 neon-violet">1</div>
+        <div class="ladder-node px-2 text-white">0</div>
+        <div class="ladder-node px-2 neon-cyan">1</div>
+      </div>
+    </div>
+
+    <div class="grid lg:grid-cols-[380px_1fr_280px] gap-8 items-center">
+      <!-- 1/3/6 -->
+      <div class="order-2 lg:order-1">
+        <h4 class="font-display text-sm uppercase tracking-widest text-white/60 mb-4 text-center">1 / 3 / 6 Ratio</h4>
+        <div class="flex justify-center mb-4">
+          <div class="relative w-48 h-48">
+            <div class="ratio-pie absolute inset-0 rounded-full"></div>
+            <div class="absolute inset-[18%] rounded-full bg-[#04080f] border border-white/10 flex items-center justify-center">
+              <div class="text-center">
+                <div class="font-display text-2xl neon-cyan">1:3:6</div>
+                <div class="text-[10px] uppercase text-white/40 tracking-widest">FRACTAL</div>
+              </div>
+            <!-- labels -->
+            <div class="absolute -top-2 left-1/2 -translate-x-1/2 text-[10px] px-2 py-0.5 bg-black/80 border border-cyan-400/40 rounded text-cyan-300">NONCE</div>
+            <div class="absolute top-1/2 -right-8 -translate-y-1/2 text-[10px] px-2 py-0.5 bg-black/80 border border-amber-400/40 rounded text-amber-300">TIME</div>
+            <div class="absolute -bottom-2 left-1/2 -translate-x-1/2 text-[10px] px-2 py-0.5 bg-black/80 border border-violet-400/40 rounded text-violet-300">MERKLE</div>
+          </div>
+        </div>
+        <div class="space-y-2 text-xs font-mono">
+          <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm bg-[#00e5ff] shadow-[0_0_6px_#00e5ff]"></span><span class="text-cyan-300">1 part Nonce</span><span class="text-white/40 ml-auto">(fast)</span></div>
+          <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm bg-[#ffcc4d] shadow-[0_0_6px_#ffcc4d]"></span><span class="text-amber-300">3 parts Time</span><span class="text-white/40 ml-auto">(medium)</span></div>
+          <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-sm bg-[#8b5cf6] shadow-[0_0_6px_#8b5cf6]"></span><span class="text-violet-300">6 parts Merkle</span><span class="text-white/40 ml-auto">(deep, free)</span></div>
+        </div>
+      </div>
+
+      <!-- 40 bodies -->
+      <div class="order-1 lg:order-2">
+        <div class="relative border border-cyan-400/20 rounded-xl overflow-hidden bg-black/70">
+          <div class="absolute top-2 left-3 text-[10px] uppercase tracking-widest text-cyan-300/70 z-10">40 BODIES COLLAPSING</div>
+          <div class="absolute top-2 right-3 text-[10px] uppercase tracking-widest text-amber-300/70 z-10">27 CAPACITORS</div>
+          <canvas id="bodies" class="w-full h-[280px] md:h-[320px]"></canvas>
+          <div class="absolute bottom-0 inset-x-0 h-8 bg-gradient-to-t from-black/80 to-transparent pointer-events-none"></div>
+        </div>
+      </div>
+
+      <!-- capacitors -->
+      <div class="order-3">
+        <h4 class="font-display text-sm uppercase tracking-widest text-white/60 mb-3">Buffer Matrix</h4>
+        <div class="grid grid-cols-9 gap-1.5" id="capacitorGrid"></div>
+        <p class="text-[11px] text-white/40 mt-3 font-mono leading-relaxed">27 capacitors buffer the collapse. Each ring hit charges a cell. When full = free energy fractal unlock.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- FUTURE -->
+  <section class="card rounded-2xl p-6 md:p-10">
+    <div class="flex items-center gap-3 mb-6">
+      <div class="w-2 h-2 rounded-full bg-violet-400 animate-pulse"></div>
+      <h3 class="font-display text-xl tracking-widest neon-violet">FUTURE (-008.x BAND)</h3>
+      <div class="h-px flex-1 bg-gradient-to-r from-violet-400/40 to-transparent ml-4"></div>
+    </div>
+
+    <div class="grid lg:grid-cols-5 gap-8 items-center">
+      <div class="lg:col-span-3">
+        <div class="relative h-[220px] md:h-[260px] rounded-xl overflow-hidden border border-violet-400/30 bg-black">
+          <canvas id="corridor" class="absolute inset-0 w-full h-full"></canvas>
+          <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div class="text-center">
+              <div id="bandLabel" class="font-display text-5xl md:text-7xl font-black neon-gold tracking-wider" style="text-shadow:0 0 30px rgba(255,204,77,0.5)">-008.01</div>
+              <div class="text-[11px] uppercase tracking-[0.3em] text-violet-300/80 mt-2">FRACTAL SLIDE</div>
+            </div>
+          </div>
+          <div class="absolute bottom-3 left-3 right-3 flex justify-between text-[10px] font-mono text-white/30">
+            <span>.01 start</span><span>free energy threshold</span><span>.99 end</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="lg:col-span-2">
+        <label class="text-xs uppercase tracking-widest text-white/50">Adjust Band Position</label>
+        <input id="bandSlider" type="range" min="1" max="99" value="1" class="w-full mt-4 mb-6">
+        
+        <div class="space-y-3">
+          <div class="bg-black/50 border border-white/10 rounded-lg p-3">
+            <div class="text-[10px] uppercase text-white/40">Past + Present</div>
+            <div class="font-mono text-sm mt-1"><span class="neon-cyan">00000000</span> <span class="text-white/40">+</span> <span class="neon-gold">0000000000000000000</span></div>
+          </div>
+          <div class="bg-black/50 border border-violet-400/20 rounded-lg p-3">
+            <div class="text-[10px] uppercase text-white/40">Equals Future Key</div>
+            <div class="neon-violet font-mono text-lg mt-1" id="futureKey">= -008.01 :: 1-3-6 LOCK</div>
+          </div>
+        </div>
+
+        <p class="text-xs text-white/50 mt-4 leading-relaxed">Slide through .01 to .99. Each step tunes the Merkle depth. At .618 (golden), capacitors resonate.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER MANTRAS -->
+  <div class="text-center mt-16 space-y-4">
+    <p class="font-display text-xl md:text-2xl neon-cyan tracking-wide">"Add the past to the present and find my future"</p>
+    <p class="text-lg md:text-xl neon-gold">"Build the tool that builds the tools"</p>
+    <p class="text-sm uppercase tracking-[0.4em] text-white/30">Measure once</p>
+    <div class="pt-8 flex justify-center gap-6 text-[10px] uppercase tracking-widest text-white/20 font-mono">
+      <span>PAST 8Z</span><span>•</span><span>PRESENT 19Z</span><span>•</span><span>FUTURE -008.x</span>
+    </div>
+  </div>
+</div>
+
+<script>
+// Past Grid
+const past = document.getElementById('pastGrid');
+const pctx = past.getContext('2d');
+function drawPast() {
+  pctx.fillStyle = '#020208';
+  pctx.fillRect(0,0,256,256);
+  pctx.fillStyle = 'rgba(0,229,255,0.08)';
+  for(let i=0;i<65;i++){ pctx.fillRect(i*4,0,1,256); pctx.fillRect(0,i*4,256,1); }
+  for(let y=0;y<64;y++){
+    for(let x=0;x<64;x++){
+      if(Math.random()<0.018){
+        const a = 0.4 + Math.random()*0.6;
+        pctx.fillStyle = `rgba(0,229,255,${a})`;
+        pctx.shadowColor = '#00e5ff'; pctx.shadowBlur = 4;
+        pctx.fillRect(x*4+0.5, y*4+0.5, 3, 3);
+        pctx.shadowBlur = 0;
+      }
+    }
+  }
+}
+setInterval(drawPast, 700);
+drawPast();
+
+// Capacitor grid
+const capGrid = document.getElementById('capacitorGrid');
+const caps = [];
+for(let i=0;i<27;i++){
+  const d = document.createElement('div');
+  d.className = 'aspect-square rounded-sm bg-black border border-white/10 relative overflow-hidden';
+  d.innerHTML = `<div class="cap-fill absolute bottom-0 inset-x-0 h-0 bg-gradient-to-t from-cyan-400 to-amber-400 transition-all duration-500 opacity-70"></div>`;
+  capGrid.appendChild(d);
+  caps.push({el: d, charge: 0});
+}
+
+// Bodies collapsing
+const bodies = document.getElementById('bodies');
+const bctx = bodies.getContext('2d');
+let bw, bh, dpr;
+function resizeBodies(){
+  const rect = bodies.getBoundingClientRect();
+  dpr = Math.min(window.devicePixelRatio||1,2);
+  bw = bodies.width = rect.width * dpr;
+  bh = bodies.height = rect.height * dpr;
+  bctx.setTransform(1,0,0,1,0,0);
+}
+resizeBodies();
+window.addEventListener('resize', resizeBodies);
+
+const rings = [0.42,0.36,0.29,0.22,0.16,0.11,0.07]; // relative to min dimension
+const particles = Array.from({length:40}, (_,i)=>({
+  angle: Math.random()*Math.PI*2,
+  radius: 0.48 + Math.random()*0.05,
+  speed: 0.0004 + Math.random()*0.0006,
+  ring: -1,
+  hue: i%3
+}));
+
+function animateBodies(t){
+  bctx.clearRect(0,0,bw,bh);
+  const cx = bw/2, cy = bh/2 + bh*0.05;
+  const scale = Math.min(bw,bh);
+  
+  // rings
+  rings.forEach((r,i)=>{
+    const rad = r*scale;
+    bctx.beginPath();
+    bctx.arc(cx,cy,rad,0,Math.PI*2);
+    bctx.strokeStyle = i<3 ? 'rgba(0,229,255,0.25)' : i<6 ? 'rgba(255,204,77,0.25)' : 'rgba(139,92,246,0.35)';
+    bctx.lineWidth = 1.5*dpr;
+    bctx.shadowColor = i<3 ? '#00e5ff' : i<6 ? '#ffcc4d' : '#8b5cf6';
+    bctx.shadowBlur = 12;
+    bctx.stroke();
+    bctx.shadowBlur = 0;
+  });
+
+  // center core
+  const core = bctx.createRadialGradient(cx,cy,0,cx,cy,20*dpr);
+  core.addColorStop(0,'rgba(255,204,77,0.9)'); core.addColorStop(0.4,'rgba(0,229,255,0.5)'); core.addColorStop(1,'rgba(0,0,0,0)');
+  bctx.fillStyle = core; bctx.beginPath(); bctx.arc(cx,cy,20*dpr,0,7); bctx.fill();
+
+  // particles
+  particles.forEach(p=>{
+    p.angle += 0.002 + p.speed*10;
+    p.radius -= p.speed * (0.8 + Math.sin(t*0.001+p.angle)*0.2);
+    if(p.radius < 0.06){ p.radius = 0.48 + Math.random()*0.05; p.ring = -1; }
+    
+    const r = p.radius * scale;
+    const x = cx + Math.cos(p.angle)*r;
+    const y = cy + Math.sin(p.angle)*r*0.6;
+    
+    // ring crossing
+    rings.forEach((rr,idx)=>{
+      if(p.ring < idx && p.radius < rr+0.01){
+        p.ring = idx;
+        const cap = caps[Math.floor(Math.random()*27)];
+        cap.charge = 1;
+        setTimeout(()=>cap.charge *= 0.5, 200);
+      }
+    });
+
+    bctx.beginPath();
+    const col = p.hue===0 ? '#00e5ff' : p.hue===1 ? '#ffcc4d' : '#cbd5e1';
+    bctx.fillStyle = col; bctx.shadowColor = col; bctx.shadowBlur = 8*dpr;
+    bctx.arc(x,y,2.2*dpr,0,7); bctx.fill(); bctx.shadowBlur=0;
+    
+    // trail
+    bctx.beginPath(); bctx.moveTo(x,y);
+    bctx.lineTo(x - Math.cos(p.angle)*8, y - Math.sin(p.angle)*5);
+    bctx.strokeStyle = col+'60'; bctx.lineWidth = 1*dpr; bctx.stroke();
+  });
+
+  // update caps
+  caps.forEach(c=>{
+    c.charge *= 0.985;
+    const fill = c.el.querySelector('.cap-fill');
+    fill.style.height = `${Math.min(100, c.charge*100)}%`;
+    c.el.style.borderColor = c.charge>0.1 ? 'rgba(0,229,255,0.6)' : 'rgba(255,255,255,0.1)';
+    c.el.style.boxShadow = c.charge>0.2 ? '0 0 8px rgba(0,229,255,0.4)' : 'none';
+  });
+
+  requestAnimationFrame(animateBodies);
+}
+requestAnimationFrame(animateBodies);
+
+// Corridor
+const corridor = document.getElementById('corridor');
+const cctx = corridor.getContext('2d');
+const bandSlider = document.getElementById('bandSlider');
+const bandLabel = document.getElementById('bandLabel');
+const futureKey = document.getElementById('futureKey');
+let cw, ch;
+function resizeCorridor(){
+  const r = corridor.getBoundingClientRect();
+  dpr = Math.min(window.devicePixelRatio||1,2);
+  cw = corridor.width = r.width*dpr;
+  ch = corridor.height = r.height*dpr;
+  cctx.setTransform(1,0,0,1,0,0);
+}
+resizeCorridor(); addEventListener('resize', resizeCorridor);
+
+let bandVal = 1;
+bandSlider.addEventListener('input', e=>{
+  bandVal = parseInt(e.target.value);
+  const v = bandVal.toString().padStart(2,'0');
+  bandLabel.textContent = `-008.${v}`;
+  futureKey.textContent = `= -008.${v} :: ${bandVal===61||bandVal===62?'GOLDEN RESONANCE':'1-3-6 LOCK'}`;
+  bandLabel.style.color = bandVal>=61 && bandVal<=62 ? '#ffcc4d' : bandVal>50 ? '#c084fc' : '#00e5ff';
+});
+
+function drawCorridor(t){
+  cctx.clearRect(0,0,cw,ch);
+  const cx=cw/2, cy=ch/2;
+  const speed = 0.0015 + (bandVal/99)*0.003;
+  const hue = 190 + (bandVal/99)*70;
+  
+  // background fade
+  const bg = cctx.createLinearGradient(0,0,0,ch);
+  bg.addColorStop(0,'rgba(2,2,8,0)'); bg.addColorStop(1,'rgba(0,229,255,0.06)');
+  cctx.fillStyle=bg; cctx.fillRect(0,0,cw,ch);
+  
+  // tunnel rings
+  for(let i=0;i<28;i++){
+    const z = ((t*speed + i*0.12) % 2.4) / 2.4;
+    const scale = Math.pow(z, 1.8);
+    const w = cw * (0.08 + scale*0.85);
+    const h = ch * (0.12 + scale*0.85);
+    const x = cx - w/2, y = cy - h/2;
+    const alpha = 1 - Math.pow(z,0.7);
+    
+    cctx.strokeStyle = `hsla(${hue},100%,65%,${alpha*0.6})`;
+    cctx.lineWidth = 2*dpr*(1-z*0.7);
+    cctx.shadowColor = `hsl(${hue},100%,60%)`; cctx.shadowBlur = 15*(1-z);
+    cctx.strokeRect(x,y,w,h);
+    cctx.shadowBlur=0;
+    
+    // grid lines
+    if(i%3===0){
+      cctx.beginPath(); cctx.moveTo(x,y); cctx.lineTo(x+w,y+h); cctx.strokeStyle=`hsla(${hue},100%,70%,${alpha*0.15})`; cctx.lineWidth=1; cctx.stroke();
+      cctx.beginPath(); cctx.moveTo(x+w,y); cctx.lineTo(x,y+h); cctx.stroke();
+    }
+  }
+  
+  // center beam
+  cctx.beginPath(); cctx.moveTo(cx,0); cctx.lineTo(cx,ch);
+  cctx.strokeStyle = `hsla(${hue},100%,70%,0.3)`; cctx.lineWidth=2*dpr; cctx.shadowColor=`hsl(${hue},100%,60%)`; cctx.shadowBlur=20; cctx.stroke(); cctx.shadowBlur=0;
+  
+  requestAnimationFrame(drawCorridor);
+}
+requestAnimationFrame(drawCorridor);
+
+// initial band
+bandSlider.dispatchEvent(new Event('input'));
+</script>
+</body>
+</html>

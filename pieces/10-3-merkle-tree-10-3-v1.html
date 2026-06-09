@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>3002 Merkle Leaves → 1 Core</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600&family=Oxanium:wght@300;500;700&display=swap" rel="stylesheet">
+<style>
+  body { margin:0; background:#000; overflow:hidden; font-family:'Oxanium', sans-serif; }
+  .font-mono { font-family:'JetBrains Mono', monospace; }
+  .neon-cyan { text-shadow:0 0 7px rgba(126,249,255,0.9),0 0 20px rgba(0,220,255,0.6),0 0 40px rgba(0,180,255,0.3); }
+  .neon-gold { text-shadow:0 0 8px rgba(255,204,51,0.95),0 0 25px rgba(255,170,0,0.7),0 0 50px rgba(255,120,0,0.4); }
+  .neon-white { text-shadow:0 0 6px rgba(255,255,255,0.85),0 0 18px rgba(200,240,255,0.5); }
+  .glass { backdrop-filter:blur(12px); background:linear-gradient(180deg,rgba(8,18,28,0.65),rgba(4,10,15,0.35)); border:1px solid rgba(126,249,255,0.15); }
+</style>
+</head>
+<body class="bg-black text-cyan-100 select-none">
+<canvas id="c" class="fixed inset-0 w-full h-full"></canvas>
+
+<!-- UI Overlay -->
+<div class="pointer-events-none fixed inset-0">
+  <!-- Top Formula -->
+  <div class="absolute top-5 md:top-8 left-1/2 -translate-x-1/2 text-center w-full px-4">
+    <div class="font-mono text-[10px] md:text-xs tracking-[0.35em] text-cyan-300/60 uppercase">Merkle Tree Visualization</div>
+    <h1 class="mt-1.5 text-[26px] md:text-[42px] font-light neon-cyan tracking-wider leading-none">
+      10<sup class="text-[18px] md:text-[28px] -top-2 relative">3</sup> × 3 + 2 = <span class="text-white neon-white">3002</span> <span class="text-cyan-300/90">LEAVES</span>
+    </h1>
+  </div>
+
+  <!-- Math Breakdown -->
+  <div id="math" class="absolute left-1/2 -translate-x-1/2 top-[20%] md:top-[17%] transition-opacity duration-700 opacity-0">
+    <div class="glass rounded-full px-5 py-2.5 md:px-8 md:py-3 shadow-[0_0_30px_rgba(0,200,255,0.15)]">
+      <div class="font-mono text-[13px] md:text-[20px] tracking-widest text-center whitespace-nowrap">
+        <span class="text-cyan-300 neon-cyan">1000</span>
+        <span class="text-white/50 mx-1.5">+</span>
+        <span class="text-cyan-300 neon-cyan">1000</span>
+        <span class="text-white/50 mx-1.5">+</span>
+        <span class="text-cyan-300 neon-cyan">1000</span>
+        <span class="text-white/50 mx-1.5">+</span>
+        <span class="text-white neon-white">2</span>
+        <span class="text-white/50 mx-2">=</span>
+        <span class="text-white text-[16px] md:text-[24px] neon-white">3002</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Phase Change -->
+  <div id="phase" class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 transition-all duration-500 opacity-0 scale-90">
+    <div class="text-center">
+      <div class="font-mono text-[34px] md:text-[72px] font-thin tracking-[0.18em] leading-none">
+        <span class="text-cyan-300 neon-cyan">9 9 9</span>
+        <span class="mx-2 md:mx-5 text-white/40 relative -top-1">→</span>
+        <span class="text-amber-300 neon-gold">0 0 0 1</span>
+      </div>
+      <div class="mt-3 font-mono text-[10px] md:text-xs tracking-[0.45em] text-white/45 uppercase">Phase Transition</div>
+    </div>
+  </div>
+
+  <!-- Core Labels -->
+  <div class="absolute left-1/2 top-1/2 -translate-x-1/2 translate-y-[68px] md:translate-y-[88px] text-center">
+    <div id="coreLabel" class="font-mono text-[11px] md:text-[13px] tracking-[0.55em] text-cyan-200/80 transition-all duration-500">ROOT <span class="text-white">1</span></div>
+    <div id="locked" class="mt-2.5 font-light text-[18px] md:text-[28px] tracking-[0.28em] text-amber-300 neon-gold opacity-0 transition-opacity duration-700">MERKLE ROOT LOCKED</div>
+  </div>
+
+  <!-- Bottom -->
+  <div class="absolute bottom-6 md:bottom-9 left-1/2 -translate-x-1/2 text-center w-full px-4">
+    <div class="font-mono text-[15px] md:text-[22px] tracking-[0.32em]">
+      <span class="text-cyan-300 neon-cyan">8 PETALS</span>
+      <span class="mx-2.5 md:mx-4 text-white/35">→</span>
+      <span class="text-amber-300 neon-gold">1 CORE</span>
+    </div>
+    <div class="mt-3 flex items-center justify-center gap-3">
+      <div class="h-px w-14 md:w-20 bg-gradient-to-r from-transparent to-cyan-400/50"></div>
+      <div class="font-mono text-[10px] tracking-[0.25em] text-white/40">CUBES COLLAPSING</div>
+      <div class="h-px w-14 md:w-20 bg-gradient-to-l from-transparent to-amber-400/50"></div>
+    </div>
+  </div>
+
+  <!-- Timer -->
+  <div class="absolute bottom-4 left-3 md:bottom-6 md:left-6">
+    <div class="glass rounded-xl px-3.5 py-2.5 min-w-[92px]">
+      <div class="font-mono text-[9px] tracking-widest text-white/45 uppercase">Cycle</div>
+      <div id="timer" class="font-mono text-[20px] leading-none mt-1 text-cyan-300 neon-cyan">0.0s</div>
+      <div class="mt-2 h-[3px] w-[84px] bg-white/10 overflow-hidden rounded-full">
+        <div id="progress" class="h-full w-0 bg-gradient-to-r from-cyan-400 via-sky-300 to-amber-400 shadow-[0_0_10px_rgba(126,249,255,0.6)]"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { AfterimagePass } from 'three/addons/postprocessing/AfterimagePass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+
+const canvas = document.getElementById('c');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.15;
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x000407);
+scene.fog = new THREE.FogExp2(0x000407, 0.015);
+
+const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 200);
+camera.position.set(0, 4, 34);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.05;
+controls.autoRotate = true;
+controls.autoRotateSpeed = 0.35;
+controls.minDistance = 18;
+controls.maxDistance = 65;
+controls.target.set(0,0,0);
+
+// Lights
+scene.add(new THREE.AmbientLight(0x0a1a24, 0.6));
+const dirLight = new THREE.DirectionalLight(0x7fefff, 0.3);
+dirLight.position.set(5,10,7);
+scene.add(dirLight);
+
+// Composer
+const composer = new EffectComposer(renderer);
+composer.addPass(new RenderPass(scene, camera));
+const afterimagePass = new AfterimagePass();
+afterimagePass.uniforms['damp'].value = 0.92;
+composer.addPass(afterimagePass);
+const bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1.4, 0.85, 0.12);
+composer.addPass(bloomPass);
+composer.addPass(new OutputPass());
+
+// Starfield
+const starGeo = new THREE.BufferGeometry();
+const starCount = 1500;
+const starPos = new Float32Array(starCount*3);
+for(let i=0;i<starCount;i++){
+  const r = 120 + Math.random()*80;
+  const th = Math.random()*Math.PI*2;
+  const ph = Math.acos(THREE.MathUtils.randFloatSpread(2));
+  starPos[i*3] = r*Math.sin(ph)*Math.cos(th);
+  starPos[i*3+1] = r*Math.sin(ph)*Math.sin(th);
+  starPos[i*3+2] = r*Math.cos(ph);
+}
+starGeo.setAttribute('position', new THREE.BufferAttribute(starPos,3));
+scene.add(new THREE.Points(starGeo, new THREE.PointsMaterial({color:0x7fdfff, size:0.4, transparent:true, opacity:0.5, sizeAttenuation:true})));
+
+// 8 Petal Directions (±1,±1,±1)
+const petalDirs = [];
+for (const sx of [-1,1]) for (const sy of [-1,1]) for (const sz of [-1,1]) {
+  petalDirs.push(new THREE.Vector3(sx,sy,sz).normalize());
+}
+
+// Petal Pathways
+const petalsGroup = new THREE.Group();
+scene.add(petalsGroup);
+petalDirs.forEach(dir=>{
+  const pts = [];
+  for(let i=0;i<=40;i++){
+    const t = i/40;
+    const r = THREE.MathUtils.lerp(18, 0, Math.pow(t,1.5));
+    const wobble = Math.sin(t*Math.PI)*0.8;
+    const p = dir.clone().multiplyScalar(r);
+    p.x += wobble * (dir.y*0.3);
+    p.y += wobble * (dir.z*0.2);
+    pts.push(p);
+  }
+  const curve = new THREE.CatmullRomCurve3(pts);
+  const tube = new THREE.Mesh(
+    new THREE.TubeGeometry(curve, 80, 0.06, 8, false),
+    new THREE.MeshBasicMaterial({color:0x00e5ff, transparent:true, opacity:0, blending:THREE.AdditiveBlending, depthWrite:false})
+  );
+  const glow = new THREE.Mesh(
+    new THREE.TubeGeometry(curve, 60, 0.18, 8, false),
+    new THREE.MeshBasicMaterial({color:0x00aaff, transparent:true, opacity:0, blending:THREE.AdditiveBlending, depthWrite:false})
+  );
+  petalsGroup.add(tube);
+  petalsGroup.add(glow);
+});
+
+// Core
+const core = new THREE.Mesh(
+  new THREE.SphereGeometry(0.85, 48, 48),
+  new THREE.MeshStandardMaterial({color:0x020507, emissive:0x000000, emissiveIntensity:0, metalness:0.9, roughness:0.2})
+);
+scene.add(core);
+
+const coreHalo = new THREE.Mesh(
+  new THREE.SphereGeometry(1.4, 32, 32),
+  new THREE.MeshBasicMaterial({color:0xffcc44, transparent:true, opacity:0, blending:THREE.AdditiveBlending, depthWrite:false})
+);
+scene.add(coreHalo);
+
+const coreLight = new THREE.PointLight(0xffc266, 0, 35, 2);
+scene.add(coreLight);
+
+// Leaves - 3002 instances
+const LEAF_COUNT = 3002;
+const leafGeo = new THREE.SphereGeometry(0.075, 10, 10);
+const leafMat = new THREE.MeshBasicMaterial({vertexColors:true, transparent:true, opacity:0.96, blending:THREE.AdditiveBlending, depthWrite:false});
+const leaves = new THREE.InstancedMesh(leafGeo, leafMat, LEAF_COUNT);
+leaves.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+leaves.frustumCulled = false;
+scene.add(leaves);
+
+const dummy = new THREE.Object3D();
+const color = new THREE.Color();
+
+// Precompute leaf data
+const leavesData = [];
+const cubeCenters = [
+  new THREE.Vector3(-11, 6.5, -1.5),
+  new THREE.Vector3(11, 6.5, 1.5),
+  new THREE.Vector3(0, -9.5, 0)
+];
+const UP = new THREE.Vector3(0,1,0);
+
+for(let i=0;i<LEAF_COUNT;i++){
+  let sx, sy, sz;
+  if(i<3000){
+    const cube = Math.floor(i/1000);
+    const local = i%1000;
+    const x = local%10, y = Math.floor(local/10)%10, z = Math.floor(local/100);
+    const c = cubeCenters[cube];
+    sx = (x-4.5)*0.58 + c.x;
+    sy = (y-4.5)*0.58 + c.y;
+    sz = (z-4.5)*0.58 + c.z;
+  }else{
+    sx = i===3000 ? -11 : 11;
+    sy = i===3000 ? 15.5 : -15.5;
+    sz = i===3000 ? 4 : -4;
+  }
+  const petal = i%8;
+  const dir = petalDirs[petal];
+  const midDist = 8.8 + Math.random()*1.4;
+  const mx = dir.x*midDist, my = dir.y*midDist, mz = dir.z*midDist;
+  const ax = new THREE.Vector3().crossVectors(dir, UP);
+  if(ax.lengthSq()<0.01) ax.set(1,0,0); else ax.normalize();
+  const bx = new THREE.Vector3().crossVectors(ax, dir).normalize();
+  
+  leavesData.push({sx,sy,sz,mx,my,mz,ax:ax.x,ay:ax.y,az:ax.z,bx:bx.x,by:bx.y,bz:bx.z,seed:Math.random()*Math.PI*2,isSpecial:i>=3000});
+  
+  dummy.position.set(sx,sy,sz);
+  dummy.scale.setScalar(i>=3000?1.7:1);
+  dummy.updateMatrix();
+  leaves.setMatrixAt(i, dummy.matrix);
+  leaves.setColorAt(i, color.setHex(i>=3000?0xffffff:0x7ef9ff));
+}
+leaves.instanceMatrix.needsUpdate = true;
+leaves.instanceColor.needsUpdate = true;
+
+// UI elements
+const mathEl = document.getElementById('math');
+const phaseEl = document.getElementById('phase');
+const lockedEl = document.getElementById('locked');
+const coreLabel = document.getElementById('coreLabel');
+const timerEl = document.getElementById('timer');
+const progressEl = document.getElementById('progress');
+
+const clock = new THREE.Clock();
+const CYCLE = 12;
+
+function easeInOutCubic(x){return x<0.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2;}
+function easeOutCubic(x){return 1-Math.pow(1-x,3);}
+function easeInCubic(x){return x*x*x;}
+
+function animate(){
+  requestAnimationFrame(animate);
+  const tRaw = clock.getElapsedTime();
+  const t = tRaw % CYCLE;
+  const phase = t / CYCLE;
+  
+  controls.update();
+  
+  timerEl.textContent = t.toFixed(1)+'s';
+  progressEl.style.width = (phase*100)+'%';
+  
+  // Phases: 0-2.5 expand, 2.5-3 prep, 3-9 collapse, 9-10.5 merge, 10.5-12 reset
+  let petalOpacity = 0;
+  let showMath = 0, showPhase = 0, showLocked = 0;
+  
+  if(t < 2.5){ // EXPAND
+    afterimagePass.uniforms['damp'].value = 0.94;
+    bloomPass.strength = 1.3;
+    for(let i=0;i<LEAF_COUNT;i++){
+      const d = leavesData[i];
+      const floatY = Math.sin(tRaw*0.7 + d.seed)*0.18;
+      dummy.position.set(d.sx, d.sy + floatY, d.sz);
+      const s = d.isSpecial ? 1.65 + Math.sin(tRaw*3 + d.seed)*0.18 : 1.0 + Math.sin(tRaw*1.2 + d.seed)*0.06;
+      dummy.scale.setScalar(s);
+      dummy.updateMatrix();
+      leaves.setMatrixAt(i, dummy.matrix);
+    }
+    core.scale.setScalar(0.72 + Math.sin(tRaw*1.5)*0.03);
+    core.material.emissive.setHex(0x000000);
+    core.material.emissiveIntensity = 0;
+    coreLight.intensity = 0;
+    coreHalo.material.opacity = 0;
+    
+  } else if(t < 3.0){ // PREP
+    showMath = (t-2.5)/0.5;
+    for(let i=0;i<LEAF_COUNT;i++){
+      const d = leavesData[i];
+      dummy.position.set(d.sx,d.sy,d.sz);
+      dummy.scale.setScalar(d.isSpecial?1.6:1);
+      dummy.updateMatrix();
+      leaves.setMatrixAt(i, dummy.matrix);
+    }
+    
+  } else if(t < 9.0){ // COLLAPSE
+    showMath = 1;
+    const cp = (t-3)/6;
+    const eased = easeInOutCubic(cp);
+    petalOpacity = Math.min(1, cp*1.8)*0.55;
+    afterimagePass.uniforms['damp'].value = 0.86;
+    bloomPass.strength = 1.4 + cp*0.3;
+    if(t>8.2) showPhase = Math.min(1,(t-8.2)/0.5);
+    if(t>8.8) showPhase *= 1-(t-8.8)/0.8;
+    
+    for(let i=0;i<LEAF_COUNT;i++){
+      const d = leavesData[i];
+      let px,py,pz;
+      if(cp < 0.62){
+        const p = cp/0.62;
+        const e = easeInOutCubic(p);
+        px = d.sx + (d.mx - d.sx)*e;
+        py = d.sy + (d.my - d.sy)*e;
+        pz = d.sz + (d.mz - d.sz)*e;
+      }else{
+        const p = (cp-0.62)/0.38;
+        const e = easeInCubic(p);
+        px = d.mx * (1-e);
+        py = d.my * (1-e);
+        pz = d.mz * (1-e);
+      }
+      const angle = cp*Math.PI*4.5 + d.seed;
+      const radius = (1-cp)*2.4 * (1 - Math.max(0,cp-0.7)/0.3*0.7);
+      const ca = Math.cos(angle)*radius;
+      const sa = Math.sin(angle)*radius;
+      px += d.ax*ca + d.bx*sa;
+      py += d.ay*ca + d.by*sa;
+      pz += d.az*ca + d.bz*sa;
+      
+      dummy.position.set(px,py,pz);
+      const s = d.isSpecial ? THREE.MathUtils.lerp(1.7,0.35,cp) : THREE.MathUtils.lerp(1.0,0.22,cp);
+      dummy.scale.setScalar(s);
+      dummy.updateMatrix();
+      leaves.setMatrixAt(i, dummy.matrix);
+    }
+    core.scale.setScalar(0.75 + cp*0.35);
+    coreLight.intensity = cp*4;
+    coreHalo.material.opacity = cp*0.15;
+    
+  } else if(t < 10.5){ // MERGE
+    showMath = Math.max(0,1-(t-9)/0.5);
+    showLocked = Math.min(1,(t-9.1)/0.4);
+    petalOpacity = 0.45 * (1-(t-9)/1.5);
+    const mp = (t-9)/1.5;
+    afterimagePass.uniforms['damp'].value = 0.9;
+    bloomPass.strength = 1.9 + Math.sin(tRaw*18)*0.15;
+    
+    for(let i=0;i<LEAF_COUNT;i++){
+      const d = leavesData[i];
+      const a = d.seed;
+      const r = (1-mp)*0.9 * Math.pow(Math.random(),0.8);
+      const px = Math.cos(a*6.28)*r*0.3;
+      const py = Math.sin(a*5.1)*r*0.3;
+      const pz = Math.cos(a*3.7)*Math.sin(a*2.3)*r*0.2;
+      dummy.position.set(px,py,pz);
+      dummy.scale.setScalar(0.2*(1-mp));
+      dummy.updateMatrix();
+      leaves.setMatrixAt(i, dummy.matrix);
+    }
+    const pulse = 1.0 + mp*0.9 + Math.sin(tRaw*22)*0.05;
+    core.scale.setScalar(pulse);
+    core.material.emissive.setHex(0xffb433);
+    core.material.emissiveIntensity = 1.8 + mp*1.2;
+    core.material.color.setHex(0xffaa22);
+    coreLight.intensity = 18 + mp*22;
+    coreLight.color.setHex(0xffdd88);
+    coreHalo.material.opacity = 0.35 + mp*0.4;
+    coreHalo.scale.setScalar(1 + mp*0.5);
+    
+  } else { // RESET
+    showLocked = Math.max(0,1-(t-10.5)/0.8);
+    const rp = (t-10.5)/1.5;
+    const e = easeOutCubic(rp);
+    afterimagePass.uniforms['damp'].value = 0.93;
+    bloomPass.strength = 1.3 + (1-e)*0.5;
+    
+    for(let i=0;i<LEAF_COUNT;i++){
+      const d = leavesData[i];
+      const px = d.sx*e;
+      const py = d.sy*e;
+      const pz = d.sz*e;
+      dummy.position.set(px,py,pz);
+      dummy.scale.setScalar(e*(d.isSpecial?1.6:1));
+      dummy.updateMatrix();
+      leaves.setMatrixAt(i, dummy.matrix);
+    }
+    core.scale.setScalar(THREE.MathUtils.lerp(1.8,0.72,e));
+    core.material.emissiveIntensity = THREE.MathUtils.lerp(2.5,0,e);
+    core.material.emissive.setHex(0x000000);
+    core.material.color.setHex(0x020507);
+    coreLight.intensity = THREE.MathUtils.lerp(35,0,e);
+    coreHalo.material.opacity = THREE.MathUtils.lerp(0.7,0,e);
+  }
+  
+  leaves.instanceMatrix.needsUpdate = true;
+  petalsGroup.children.forEach((m,i)=>{
+    const isGlow = i%2===1;
+    m.material.opacity = petalOpacity * (isGlow?0.4:1);
+  });
+  
+  mathEl.style.opacity = showMath;
+  phaseEl.style.opacity = showPhase;
+  phaseEl.style.transform = `translate(-50%,-50%) scale(${0.9+showPhase*0.1})`;
+  lockedEl.style.opacity = showLocked;
+  coreLabel.style.color = t>9 && t<11 ? '#ffd070' : '#aeefff';
+  coreLabel.className = `font-mono text-[11px] md:text-[13px] tracking-[0.55em] transition-all duration-500 ${t>9 && t<11 ? 'neon-gold' : ''}`;
+  
+  composer.render();
+}
+animate();
+
+window.addEventListener('resize', ()=>{
+  camera.aspect = window.innerWidth/window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  composer.setSize(window.innerWidth, window.innerHeight);
+});
+</script>
+</body>
+</html>

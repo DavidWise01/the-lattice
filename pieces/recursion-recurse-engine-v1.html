@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ENG1 // RECURSIVE FRACTAL ENGINE</title>
+<style>
+  :root {
+    --green: #00ff88;
+    --cyan: #00e5ff;
+    --bg: #000000;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--bg);
+    color: var(--green);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+  canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+  header {
+    position: absolute;
+    top: 24px;
+    left: 0;
+    right: 0;
+    text-align: center;
+    z-index: 10;
+    pointer-events: none;
+  }
+  header h1 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 3px;
+    color: var(--green);
+    text-shadow: 0 0 10px var(--green), 0 0 30px rgba(0,255,136,0.5);
+  }
+  header .sub {
+    margin-top: 6px;
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: var(--cyan);
+    opacity: 0.85;
+    text-shadow: 0 0 8px var(--cyan);
+  }
+  .panel {
+    position: absolute;
+    z-index: 10;
+    top: 120px;
+    padding: 16px 18px;
+    min-width: 210px;
+    background: linear-gradient(180deg, rgba(0,18,10,0.75), rgba(0,6,3,0.9));
+    border: 1px solid rgba(0,255,136,0.2);
+    box-shadow: 0 0 24px rgba(0,255,136,0.08), inset 0 0 16px rgba(0,255,136,0.04);
+    backdrop-filter: blur(8px);
+  }
+  .panel.left { left: 28px; }
+  .panel.right { right: 28px; text-align: right; }
+  .panel .label {
+    font-size: 10px;
+    color: var(--cyan);
+    opacity: 0.7;
+    letter-spacing: 1.5px;
+    margin-top: 12px;
+    text-transform: uppercase;
+  }
+  .panel .label:first-child { margin-top: 0; }
+  .panel .value {
+    font-size: 20px;
+    line-height: 1.2;
+    color: var(--green);
+    text-shadow: 0 0 10px rgba(0,255,136,0.7);
+    margin-top: 2px;
+  }
+  .panel .value.small { font-size: 16px; color: var(--cyan); text-shadow: 0 0 8px rgba(0,229,255,0.7); }
+  #core {
+    font-size: 32px;
+    line-height: 1;
+    animation: pulse 1.6s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%,100% { opacity: 0.6; transform: scale(0.92); text-shadow: 0 0 8px var(--green); }
+    50% { opacity: 1; transform: scale(1.08); text-shadow: 0 0 22px var(--green), 0 0 40px var(--green); }
+  }
+  footer {
+    position: absolute;
+    bottom: 20px;
+    left: 0; right: 0;
+    text-align: center;
+    z-index: 10;
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: var(--cyan);
+    opacity: 0.8;
+    text-shadow: 0 0 8px var(--cyan);
+    pointer-events: none;
+  }
+  .scan {
+    position: fixed;
+    inset: 0;
+    z-index: 5;
+    pointer-events: none;
+    background: repeating-linear-gradient(to bottom, rgba(0,255,136,0.06) 0px, rgba(0,255,136,0.06) 1px, transparent 2px, transparent 4px);
+    mix-blend-mode: screen;
+    opacity: 0.28;
+  }
+  .vignette {
+    position: fixed;
+    inset: 0;
+    z-index: 4;
+    pointer-events: none;
+    background: radial-gradient(circle at center, transparent 55%, rgba(0,0,0,0.9) 100%);
+  }
+  .grid {
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    opacity: 0.07;
+    background-image: linear-gradient(rgba(0,255,136,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(0,255,136,0.3) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+  @media (max-width: 860px) {
+    .panel { min-width: 150px; padding: 12px 14px; top: 90px; }
+    .panel.left { left: 12px; }
+    .panel.right { right: 12px; }
+    .panel .value { font-size: 16px; }
+    header h1 { font-size: 12px; letter-spacing: 2px; }
+    header .sub { font-size: 9px; }
+    footer { font-size: 9px; bottom: 12px; padding: 0 10px; }
+  }
+</style>
+</head>
+<body>
+  <div class="grid"></div>
+  <div class="vignette"></div>
+  <div class="scan"></div>
+  <canvas id="engine"></canvas>
+
+  <header>
+    <h1>ENG1 // RECURSIVE FRACTAL ENGINE</h1>
+    <div class="sub">. + 1 + n | x3ⁿ | infinite compression</div>
+  </header>
+
+  <div class="panel left">
+    <div class="label">Layer</div>
+    <div class="value" id="layer">0</div>
+    <div class="label">Nodes</div>
+    <div class="value small" id="nodes">1</div>
+    <div class="label">Ratio</div>
+    <div class="value small" id="ratio">1:1</div>
+  </div>
+
+  <div class="panel right">
+    <div class="label">State</div>
+    <div class="value small" id="state">BLOOMING</div>
+    <div class="label">Core</div>
+    <div class="value" id="core">.</div>
+    <div class="label">E_c</div>
+    <div class="value small" id="ec">0.000 kT</div>
+    <div class="label">E_b</div>
+    <div class="value small" id="eb">0.000 kT</div>
+    <div class="label">Net</div>
+    <div class="value small" id="net">0.000 kT</div>
+  </div>
+
+  <footer>THEIR GRID: 0 8 0 (stores all) | YOUR ENGINE: . (computes all)</footer>
+
+<script>
+(() => {
+  const canvas = document.getElementById('engine');
+  const ctx = canvas.getContext('2d');
+  let dpr = Math.min(window.devicePixelRatio || 1, 2);
+  
+  const GREEN = '#00ff88';
+  const CYAN = '#00e5ff';
+  
+  let width = 0, height = 0, cx = 0, cy = 0;
+  
+  function resize() {
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    width = window.innerWidth;
+    height = window.innerHeight;
+    canvas.width = width * dpr;
+    canvas.height = height * dpr;
+    canvas.style.width = width + 'px';
+    canvas.style.height = height + 'px';
+    ctx.setTransform(1,0,0,1,0,0);
+    ctx.scale(dpr, dpr);
+    cx = width / 2;
+    cy = height / 2 + 10;
+  }
+  window.addEventListener('resize', resize);
+  resize();
+  
+  // Build recursive ternary tree
+  const nodes = [];
+  const layerRadii = [0, 78, 136, 182, 218, 246];
+  const root = { depth: 0, angle: 0, baseDist: 0, children: [], parent: null, cx: 0, cy: 0, active: 1 };
+  nodes.push(root);
+  
+  function build(parent, depth) {
+    if (depth > 5) return;
+    for (let i = 0; i < 3; i++) {
+      const a = parent.angle + i * (Math.PI * 2 / 3) + depth * 0.15;
+      const child = {
+        depth,
+        angle: a,
+        baseDist: layerRadii[depth] - layerRadii[depth-1],
+        children: [],
+        parent,
+        cx: 0,
+        cy: 0,
+        active: 0
+      };
+      parent.children.push(child);
+      nodes.push(child);
+      build(child, depth + 1);
+    }
+  }
+  build(root, 1);
+  
+  // Particles
+  const particleCount = width < 700 ? 120 : 200;
+  const particles = Array.from({length: particleCount}, () => ({
+    node: nodes[1 + Math.floor(Math.random() * (nodes.length - 2))],
+    t: Math.random(),
+    speed: 0.007 + Math.random() * 0.013
+  }));
+  
+  const elLayer = document.getElementById('layer');
+  const elNodes = document.getElementById('nodes');
+  const elRatio = document.getElementById('ratio');
+  const elState = document.getElementById('state');
+  const elEc = document.getElementById('ec');
+  const elEb = document.getElementById('eb');
+  const elNet = document.getElementById('net');
+  
+  let lastUI = 0;
+  
+  function easeInOutCubic(x) {
+    return x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+  }
+  
+  function updatePositions(scale, depthFloat) {
+    function walk(node, px, py, parentActive) {
+      const local = Math.min(Math.max(depthFloat - node.depth + 1, 0), 1);
+      const e = local < 1 ? local * local * (3 - 2 * local) : 1;
+      const x = px + (node.parent ? Math.cos(node.angle) * node.baseDist * scale * e : 0);
+      const y = py + (node.parent ? Math.sin(node.angle) * node.baseDist * scale * e : 0);
+      node.cx = x;
+      node.cy = y;
+      node.active = node.parent ? Math.min(e, parentActive) : 1;
+      for (const c of node.children) walk(c, x, y, node.active);
+    }
+    walk(root, 0, 0, 1);
+  }
+  
+  function loop(now) {
+    requestAnimationFrame(loop);
+    
+    const cycleDur = 14000;
+    const cp = (now % cycleDur) / cycleDur;
+    let state, depthFloat;
+    
+    if (cp < 0.4) {
+      const p = cp / 0.4;
+      depthFloat = easeInOutCubic(p) * 5;
+      state = 'BLOOMING';
+    } else if (cp < 0.5) {
+      depthFloat = 5;
+      state = 'BLOOMING';
+    } else if (cp < 0.9) {
+      const p = (cp - 0.5) / 0.4;
+      depthFloat = (1 - easeInOutCubic(p)) * 5;
+      state = 'COMPRESSING';
+    } else {
+      depthFloat = 0;
+      state = 'COMPRESSING';
+    }
+    
+    const scale = Math.min(width, height) * 0.00095 + 0.35;
+    updatePositions(scale, depthFloat);
+    
+    // Update particles
+    const isBloom = state === 'BLOOMING';
+    for (const p of particles) {
+      let n = p.node;
+      if (!n || !n.parent) { p.node = nodes[1 + Math.floor(Math.random()*(nodes.length-1))]; continue; }
+      p.t += (isBloom ? 1 : -1) * p.speed * 1.2;
+      if (p.t >= 1) {
+        p.t = 0;
+        if (n.children.length && n.active > 0.4 && Math.random() < 0.85) {
+          p.node = n.children[Math.floor(Math.random() * n.children.length)];
+        } else {
+          p.node = nodes[1 + Math.floor(Math.random()*(nodes.length-1))];
+        }
+      } else if (p.t <= 0) {
+        p.t = 1;
+        p.node = n.parent.depth === 0 ? nodes[1 + Math.floor(Math.random()*(nodes.length-1))] : n.parent;
+      }
+    }
+    
+    // Draw
+    ctx.clearRect(0, 0, width, height);
+    
+    // fade trail
+    ctx.fillStyle = 'rgba(0,0,0,0.12)';
+    ctx.fillRect(0, 0, width, height);
+    
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    
+    // Layer rings
+    ctx.lineWidth = 1;
+    for (let l = 1; l <= 5; l++) {
+      if (depthFloat + 0.3 > l) {
+        const r = layerRadii[l] * scale;
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 0, Math.PI * 2);
+        ctx.strokeStyle = `rgba(0,255,136,${0.03 + (l/5)*0.04})`;
+        ctx.stroke();
+      }
+    }
+    
+    // Connections
+    for (const n of nodes) {
+      if (!n.parent || n.active < 0.02) continue;
+      const x1 = cx + n.parent.cx;
+      const y1 = cy + n.parent.cy;
+      const x2 = cx + n.cx;
+      const y2 = cy + n.cy;
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
+      ctx.strokeStyle = state === 'COMPRESSING' ? 'rgba(0,229,255,0.55)' : 'rgba(0,255,136,0.5)';
+      ctx.lineWidth = 0.8 + n.active * 1.1;
+      ctx.shadowBlur = 12;
+      ctx.shadowColor = state === 'COMPRESSING' ? CYAN : GREEN;
+      ctx.globalAlpha = 0.18 + n.active * 0.55;
+      ctx.stroke();
+    }
+    ctx.shadowBlur = 0;
+    ctx.globalAlpha = 1;
+    
+    // Core halo
+    const corePulse = 28 + Math.sin(now * 0.003) * 3 + depthFloat * 7;
+    const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, corePulse);
+    grad.addColorStop(0, state === 'COMPRESSING' ? 'rgba(0,229,255,0.22)' : 'rgba(0,255,136,0.22)');
+    grad.addColorStop(0.5, state === 'COMPRESSING' ? 'rgba(0,229,255,0.08)' : 'rgba(0,255,136,0.08)');
+    grad.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(cx, cy, corePulse, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Nodes
+    for (const n of nodes) {
+      if (n.active < 0.01) continue;
+      const x = cx + n.cx;
+      const y = cy + n.cy;
+      const r = n.depth === 0 ? 8 : Math.max(1.6, 4.2 - n.depth * 0.55);
+      ctx.beginPath();
+      ctx.arc(x, y, r * (1 + 0.12 * Math.sin(now * 0.002 + n.depth)), 0, Math.PI * 2);
+      ctx.fillStyle = n.depth === 0 ? GREEN : (state === 'COMPRESSING' ? CYAN : GREEN);
+      ctx.shadowBlur = n.depth === 0 ? 22 : 14;
+      ctx.shadowColor = ctx.fillStyle;
+      ctx.globalAlpha = 0.85 * n.active + 0.15;
+      ctx.fill();
+    }
+    ctx.shadowBlur = 0;
+    ctx.globalAlpha = 1;
+    
+    // Core "."
+    ctx.font = 'bold 24px monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#000';
+    ctx.globalAlpha = 0.9;
+    ctx.fillText('.', cx, cy + 1);
+    ctx.globalAlpha = 1;
+    
+    // Particles
+    for (const p of particles) {
+      const n = p.node;
+      if (!n.parent || n.active < 0.05) continue;
+      const x = cx + n.parent.cx + (n.cx - n.parent.cx) * p.t;
+      const y = cy + n.parent.cy + (n.cy - n.parent.cy) * p.t;
+      ctx.beginPath();
+      ctx.arc(x, y, 1.7, 0, Math.PI * 2);
+      ctx.fillStyle = state === 'COMPRESSING' ? CYAN : GREEN;
+      ctx.shadowBlur = 10;
+      ctx.shadowColor = ctx.fillStyle;
+      ctx.globalAlpha = 0.9;
+      ctx.fill();
+    }
+    ctx.shadowBlur = 0;
+    ctx.restore();
+    
+    // UI updates
+    if (now - lastUI > 70) {
+      lastUI = now;
+      const displayLayer = Math.min(5, Math.max(0, Math.floor(depthFloat + 0.15)));
+      const nodesCount = Math.pow(3, displayLayer);
+      const ratio = nodesCount;
+      const E = Math.log(Math.max(1, ratio));
+      
+      elLayer.textContent = displayLayer;
+      elNodes.textContent = nodesCount.toLocaleString();
+      elRatio.textContent = `${ratio}:1`;
+      elState.textContent = state;
+      elState.style.color = state === 'COMPRESSING' ? CYAN : GREEN;
+      elState.style.textShadow = state === 'COMPRESSING' ? '0 0 8px #00e5ff' : '0 0 8px #00ff88';
+      
+      elEc.textContent = (state === 'COMPRESSING' ? E : 0).toFixed(3) + ' kT';
+      elEb.textContent = (state === 'BLOOMING' ? E : 0).toFixed(3) + ' kT';
+      elNet.textContent = '0.000 kT';
+    }
+  }
+  
+  requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ROOT0 LAYER 1.49 — JULIA SET VARIATIONS</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fragment+Mono&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root { color-scheme: dark; }
+  html,body { height:100%; }
+  body { font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif; background:#050505; }
+  .mono { font-family: "Fragment Mono", ui-monospace, SFMono-Regular, Menlo, monospace; }
+  .glass { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
+  .noise::before { content:""; position:fixed; inset:-50%; background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); opacity:.035; pointer-events:none; mix-blend-mode:screen; animation: drift 60s linear infinite; }
+  @keyframes drift { to { transform: translate3d(10%,10%,0) } }
+  .observer { animation: blink 4.2s infinite; }
+  @keyframes blink { 0%,92%,100%{ opacity:.35 } 94%,96%{ opacity:.15 } }
+  canvas { display:block; }
+  .slit canvas { image-rendering: pixelated; }
+</style>
+</head>
+<body class="noise text-zinc-200 selection:bg-white/20">
+  <div class="max-w-[1640px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+    <!-- Header -->
+    <header class="flex items-center justify-between gap-4 mb-6">
+      <div class="flex items-baseline gap-3">
+        <div class="w-2 h-2 rounded-full bg-white animate-pulse"></div>
+        <h1 class="text-[22px] sm:text-[28px] font-light tracking-tight">ROOT0 <span class="text-white/50">LAYER 1.49</span></h1>
+        <span class="hidden sm:inline text-[11px] uppercase tracking-[0.22em] text-white/40">JULIA SET VARIATIONS FULLY EXPLORED</span>
+      </div>
+      <div class="hidden md:flex items-center gap-3 text-[11px] mono text-white/50">
+        <span>zₙ₊₁ = zₙ² + c</span>
+        <span class="opacity-30">|</span>
+        <span>BED WHITE GRAY BLACK</span>
+      </div>
+    </header>
+
+    <div class="grid grid-cols-12 gap-5 xl:gap-6">
+      <!-- Main Julia -->
+      <section class="col-span-12 xl:col-span-8 relative">
+        <div class="relative aspect-[4/3] rounded-[22px] overflow-hidden glass">
+          <canvas id="juliaMain" class="absolute inset-0 w-full h-full touch-none"></canvas>
+          <div id="observers" class="absolute inset-0 pointer-events-none"></div>
+          
+          <!-- HUD -->
+          <div class="absolute top-3 left-3 flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-black/60 border border-white/10 backdrop-blur">
+            <span class="mono text-[11px] tracking-wide">zₙ₊₁ = zₙ² + c</span>
+          </div>
+          <div id="third" class="absolute top-3 right-3 px-2.5 py-1 rounded-md bg-white/10 border border-white/20 text-[10px] uppercase tracking-widest mono opacity-0 transition-opacity duration-500">3rd uncertain choosing…</div>
+          
+          <div class="absolute bottom-3 left-3 right-3 flex items-end justify-between gap-3">
+            <div class="px-3 py-2 rounded-xl bg-black/70 border border-white/10 backdrop-blur">
+              <div class="text-[10px] uppercase tracking-widest text-white/50">current c</div>
+              <div class="mono text-[15px] leading-tight">
+                <span id="cRe">-0.80000</span> <span class="text-white/40">+</span> <span id="cIm">0.15600</span><span class="text-white/40">i</span>
+              </div>
+            </div>
+            <div class="hidden sm:flex items-center gap-2 px-3 py-2 rounded-xl bg-black/70 border border-white/10">
+              <div class="w-1.5 h-1.5 rounded-full bg-white/70 animate-pulse"></div>
+              <span class="text-[11px] mono text-white/70">drag to pan · scroll to zoom · click slits or map</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Sidebar -->
+      <aside class="col-span-12 xl:col-span-4 flex flex-col gap-5">
+        <!-- Controls -->
+        <div class="glass rounded-[22px] p-5">
+          <div class="flex items-center justify-between mb-3">
+            <h2 class="text-[12px] uppercase tracking-[0.18em] text-white/60">Julia Explorer</h2>
+            <span class="text-[10px] mono px-2 py-0.5 rounded bg-white/10 border border-white/10">LIVE</span>
+          </div>
+          <p class="text-[13px] leading-relaxed text-zinc-300">Fixed-c iteration. Each pixel is a starting z₀. Color = escape speed. White = bounded.</p>
+          <div class="mt-4 grid grid-cols-3 gap-2">
+            <button data-preset="0" class="preset px-2.5 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-[12px] mono text-left">-0.8 +0.156i</button>
+            <button data-preset="1" class="preset px-2.5 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-[12px] mono text-left">-0.745 +0.113i</button>
+            <button data-preset="2" class="preset px-2.5 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-[12px] mono text-left">0.285 +0.01i</button>
+          </div>
+        </div>
+
+        <!-- 23-bit dual coin -->
+        <div class="glass rounded-[22px] p-5">
+          <div class="flex items-center justify-between">
+            <h3 class="text-[12px] uppercase tracking-[0.18em] text-white/60">23-bit Dual-Coin</h3>
+            <span class="text-[10px] mono text-white/40">spinning through variations</span>
+          </div>
+          <div class="mt-3 flex items-center gap-4">
+            <canvas id="coin" width="220" height="220" class="w-[110px] h-[110px]"></canvas>
+            <div class="flex-1">
+              <div class="mono text-[11px] text-white/60 leading-5">
+                <div>bits: <span id="bits" class="text-white/90">00000000000000000000000</span></div>
+                <div class="mt-1">hash(c) → next variation</div>
+              </div>
+              <div class="mt-3 h-[2px] w-full bg-white/10 overflow-hidden rounded">
+                <div id="coinBar" class="h-full w-1/3 bg-white/70 transition-all duration-500"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Jane Prime -->
+        <div class="glass rounded-[22px] p-5">
+          <h3 class="text-[11px] uppercase tracking-widest text-white/50 mb-2">Jane-Prime // Field Note</h3>
+          <p class="text-[13px] leading-relaxed text-zinc-300 font-light">“Mandelbrot is the Walk. Julia is where you tell the local story. Pick a c — and you’re picking a neighbourhood. Stay inside the W-boundary <span class="mono">0 0 8 0 0</span>, the story stays connected. Cross it, and the story shatters into dust. Each of the 12 slits is the same iteration, just a different address. The 3rd doesn’t choose left or right — it chooses the story itself.”</p>
+        </div>
+      </aside>
+
+      <!-- 12 slits -->
+      <section class="col-span-12">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-[12px] uppercase tracking-[0.2em] text-white/60">12 Slits — Simultaneous Variations</h3>
+          <span class="text-[11px] mono text-white/40">click to morph</span>
+        </div>
+        <div id="slits" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6 gap-3"></div>
+      </section>
+
+      <!-- Bottom trio -->
+      <section class="col-span-12 grid grid-cols-12 gap-5">
+        <!-- Mandelbrot picker -->
+        <div class="col-span-12 lg:col-span-5 glass rounded-[22px] p-5">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="text-[12px] uppercase tracking-[0.18em] text-white/60">Mandelbrot Map — pick c</h3>
+            <span class="text-[10px] mono text-white/40">W-boundary decides</span>
+          </div>
+          <div class="flex gap-4">
+            <div class="relative">
+              <canvas id="mandel" width="280" height="280" class="w-[140px] h-[140px] sm:w-[180px] sm:h-[180px] rounded-xl border border-white/10 bg-black cursor-crosshair"></canvas>
+              <div id="mandelDot" class="absolute w-2.5 h-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full border border-black bg-white shadow-[0_0_10px_rgba(255,255,255,0.8)] pointer-events-none"></div>
+            </div>
+            <div class="flex-1">
+              <div class="mono text-[12px] leading-6 text-zinc-300">
+                <div>Re ∈ [-2.0, 1.0]</div>
+                <div>Im ∈ [-1.2, 1.2]</div>
+                <div class="mt-2 text-white/70">Inside → connected Julia</div>
+                <div class="text-white/70">Outside → dust</div>
+              </div>
+              <button id="randomC" class="mt-4 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-[12px]">randomize c</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- W boundary -->
+        <div class="col-span-12 sm:col-span-6 lg:col-span-4 glass rounded-[22px] p-5">
+          <h3 class="text-[12px] uppercase tracking-[0.18em] text-white/60 mb-3">W-Boundary</h3>
+          <div class="flex items-end gap-3">
+            <div class="flex gap-1.5">
+              <div class="w-9 h-12 grid place-items-center rounded-lg bg-white/5 border border-white/10 mono text-xl">0</div>
+              <div class="w-9 h-12 grid place-items-center rounded-lg bg-white/5 border border-white/10 mono text-xl">0</div>
+              <div id="w8" class="w-9 h-12 grid place-items-center rounded-lg bg-white text-black mono text-xl font-medium shadow-[0_0_20px_rgba(255,255,255,0.2)] transition">8</div>
+              <div class="w-9 h-12 grid place-items-center rounded-lg bg-white/5 border border-white/10 mono text-xl">0</div>
+              <div class="w-9 h-12 grid place-items-center rounded-lg bg-white/5 border border-white/10 mono text-xl">0</div>
+            </div>
+            <div class="pb-1">
+              <div id="connStatus" class="mono text-[11px] px-2 py-1 rounded bg-white/10 border border-white/15 text-white/90">CONNECTED</div>
+              <div class="text-[11px] text-white/50 mt-1">|c| in M-set</div>
+            </div>
+          </div>
+          <p class="text-[12px] text-zinc-400 mt-3 leading-relaxed">The sequence 0·0·8·0·0 marks the decision. Inside, orbits hold together. Outside, they atomize.</p>
+        </div>
+
+        <!-- 132 toroids -->
+        <div class="col-span-12 sm:col-span-6 lg:col-span-3 glass rounded-[22px] p-5">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="text-[12px] uppercase tracking-[0.18em] text-white/60">132 Toroids</h3>
+            <span class="text-[10px] mono text-white/40">pulsing</span>
+          </div>
+          <div id="toroids" class="grid grid-cols-12 gap-[6px]"></div>
+        </div>
+      </section>
+
+      <!-- Observers footer -->
+      <div class="col-span-12 flex items-center justify-between mt-2 text-[11px] mono text-white/40">
+        <div>22 observers watching variations</div>
+        <div class="hidden sm:block">ROOT0 • bed white gray black • layer 1.49</div>
+      </div>
+    </div>
+  </div>
+
+<script>
+const presets = [
+  {c:[-0.8,0.156], name:"dendritic lightning tree"},
+  {c:[-0.74543,0.11301], name:"seahorse spirals"},
+  {c:[0.285,0.01], name:"fat rabbit"},
+  {c:[-0.4,0.6], name:"elegant twisting arms"},
+  {c:[-0.75,0], name:"dust clouds near boundary"},
+  {c:[-0.1,0.651], name:"triple-eared"},
+  {c:[0.355,0.355], name:"dragon tail"},
+  {c:[-0.70176,-0.3842], name:"seahorse valley"},
+  {c:[-0.835,-0.2321], name:"spiraled dendrite"},
+  {c:[0.45,0.1428], name:"neuro web"},
+  {c:[-0.7269,0.1889], name:"twin spirals"},
+  {c:[0,0.8], name:"four-armed star"},
+];
+
+// --- Main Julia WebGL ---
+const canvas = document.getElementById('juliaMain');
+const gl = canvas.getContext('webgl', { antialias: true, preserveDrawingBorder: false });
+let prog, uC, uCenter, uScale, uAspect;
+let curC = {x:-0.8, y:0.156}, targetC = {x:-0.8, y:0.156};
+let center = {x:0, y:0}, scale = 2.8;
+
+function initGL(){
+  const vs = `attribute vec2 p; varying vec2 uv; void main(){ uv=p*0.5+0.5; gl_Position=vec4(p,0,1); }`;
+  const fs = `precision highp float; varying vec2 uv; uniform vec2 c; uniform vec2 ctr; uniform float scl; uniform float asp;
+    void main(){
+      vec2 z = vec2((uv.x-0.5)*scl*asp + ctr.x, (uv.y-0.5)*scl + ctr.y);
+      float i;
+      for(i=0.; i<250.; i++){ if(dot(z,z)>4.0) break; z = vec2(z.x*z.x - z.y*z.y, 2.0*z.x*z.y) + c; }
+      float t = i/250.0;
+      float inside = step(249.5, i);
+      vec3 col = mix(vec3(pow(1.0-t,0.55)), vec3(1.0), inside);
+      col *= 0.92 + 0.08*fract(sin(dot(uv,vec2(12.9898,78.233)))*43758.5);
+      gl_FragColor = vec4(col,1.0);
+    }`;
+  function sh(t,s){ const o=gl.createShader(t); gl.shaderSource(o,s); gl.compileShader(o); return o; }
+  prog = gl.createProgram();
+  gl.attachShader(prog, sh(gl.VERTEX_SHADER, vs));
+  gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, fs));
+  gl.linkProgram(prog); gl.useProgram(prog);
+  const buf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1,1,-1,-1,1,1,1]), gl.STATIC_DRAW);
+  const loc = gl.getAttribLocation(prog,'p'); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc,2,gl.FLOAT,false,0,0);
+  uC = gl.getUniformLocation(prog,'c');
+  uCenter = gl.getUniformLocation(prog,'ctr');
+  uScale = gl.getUniformLocation(prog,'scl');
+  uAspect = gl.getUniformLocation(prog,'asp');
+}
+initGL();
+
+function resize(){
+  const r = canvas.parentElement.getBoundingClientRect();
+  const dpr = Math.min(window.devicePixelRatio||1, 2);
+  canvas.width = Math.floor(r.width*dpr);
+  canvas.height = Math.floor(r.height*dpr);
+  gl.viewport(0,0,canvas.width,canvas.height);
+}
+window.addEventListener('resize', resize); resize();
+
+function render(){
+  // morph
+  curC.x += (targetC.x - curC.x)*0.12;
+  curC.y += (targetC.y - curC.y)*0.12;
+  gl.useProgram(prog);
+  gl.uniform2f(uC, curC.x, curC.y);
+  gl.uniform2f(uCenter, center.x, center.y);
+  gl.uniform1f(uScale, scale);
+  gl.uniform1f(uAspect, canvas.width/canvas.height);
+  gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
+  
+  document.getElementById('cRe').textContent = curC.x.toFixed(5);
+  document.getElementById('cIm').textContent = Math.abs(curC.y).toFixed(5);
+  document.getElementById('cIm').previousElementSibling.textContent = curC.y>=0?'+':'−';
+  
+  updateMandelDot();
+  updateW();
+  requestAnimationFrame(render);
+}
+render();
+
+// pan zoom
+let dragging=false,lx=0,ly=0;
+canvas.addEventListener('pointerdown',e=>{dragging=true; lx=e.clientX; ly=e.clientY; canvas.setPointerCapture(e.pointerId);});
+window.addEventListener('pointerup',()=>dragging=false);
+window.addEventListener('pointermove',e=>{
+  if(!dragging) return;
+  const dx=(e.clientX-lx)/canvas.clientHeight*scale*(canvas.width/canvas.height);
+  const dy=(e.clientY-ly)/canvas.clientHeight*scale;
+  center.x -= dx; center.y += dy; lx=e.clientX; ly=e.clientY;
+});
+canvas.addEventListener('wheel',e=>{e.preventDefault(); scale *= e.deltaY>0?1.08:0.92; scale=Math.max(0.5,Math.min(6,scale));},{passive:false});
+
+function setC(x,y){ targetC.x=x; targetC.y=y; center.x=0; center.y=0; scale=2.8; }
+
+// --- slits ---
+const slitsEl = document.getElementById('slits');
+function renderThumb(cv,cx,cy){
+  const ctx=cv.getContext('2d'), w=cv.width, h=cv.height, img=ctx.createImageData(w,h), max=110, scl=3;
+  for(let py=0;py<h;py++){for(let px=0;px<w;px++){
+    let zx=(px/w-0.5)*scl, zy=(py/h-0.5)*scl,i=0; while(zx*zx+zy*zy<=4 && i<max){ const xt=zx*zx-zy*zy+cx; zy=2*zx*zy+cy; zx=xt; i++; }
+    const v=i===max?255: Math.floor(255*Math.pow(i/max,0.62)), idx=(py*w+px)*4;
+    img.data[idx]=v; img.data[idx+1]=v; img.data[idx+2]=v; img.data[idx+3]=255;
+  }}
+  ctx.putImageData(img,0,0);
+}
+presets.forEach((p,i)=>{
+  const b=document.createElement('button');
+  b.className='group relative aspect-[4/3] overflow-hidden rounded-xl glass hover:bg-white/[0.06] transition text-left';
+  b.innerHTML=`<canvas width="160" height="120" class="w-full h-full opacity-85 group-hover:opacity-100 transition"></canvas>
+    <div class="absolute inset-0 ring-1 ring-inset ring-white/10 group-hover:ring-white/25 rounded-xl"></div>
+    <div class="absolute bottom-0 inset-x-0 p-2.5 bg-gradient-to-t from-black/85 to-transparent">
+      <div class="mono text-[10px] text-white/70">${p.c[0].toFixed(3)} ${p.c[1]>=0?'+':'−'}${Math.abs(p.c[1]).toFixed(3)}i</div>
+      <div class="text-[12px] leading-tight">${p.name}</div>
+    </div>`;
+  renderThumb(b.querySelector('canvas'), p.c[0], p.c[1]);
+  b.onclick=()=>setC(p.c[0],p.c[1]);
+  slitsEl.appendChild(b);
+});
+document.querySelectorAll('.preset').forEach(btn=>btn.onclick=()=>{const p=presets[+btn.dataset.preset]; setC(p.c[0],p.c[1]);});
+
+// --- Mandelbrot ---
+const mandel=document.getElementById('mandel'), mctx=mandel.getContext('2d'), mDot=document.getElementById('mandelDot');
+function drawMandel(){
+  const w=280,h=280, img=mctx.createImageData(w,h);
+  for(let py=0;py<h;py++){for(let px=0;px<w;px++){
+    const x0=px/w*3-2, y0=py/h*2.4-1.2; let x=0,y=0,i=0; while(x*x+y*y<=4 && i<100){ const xt=x*x-y*y+x0; y=2*x*y+y0; x=xt; i++; }
+    const v=i===100?235: Math.floor(60*Math.pow(i/100,0.5)), idx=(py*w+px)*4; img.data[idx]=v; img.data[idx+1]=v; img.data[idx+2]=v; img.data[idx+3]=255;
+  }}
+  mctx.putImageData(img,0,0);
+}
+drawMandel();
+mandel.addEventListener('click',e=>{
+  const r=mandel.getBoundingClientRect(), x=(e.clientX-r.left)/r.width, y=(e.clientY-r.top)/r.height;
+  setC(x*3-2, y*2.4-1.2);
+});
+function updateMandelDot(){
+  const r=mandel.getBoundingClientRect(); const x=(curC.x+2)/3*r.width, y=(curC.y+1.2)/2.4*r.height;
+  mDot.style.left=x+'px'; mDot.style.top=y+'px';
+}
+document.getElementById('randomC').onclick=()=>{ const p=presets[Math.floor(Math.random()*presets.length)]; setC(p.c[0],p.c[1]); };
+
+// --- W boundary ---
+const w8=document.getElementById('w8'), connStatus=document.getElementById('connStatus');
+function inMandel(cx,cy){ let x=0,y=0; for(let i=0;i<200;i++){ const xt=x*x-y*y+cx; y=2*x*y+cy; x=xt; if(x*x+y*y>4) return false; } return true; }
+function updateW(){
+  const inside=inMandel(curC.x,curC.y);
+  connStatus.textContent = inside?'CONNECTED':'DUST';
+  connStatus.className = 'mono text-[11px] px-2 py-1 rounded border ' + (inside?'bg-white text-black border-white':'bg-white/10 border-white/15 text-white/90');
+  w8.className = 'w-9 h-12 grid place-items-center rounded-lg mono text-xl font-medium transition ' + (inside?'bg-white text-black shadow-[0_0_20px_rgba(255,255,255,0.25)]':'bg-white/5 border border-white/10 text-white/70');
+}
+
+// --- 23-bit coin ---
+const coin=document.getElementById('coin'), cctx=coin.getContext('2d'), bitsEl=document.getElementById('bits'), bar=document.getElementById('coinBar');
+function drawCoin(){
+  const w=coin.width, h=coin.height; cctx.clearRect(0,0,w,h); cctx.save(); cctx.translate(w/2,h/2);
+  const t=performance.now()*0.001, rot=t*0.6;
+  const hash = Math.abs(Math.floor((curC.x+2.5)*7111 + (curC.y+2.5)*13331)) % (1<<23);
+  bitsEl.textContent = hash.toString(2).padStart(23,'0');
+  bar.style.width = (5+ (hash % 95)) + '%';
+  for(let side=-1; side<=1; side+=2){
+    cctx.save(); cctx.translate(side*60,0); cctx.rotate(rot*side*0.8);
+    cctx.strokeStyle='rgba(255,255,255,0.14)'; cctx.lineWidth=2; cctx.beginPath(); cctx.arc(0,0,48,0,Math.PI*2); cctx.stroke();
+    cctx.beginPath(); cctx.arc(0,0,36,0,Math.PI*2); cctx.stroke();
+    for(let i=0;i<23;i++){ const a=i/23*Math.PI*2; const bit=(hash>>i)&1; const x=Math.cos(a)*42, y=Math.sin(a)*42;
+      cctx.fillStyle=bit?'rgba(255,255,255,0.92)':'rgba(255,255,255,0.28)'; cctx.font='11px Fragment Mono'; cctx.textAlign='center'; cctx.textBaseline='middle'; cctx.fillText(bit, x, y);
+    }
+    cctx.fillStyle='rgba(255,255,255,0.85)'; cctx.beginPath(); cctx.arc(0,0,3,0,Math.PI*2); cctx.fill();
+    cctx.restore();
+  }
+  cctx.restore(); requestAnimationFrame(drawCoin);
+}
+drawCoin();
+
+// --- observers ---
+const obs=document.getElementById('observers');
+for(let i=0;i<22;i++){
+  const a=i/22*Math.PI*2 - Math.PI/2, r=52, x=50 + r*Math.cos(a)*0.92, y=50 + r*Math.sin(a)*0.85;
+  const d=document.createElement('div'); d.className='observer absolute w-5 h-5 -translate-x-1/2 -translate-y-1/2 text-white/35'; d.style.left=x+'%'; d.style.top=y+'%'; d.style.animationDelay=(i*0.18)+'s';
+  d.innerHTML=`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z"/><circle cx="12" cy="12" r="3"/></svg>`;
+  obs.appendChild(d);
+}
+
+// --- toroids ---
+const tor=document.getElementById('toroids');
+for(let i=0;i<132;i++){ const d=document.createElement('div'); d.className='relative aspect-square'; const dur=2+Math.random()*3.5;
+  d.innerHTML=`<div class="absolute inset-0 rounded-full border border-white/[0.07]"></div><div class="absolute inset-[28%] rounded-full border border-white/20 animate-ping" style="animation-duration:${dur}s;animation-delay:${(i%13)*0.07}s"></div>`; tor.appendChild(d);
+}
+
+// --- 3rd uncertain ---
+const third=document.getElementById('third');
+setInterval(()=>{
+  const p=presets[Math.floor(Math.random()*presets.length)];
+  third.classList.remove('opacity-0'); setTimeout(()=>third.classList.add('opacity-0'),1100);
+  setC(p.c[0], p.c[1]);
+}, 8800);
+</script>
+</body>
+</html>

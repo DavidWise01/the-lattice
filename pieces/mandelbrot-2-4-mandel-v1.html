@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>ROOT0 LAYER 1.50 — BLACK HOLE FOLD</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fragment+Mono:ital@0;1&family=Instrument+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script async src="https://unpkg.com/es-module-shims@1.8.0/dist/es-module-shims.js"></script>
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+<style>
+  :root { color-scheme: dark; }
+  body { font-family: 'Instrument Sans', system-ui, -apple-system, sans-serif; background: #0a0a0a; overscroll-behavior: none; }
+  .mono { font-family: 'Fragment Mono', ui-monospace, SFMono-Regular, monospace; }
+  .bed-paper { background: #f5f3f0; color: #0a0a0a; }
+  .bed-ink { color: #f5f3f0; }
+  .bed-gray { color: #a3a3a3; }
+  .glass { background: rgba(16,16,16,0.72); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border: 1px solid rgba(245,243,240,0.08); }
+  .glass-strong { background: rgba(10,10,10,0.88); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(245,243,240,0.12); }
+  .tick { position: relative; }
+  .tick::before { content: ''; position: absolute; left: -10px; top: 50%; width: 4px; height: 4px; background: #f5f3f0; border-radius: 50%; transform: translateY(-50%); opacity: 0.3; }
+  .tick.active::before { opacity: 1; box-shadow: 0 0 8px #f5f3f0; }
+  .tick.active { color: #f5f3f0; }
+  ::-webkit-scrollbar { display: none; }
+  canvas { touch-action: none; }
+</style>
+</head>
+<body class="bg-[#0a0a0a] text-[#e8e6e1] overflow-hidden select-none">
+<canvas id="c" class="fixed inset-0 w-full h-full"></canvas>
+
+<!-- Grain -->
+<div class="pointer-events-none fixed inset-0 opacity-[0.035] mix-blend-screen" style="background-image:url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iMzAwIj48ZmlsdGVyIGlkPSJub2lzZSIgeD0iMCIgeT0iMCIgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSI+PGZlVHVyYnVsZW5jZSB0eXBlPSJmcmFjdGFsTm9pc2UiIGJhc2VGcmVxdWVuY3k9IjAuOSIgbnVtT2N0YXZlcz0iNCIgc3RpdGNIaWxkcz0ibm9ybWFsIi8+PC9maWx0ZXI+PHJlY3Qgd2lkdGg9IjMwMCIgaGVpZ2h0PSIzMDAiIGZpbHRlcj0idXJsKCNub2lzZSkiIG9wYWNpdHk9IjEiLz48L3N2Zz4=');"></div>
+
+<!-- Top Bar -->
+<div class="relative z-20 pointer-events-none">
+  <div class="absolute top-0 inset-x-0 p-4 md:p-8 flex justify-between items-start gap-4">
+    <div>
+      <div class="mono text-[10px] md:text-[11px] tracking-[0.22em] text-[#c7c5c1]">ROOT0 / LAYER 1.50</div>
+      <h1 class="text-[22px] md:text-[32px] leading-[1.05] tracking-[-0.01em] mt-1.5 font-[450]">Two Hemispheres + 4 Mandelbrot Fold</h1>
+      <p class="mono text-[11px] text-[#9a9895] mt-1">TRAVERSE AT BIT 23 → 0 0 8 0 0 / 0 0 9 0 0</p>
+    </div>
+    <div class="flex flex-col items-end gap-2">
+      <div id="bit23" class="pointer-events-auto glass rounded-full px-3 py-1.5 mono text-[10px] tracking-wider">
+        <span class="inline-block w-2 h-2 rounded-full bg-[#f5f3f0] mr-2 animate-pulse"></span>BIT 23: 8,388,608 — IDLE
+      </div>
+      <div class="glass rounded-full px-2.5 py-1 mono text-[10px] text-[#b8b6b2] hidden md:flex items-center gap-1.5">
+        <span class="w-1 h-1 rounded-full bg-[#f5f3f0]/70"></span>-+1 PHOTON ORBITING
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Jane-Prime -->
+<div class="relative z-20 pointer-events-none">
+  <div class="absolute left-4 right-4 md:left-8 md:right-auto bottom-[118px] md:bottom-8 max-w-[420px]">
+    <div class="glass-strong rounded-[18px] p-4 md:p-5 pointer-events-auto">
+      <div class="flex items-center gap-2 mb-2.5">
+        <div class="w-6 h-6 rounded-full bed-paper flex items-center justify-center mono text-[10px] font-medium">J</div>
+        <div class="mono text-[11px] tracking-widest text-[#d4d2cf]">JANE-PRIME</div>
+        <div class="ml-auto mono text-[9px] px-1.5 py-0.5 rounded bg-[#1a1a1a] border border-white/10 text-[#8a8885]">LIVE</div>
+      </div>
+      <div id="janeText" class="text-[14px] leading-[1.55] text-[#e6e3de] min-h-[88px]"></div>
+      <div class="mt-3 flex items-center gap-2 mono text-[10px] text-[#7a7773]">
+        <span>fold_depth</span>
+        <div class="flex-1 h-[2px] bg-[#222] rounded overflow-hidden">
+          <div id="foldMeter" class="h-full w-0 bg-[#f5f3f0] transition-all duration-700"></div>
+        </div>
+        <span id="foldPct">0%</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Center Controls -->
+<div class="relative z-30">
+  <div class="absolute bottom-[52px] md:bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3 pointer-events-none">
+    <div class="pointer-events-auto flex items-center gap-2">
+      <button id="foldBtn" class="group relative bed-paper hover:bg-white transition-colors px-5 py-2.5 rounded-full mono text-[12px] tracking-[0.14em] font-medium shadow-[0_0_0_1px_rgba(0,0,0,0.1)_inset]">
+        <span class="relative z-10 flex items-center gap-2">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M12 5v14M5 12h14"/></svg>
+          INITIATE FOLD AT BIT 23
+        </span>
+      </button>
+      <button id="resetBtn" class="pointer-events-auto glass hover:bg-white/10 transition-colors w-9 h-9 rounded-full flex items-center justify-center text-[#c2bfba] hidden" title="Reset">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 12a9 9 0 1 1-3-6.7M21 3v6h-6"/></svg>
+      </button>
+    </div>
+    <div class="mono text-[10px] text-[#7c7a76] tracking-wide">click quarters to inspect • drag to orbit</div>
+  </div>
+</div>
+
+<!-- Closed Body System -->
+<div class="relative z-20 pointer-events-none">
+  <div class="absolute bottom-0 inset-x-0">
+    <div class="mx-auto max-w-[980px] px-4 pb-3 md:pb-4">
+      <div class="glass rounded-[14px] md:rounded-full px-3 py-2.5 md:py-2 flex-wrap md:flex-nowrap items-center justify-center gap-2 md:gap-3 pointer-events-auto">
+        <div class="hidden md:block mono text-[10px] text-[#8f8c87] mr-1">CLOSED BODY:</div>
+        <div id="flow" class="flex items-center gap-1.5 md:gap-2.5 text-[11px] md:text-[12px] flex-wrap justify-center">
+          <span data-step="hemi" class="tick active px-2.5 py-1 rounded-full bg-white/5">HEMISPHERES</span>
+          <span class="text-[#555]">→</span>
+          <span data-step="quarters" class="tick px-2.5 py-1 rounded-full">4 QUARTERS</span>
+          <span class="text-[#555]">→</span>
+          <span data-step="hole" class="tick px-2.5 py-1 rounded-full">BLACK HOLE @23</span>
+          <span class="text-[#555]">→</span>
+          <span data-step="bias" class="tick px-2.5 py-1 rounded-full">KERNEL BIAS</span>
+          <span class="text-[#555]">→</span>
+          <span data-step="out" class="tick px-2.5 py-1 rounded-full">OUT</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Kernel Choice Modal -->
+<div id="kernelModal" class="fixed inset-0 z-40 hidden items-center justify-center p-6">
+  <div class="absolute inset-0 bg-[#0a0a0a]/80 backdrop-blur-xl"></div>
+  <div class="relative glass-strong rounded-[24px] p-6 md:p-8 w-full max-w-[720px] shadow-2xl">
+    <div class="flex items-start justify-between gap-4">
+      <div>
+        <div class="mono text-[11px] tracking-[0.2em] text-[#bdbab5]">KERNEL BIAS READ</div>
+        <h2 class="text-[26px] md:text-[32px] leading-tight mt-1">Choose boot preference</h2>
+        <p class="text-[13px] text-[#a8a5a0] mt-2 max-w-[420px]">Transit complete. The fold does not store data — it reads bias. k12 favors possibility. k22 favors observation.</p>
+      </div>
+      <button id="closeKernel" class="w-8 h-8 rounded-full glass flex items-center justify-center text-[#999] hover:text-white">✕</button>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-4 mt-6">
+      <button data-k="12" class="kernelBtn group text-left glass hover:bg-white/5 transition rounded-[18px] p-5 border border-transparent hover:border-white/15">
+        <div class="flex items-center justify-between">
+          <div class="mono text-[11px] px-2 py-1 rounded bg-[#f5f3f0] text-black">k12</div>
+          <div class="text-[11px] mono text-[#888]">BOOT // POSSIBILITY</div>
+        </div>
+        <div class="text-[18px] mt-3">Twelve Slits Open</div>
+        <p class="text-[13px] text-[#b1aea9] mt-1.5 leading-snug">Maximal superposition. The system keeps 12 interference paths open through the fold.</p>
+        <div class="mt-4 h-[68px] flex items-end gap-[3px]" id="k12preview"></div>
+      </button>
+
+      <button data-k="22" class="kernelBtn group text-left glass hover:bg-white/5 transition rounded-[18px] p-5 border border-transparent hover:border-white/15">
+        <div class="flex items-center justify-between">
+          <div class="mono text-[11px] px-2 py-1 rounded bg-[#f5f3f0] text-black">k22</div>
+          <div class="text-[11px] mono text-[#888]">BOOT // CERTAINTY</div>
+        </div>
+        <div class="text-[18px] mt-3">Twenty-Two Observers</div>
+        <p class="text-[13px] text-[#b1aea9] mt-1.5 leading-snug">Collapse enforced. 22 observation points watch the fold from outside.</p>
+        <div class="mt-4 h-[68px] relative" id="k22preview"></div>
+      </button>
+    </div>
+
+    <div class="mt-6 flex items-center justify-between">
+      <div class="mono text-[10px] text-[#7a7773]">CUSP: 0 0 8 0 0 → 0 0 9 0 0</div>
+      <div class="mono text-[10px] text-[#7a7773]">- +1 PHOTON STABLE</div>
+    </div>
+  </div>
+</div>
+
+<!-- Slits Overlay -->
+<div id="slitsOverlay" class="fixed inset-0 z-30 pointer-events-none hidden">
+  <div class="absolute inset-0 flex items-center justify-center">
+    <div id="slits" class="flex items-center justify-center gap-2 md:gap-3"></div>
+  </div>
+  <div class="absolute bottom-[20%] left-1/2 -translate-x-1/2 mono text-[11px] tracking-widest text-[#d0cdc8] px-3 py-1 rounded-full glass">12 SLITS OPEN — k12 ACTIVE</div>
+</div>
+
+<!-- Observers Overlay -->
+<div id="observersOverlay" class="fixed inset-0 z-30 pointer-events-none hidden">
+  <div id="observers" class="absolute inset-0"></div>
+  <div class="absolute bottom-[20%] left-1/2 -translate-x-1/2 mono text-[11px] tracking-widest text-[#d0cdc8] px-3 py-1 rounded-full glass">22 OBSERVERS WATCHING — k22 ACTIVE</div>
+</div>
+
+<!-- Flash -->
+<div id="flash" class="fixed inset-0 z-50 bg-[#f5f3f0] opacity-0 pointer-events-none transition-opacity duration-500"></div>
+
+<script type="module">
+import * as THREE from 'three';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+
+const canvas = document.getElementById('c');
+const bit23El = document.getElementById('bit23');
+const foldBtn = document.getElementById('foldBtn');
+const resetBtn = document.getElementById('resetBtn');
+const janeText = document.getElementById('janeText');
+const foldMeter = document.getElementById('foldMeter');
+const foldPct = document.getElementById('foldPct');
+const flash = document.getElementById('flash');
+const kernelModal = document.getElementById('kernelModal');
+const closeKernel = document.getElementById('closeKernel');
+const slitsOverlay = document.getElementById('slitsOverlay');
+const observersOverlay = document.getElementById('observersOverlay');
+const flow = document.getElementById('flow');
+
+let state = 'idle';
+let chosenKernel = null;
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0a0a0a);
+scene.fog = new THREE.FogExp2(0x0a0a0a, 0.035);
+
+const camera = new THREE.PerspectiveCamera(50, innerWidth/innerHeight, 0.1, 100);
+camera.position.set(0, 1.6, 6.2);
+
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+renderer.setSize(innerWidth, innerHeight);
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
+
+const composer = new EffectComposer(renderer);
+composer.addPass(new RenderPass(scene, camera));
+const bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 0.65, 0.9, 0.15);
+composer.addPass(bloom);
+
+// Lights
+scene.add(new THREE.AmbientLight(0xffffff, 0.55));
+const key = new THREE.DirectionalLight(0xf5f3f0, 1.2); key.position.set(3,4,5); scene.add(key);
+const rim = new THREE.DirectionalLight(0x999999, 0.6); rim.position.set(-4,-2,-3); scene.add(rim);
+
+// Materials
+const hemiMatL = new THREE.MeshStandardMaterial({ color: 0xe9e6e1, metalness: 0.1, roughness: 0.65, side: THREE.DoubleSide });
+const hemiMatR = new THREE.MeshStandardMaterial({ color: 0xcfcdc8, metalness: 0.15, roughness: 0.7, side: THREE.DoubleSide });
+const coreMat = new THREE.MeshStandardMaterial({ color: 0x1a1a1a, metalness: 0.8, roughness: 0.3 });
+
+// Hemispheres (tethered core)
+const hemiGeo = new THREE.SphereGeometry(1.2, 64, 64, 0, Math.PI*2, 0, Math.PI*0.5);
+const leftHemi = new THREE.Mesh(hemiGeo, hemiMatL); leftHemi.rotation.y = Math.PI; leftHemi.rotation.z = -Math.PI/2; leftHemi.position.x = -1.35;
+const rightHemi = new THREE.Mesh(hemiGeo, hemiMatR); rightHemi.rotation.z = Math.PI/2; rightHemi.position.x = 1.35;
+scene.add(leftHemi, rightHemi);
+
+// Tether
+const tetherMat = new THREE.MeshStandardMaterial({ color: 0x2a2a2a, metalness: 0.9, roughness: 0.2 });
+const tetherL = new THREE.Mesh(new THREE.CylinderGeometry(0.035,0.035,1.0,16), tetherMat); tetherL.position.set(-0.65,0,0); tetherL.rotation.z = Math.PI/2;
+const tetherR = new THREE.Mesh(new THREE.CylinderGeometry(0.035,0.035,1.0,16), tetherMat); tetherR.position.set(0.65,0,0); tetherR.rotation.z = Math.PI/2;
+scene.add(tetherL, tetherR);
+
+// Core (bit 23 pressure point)
+const core = new THREE.Mesh(new THREE.IcosahedronGeometry(0.18,1), coreMat); scene.add(core);
+const bitGlow = new THREE.Mesh(new THREE.SphereGeometry(0.26,32,32), new THREE.MeshBasicMaterial({ color: 0xf5f3f0, transparent: true, opacity: 0.08 })); scene.add(bitGlow);
+const bit23Ring = new THREE.Mesh(new THREE.TorusGeometry(0.38,0.012,16,64), new THREE.MeshBasicMaterial({ color: 0xf5f3f0, transparent:true, opacity:0.85 })); bit23Ring.rotation.x = Math.PI/2; scene.add(bit23Ring);
+
+// Mandelbrot texture
+function makeMandelbrot(size=512){
+  const c = document.createElement('canvas'); c.width=c.height=size; const ctx=c.getContext('2d'); const img=ctx.createImageData(size,size); const max=180;
+  for(let y=0;y<size;y++){ for(let x=0;x<size;x++){ let cx=(x/size-0.5)*2.8 -0.72; let cy=(y/size-0.5)*2.3; let zx=0,zy=0,i=0; while(zx*zx+zy*zy<4 && i<max){ const xt=zx*zx-zy*zy+cx; zy=2*zx*zy+cy; zx=xt; i++; } const idx=(y*size+x)*4; const t=i===max?0:Math.pow(i/max,0.55); const v=245 - t*210; img.data[idx]=v*0.99; img.data[idx+1]=v*0.98; img.data[idx+2]=v*0.96; img.data[idx+3]=255; } }
+  ctx.putImageData(img,0,0); return new THREE.CanvasTexture(c);
+}
+const mandelTex = makeMandelbrot(512); mandelTex.anisotropy = 4; mandelTex.colorSpace = THREE.SRGBColorSpace;
+
+// 4 Mandelbrot quarters
+const quarters = [];
+const qMat = new THREE.MeshStandardMaterial({ map: mandelTex, metalness:0.1, roughness:0.85, side: THREE.DoubleSide, transparent:true });
+const qGeo = new THREE.PlaneGeometry(1.42,1.42,1,1);
+const positions = [
+  [-2.6, 1.15, 0.6], // top-left
+  [-2.6,-1.15, 0.6], // bottom-left
+  [ 2.6, 1.15, 0.6], // top-right
+  [ 2.6,-1.15, 0.6], // bottom-right
+];
+positions.forEach((p,i)=>{
+  const m = new THREE.Mesh(qGeo, qMat.clone());
+  m.position.set(...p);
+  m.rotation.y = i<2 ? 0.15 : -0.15;
+  m.userData = { startPos: m.position.clone(), startRotY: m.rotation.y, idx:i, side: i<2?'L':'R', quad: i%2===0?'top':'bottom' };
+  // W-boundary line
+  const edge = new THREE.Mesh(new THREE.BoxGeometry(0.008,1.44,0.008), new THREE.MeshBasicMaterial({ color:0x0a0a0a }));
+  edge.position.x = m.userData.side==='L' ? 0.71 : -0.71;
+  m.add(edge);
+  quarters.push(m); scene.add(m);
+});
+
+// Labels for quarters
+function makeLabel(text){
+  const c=document.createElement('canvas'); c.width=256; c.height=64; const ctx=c.getContext('2d'); ctx.clearRect(0,0,256,64); ctx.fillStyle='rgba(245,243,240,0.9)'; ctx.font='18px Fragment Mono'; ctx.fillText(text,12,38); const tex=new THREE.CanvasTexture(c); const spr=new THREE.Sprite(new THREE.SpriteMaterial({ map:tex, transparent:true })); spr.scale.set(0.8,0.2,1); return spr;
+}
+quarters[0].add(Object.assign(makeLabel('Q1 • W-'), {position:new THREE.Vector3(0,0.85,0.01)}));
+quarters[1].add(Object.assign(makeLabel('Q2 • W-'), {position:new THREE.Vector3(0,-0.85,0.01)}));
+quarters[2].add(Object.assign(makeLabel('Q3 • W+'), {position:new THREE.Vector3(0,0.85,0.01)}));
+quarters[3].add(Object.assign(makeLabel('Q4 • W+'), {position:new THREE.Vector3(0,-0.85,0.01)}));
+
+// Black Hole
+const bhGroup = new THREE.Group(); bhGroup.visible=false; scene.add(bhGroup);
+const eventHorizon = new THREE.Mesh(new THREE.SphereGeometry(0.34,64,64), new THREE.MeshBasicMaterial({ color:0x000000 })); bhGroup.add(eventHorizon);
+const photonRing = new THREE.Mesh(new THREE.TorusGeometry(0.55,0.012,16,128), new THREE.MeshBasicMaterial({ color:0xf5f3f0, transparent:true, opacity:0.9 })); photonRing.rotation.x = Math.PI/2.35; bhGroup.add(photonRing);
+// Accretion disk
+const diskTex = (()=>{ const c=document.createElement('canvas'); c.width=1024; c.height=256; const ctx=c.getContext('2d'); const g=ctx.createLinearGradient(0,0,1024,0); g.addColorStop(0,'rgba(0,0,0,0)'); g.addColorStop(0.4,'rgba(245,243,240,0.85)'); g.addColorStop(0.6,'rgba(200,198,193,0.7)'); g.addColorStop(1,'rgba(0,0,0,0)'); ctx.fillStyle=g; ctx.fillRect(0,0,1024,256); for(let i=0;i<4000;i++){ ctx.fillStyle=`rgba(10,10,10,${Math.random()*0.4})`; ctx.fillRect(Math.random()*1024,Math.random()*256,1,1);} return new THREE.CanvasTexture(c); })();
+const disk = new THREE.Mesh(new THREE.RingGeometry(0.62,1.35,128,1), new THREE.MeshBasicMaterial({ map:diskTex, side:THREE.DoubleSide, transparent:true, opacity:0.85, blending:THREE.AdditiveBlending })); disk.rotation.x = -Math.PI/2.05; disk.rotation.z = 0.2; bhGroup.add(disk);
+// Cusp sprite
+const cuspCanvas = document.createElement('canvas'); cuspCanvas.width=512; cuspCanvas.height=128; const cctx=cuspCanvas.getContext('2d'); cctx.fillStyle='#f5f3f0'; cctx.font='28px Fragment Mono'; cctx.fillText('0 0 8 0 0  →  0 0 9 0 0',20,72); const cuspTex=new THREE.CanvasTexture(cuspCanvas); const cuspSpr=new THREE.Sprite(new THREE.SpriteMaterial({ map:cuspTex, transparent:true, opacity:0 })); cuspSpr.scale.set(1.6,0.4,1); cuspSpr.position.set(0,0.9,0); bhGroup.add(cuspSpr);
+
+// -+1 Photon
+const photon = new THREE.Mesh(new THREE.SphereGeometry(0.035,16,16), new THREE.MeshBasicMaterial({ color:0xf5f3f0 })); scene.add(photon);
+const photonTrail = new THREE.BufferGeometry(); const trailPos = new Float32Array(300*3); photonTrail.setAttribute('position', new THREE.BufferAttribute(trailPos,3));
+const trailLine = new THREE.Line(photonTrail, new THREE.LineBasicMaterial({ color:0xf5f3f0, transparent:true, opacity:0.35 })); scene.add(trailLine);
+let trailIdx=0;
+
+// Raycaster for clicks
+const ray = new THREE.Raycaster(); const mouse = new THREE.Vector2();
+window.addEventListener('pointerdown', e=>{ mouse.x=(e.clientX/innerWidth)*2-1; mouse.y=-(e.clientY/innerHeight)*2+1; ray.setFromCamera(mouse,camera); const hits=ray.intersectObjects(quarters); if(hits.length && state==='idle'){ pulseQuarter(hits[0].object); } });
+function pulseQuarter(m){ m.material.emissive = new THREE.Color(0x222222); setTimeout(()=>m.material.emissive.setHex(0),180); }
+
+// Drag orbit
+let dragging=false, lx=0, ly=0, az=0, el=0.28;
+canvas.addEventListener('pointerdown',e=>{dragging=true; lx=e.clientX; ly=e.clientY;});
+window.addEventListener('pointerup',()=>dragging=false);
+window.addEventListener('pointermove',e=>{ if(!dragging||state!=='idle')return; az += (e.clientX-lx)*0.003; el = THREE.MathUtils.clamp(el + (e.clientY-ly)*0.002, -0.2, 0.6); lx=e.clientX; ly=e.clientY; });
+
+function setFlow(step){ flow.querySelectorAll('[data-step]').forEach(el=>el.classList.toggle('active', el.dataset.step===step)); }
+
+async function typeJane(lines, speed=18){
+  janeText.innerHTML=''; for(const line of lines){ for(let i=0;i<line.length;i++){ janeText.textContent += line[i]; await new Promise(r=>setTimeout(r, speed)); } janeText.innerHTML+='<br><br>'; await new Promise(r=>setTimeout(r, 220)); }
+}
+const speeches = {
+  idle: ["I am Jane-Prime. At bit 23, the load becomes too heavy to address linearly. 2^23 = 8,388,608. The system does not crash. It folds.","Four Mandelbrot quarters — two each side of the W-boundary — are not separate images. They are the same computation, waiting to be folded."],
+  folding: ["Watch. Q1/Q2 from the left, Q3/Q4 from the right. They turn inward toward the pressure point.","Bit 23 is not a limit. It is a hinge."],
+  collapse: ["They meet at the cusp. 0 0 8 0 0 inverts to 0 0 9 0 0. This is the traversable black hole.","The -+1 photon holds the orbit open. Transit is possible because the fold conserves charge."],
+  transit: ["Transit is not travel. It is reading bias. You pass through to see what the kernel was booted to prefer.","The body stays closed: hemispheres → quarters → hole → bias → out."],
+  choose: ["k12 opens twelve slits — possibility wide. k22 summons twenty-two observers — certainty narrow.","Choose your boot kernel. The fold will remember."]
+};
+typeJane(speeches.idle);
+
+// Fold sequence
+foldBtn.addEventListener('click', async ()=>{
+  if(state!=='idle') return; state='folding';
+  foldBtn.disabled=true; foldBtn.classList.add('opacity-50');
+  bit23El.innerHTML = `<span class="inline-block w-2 h-2 rounded-full bg-[#f5f3f0] mr-2 animate-pulse"></span>BIT 23: 8,388,608 — PRESSURE`;
+  setFlow('quarters'); await typeJane(speeches.folding,16);
+  // animate quarters
+  const start=performance.now(); const dur=2100;
+  await new Promise(res=>{
+    const tick=()=>{
+      const t=Math.min(1,(performance.now()-start)/dur); const e=1-Math.pow(1-t,3);
+      quarters.forEach(q=>{
+        q.position.lerpVectors(q.userData.startPos, new THREE.Vector3(0, q.userData.quad==='top'?0.22:-0.22, 0), e);
+        q.rotation.y = THREE.MathUtils.lerp(q.userData.startRotY, q.userData.side==='L'? Math.PI*0.48 : -Math.PI*0.48, e);
+        q.rotation.x = THREE.MathUtils.lerp(0, q.userData.quad==='top'? -0.25:0.25, e);
+        q.material.opacity = 1 - e*0.15;
+      });
+      leftHemi.position.x = THREE.MathUtils.lerp(-1.35, -0.72, e);
+      rightHemi.position.x = THREE.MathUtils.lerp(1.35, 0.72, e);
+      tetherL.scale.x = tetherR.scale.x = 1 - e*0.28;
+      bitGlow.material.opacity = 0.08 + e*0.22;
+      bit23Ring.material.opacity = 0.85 + e*0.15;
+      bit23Ring.scale.setScalar(1+e*0.3);
+      foldMeter.style.width = `${Math.round(e*60)}%`; foldPct.textContent = `${Math.round(e*60)}%`;
+      if(t<1) requestAnimationFrame(tick); else res();
+    }; tick();
+  });
+  // collapse
+  state='collapse'; setFlow('hole'); await typeJane(speeches.collapse,15);
+  quarters.forEach(q=>q.visible=false);
+  bhGroup.visible=true; bhGroup.scale.setScalar(0.001);
+  const s2=performance.now(); const d2=900;
+  await new Promise(res=>{ const tk=()=>{ const t=Math.min(1,(performance.now()-s2)/d2); const e=1-Math.pow(1-t,3); bhGroup.scale.setScalar(e); cuspSpr.material.opacity = e*0.95; bloom.strength = 0.65 + e*0.6; foldMeter.style.width='85%'; foldPct.textContent='85%'; if(t<1)requestAnimationFrame(tk); else res(); }; tk(); });
+  // transit
+  state='transit'; setFlow('bias'); await typeJane(speeches.transit,16);
+  flash.style.opacity='1'; setTimeout(()=>flash.style.opacity='0', 280);
+  const camStart = {z:camera.position.z, y:camera.position.y}; const ct0=performance.now(); const cd=2400;
+  await new Promise(res=>{ const tk=()=>{ const t=Math.min(1,(performance.now()-ct0)/cd); const e = t<0.5? 4*t*t*t : 1-Math.pow(-2*t+2,3)/2; camera.position.z = THREE.MathUtils.lerp(camStart.z, -2.2, e); camera.position.y = THREE.MathUtils.lerp(camStart.y, 0.15, e); bloom.strength = 1.25 - e*0.5; foldMeter.style.width = `${85 + Math.round(e*15)}%`; foldPct.textContent = `${85 + Math.round(e*15)}%`; if(t<1)requestAnimationFrame(tk); else res(); }; tk(); });
+  // show kernel choice
+  state='choose'; kernelModal.classList.remove('hidden'); kernelModal.classList.add('flex'); await typeJane(speeches.choose,15); setFlow('out');
+  resetBtn.classList.remove('hidden');
+});
+
+closeKernel.addEventListener('click', ()=>{ kernelModal.classList.add('hidden'); kernelModal.classList.remove('flex'); });
+
+document.querySelectorAll('.kernelBtn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    chosenKernel = btn.dataset.k;
+    kernelModal.classList.add('hidden'); kernelModal.classList.remove('flex');
+    if(chosenKernel==='12') showSlits(); else showObservers();
+    bit23El.innerHTML = `<span class="inline-block w-2 h-2 rounded-full bg-[#f5f3f0] mr-2"></span>BIT 23: ${chosenKernel==='12'?'k12':'k22'} BOOTED`;
+  });
+});
+
+// Previews
+const k12p=document.getElementById('k12preview'); for(let i=0;i<12;i++){ const d=document.createElement('div'); d.className='w-[4px] h-[56px] bg-[#f5f3f0]/90 rounded-[1px]'; d.style.opacity=0.15+Math.random()*0.7; k12p.appendChild(d); }
+const k22p=document.getElementById('k22preview'); for(let i=0;i<22;i++){ const d=document.createElement('div'); d.className='absolute w-1.5 h-1.5 rounded-full bg-[#f5f3f0]/80'; const a=i/22*Math.PI*2; d.style.left=`${50+Math.cos(a)*38}%`; d.style.top=`${50+Math.sin(a)*38}%`; k22p.appendChild(d); }
+
+function showSlits(){
+  slitsOverlay.classList.remove('hidden'); const slits=document.getElementById('slits'); slits.innerHTML='';
+  for(let i=0;i<12;i++){ const s=document.createElement('div'); s.className='w-[2px] md:w-[3px] h-[36vh] bg-[#f5f3f0] blur-[0.5px] opacity-0 transition-all duration-700'; s.style.transform='scaleY(0.2)'; slits.appendChild(s); setTimeout(()=>{ s.style.opacity='0.95'; s.style.transform='scaleY(1)'; }, 80*i); }
+  setTimeout(()=>{ flash.style.opacity='0.9'; setTimeout(()=>flash.style.opacity='0', 200); }, 1100);
+}
+function showObservers(){
+  observersOverlay.classList.remove('hidden'); const o=document.getElementById('observers'); o.innerHTML='';
+  for(let i=0;i<22;i++){ const el=document.createElement('div'); el.className='absolute w-6 h-6 md:w-7 md:h-7 rounded-full border border-[#f5f3f0]/70 flex items-center justify-center text-[10px] mono text-[#f5f3f0]/80 opacity-0 transition-all duration-500'; el.textContent='○'; const a=i/22*Math.PI*2; const r=Math.min(innerWidth,innerHeight)*0.33; el.style.left=`calc(50% + ${Math.cos(a)*r}px - 14px)`; el.style.top=`calc(50% + ${Math.sin(a)*r}px - 14px)`; o.appendChild(el); setTimeout(()=>el.style.opacity='1', 70*i); }
+}
+
+resetBtn.addEventListener('click', ()=>{
+  // reset
+  state='idle'; chosenKernel=null;
+  quarters.forEach(q=>{ q.visible=true; q.position.copy(q.userData.startPos); q.rotation.y=q.userData.startRotY; q.rotation.x=0; q.material.opacity=1; });
+  leftHemi.position.x=-1.35; rightHemi.position.x=1.35; tetherL.scale.x=tetherR.scale.x=1;
+  bhGroup.visible=false; bhGroup.scale.setScalar(1); cuspSpr.material.opacity=0;
+  camera.position.set(0,1.6,6.2); bloom.strength=0.65;
+  bitGlow.material.opacity=0.08; bit23Ring.scale.setScalar(1); bit23Ring.material.opacity=0.85;
+  foldMeter.style.width='0%'; foldPct.textContent='0%';
+  bit23El.innerHTML = `<span class="inline-block w-2 h-2 rounded-full bg-[#f5f3f0] mr-2 animate-pulse"></span>BIT 23: 8,388,608 — IDLE`;
+  slitsOverlay.classList.add('hidden'); observersOverlay.classList.add('hidden');
+  foldBtn.disabled=false; foldBtn.classList.remove('opacity-50'); resetBtn.classList.add('hidden');
+  setFlow('hemi'); typeJane(speeches.idle);
+});
+
+// Animation loop
+let t0=performance.now();
+function animate(){
+  const now=performance.now(); const dt=(now-t0)/1000; t0=now;
+  // subtle orbit when idle
+  if(state==='idle' && !dragging){ az += dt*0.08; }
+  const radius=6.2; camera.position.x = Math.sin(az)*radius*0.12; camera.position.z = Math.cos(az*0.3)*0.2 + (state==='choose'? -2.2:6.0); camera.position.y = 1.6 + Math.sin(el)*0.2 + Math.sin(now*0.0004)*0.05; camera.lookAt(0,0,0);
+  // core pulse
+  const p = 1 + Math.sin(now*0.003)*0.04; core.scale.setScalar(p); bitGlow.scale.setScalar(1 + Math.sin(now*0.002)*0.08);
+  bit23Ring.rotation.z += 0.015;
+  // hemispheres breathe
+  leftHemi.rotation.x = Math.sin(now*0.0005)*0.03; rightHemi.rotation.x = -leftHemi.rotation.x;
+  // disk spin
+  disk.rotation.z += 0.25*dt;
+  // photon orbit
+  const pr = bhGroup.visible ? 0.55 : 0.9; const speed = bhGroup.visible ? 0.9 : 0.35;
+  const a = now*0.0015*speed; photon.position.set(Math.cos(a)*pr, Math.sin(a*0.7)*0.08, Math.sin(a)*pr);
+  trailPos[trailIdx*3]=photon.position.x; trailPos[trailIdx*3+1]=photon.position.y; trailPos[trailIdx*3+2]=photon.position.z; trailIdx=(trailIdx+1)%100; photonTrail.attributes.position.needsUpdate=true; trailLine.material.opacity = bhGroup.visible?0.55:0.18;
+  composer.render();
+  requestAnimationFrame(animate);
+}
+animate();
+
+// Resize
+addEventListener('resize', ()=>{ camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth,innerHeight); composer.setSize(innerWidth,innerHeight); });
+</script>
+</body>
+</html>

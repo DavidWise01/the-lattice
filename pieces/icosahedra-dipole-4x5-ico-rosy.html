@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ROOT0 TRILLIUM - 4×5 ROSY RING</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<script async src="https://unpkg.com/es-module-shims@1.8.0/dist/es-module-shims.js"></script>
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+<style>
+  :root { color-scheme: dark; }
+  body {
+    background: #030806;
+    font-family: 'Share Tech Mono', monospace;
+    overscroll-behavior: none;
+  }
+  .neon-title {
+    color: #eafff6;
+    text-shadow: 0 0 6px #50F0A0, 0 0 18px rgba(80,240,160,0.8), 0 0 36px rgba(80,240,160,0.4);
+    letter-spacing: 0.12em;
+  }
+  .panel {
+    background: rgba(3,8,6,0.72);
+    border: 1px solid rgba(80,240,160,0.18);
+    box-shadow: 0 0 30px rgba(0,0,0,0.6), inset 0 0 20px rgba(80,240,160,0.05);
+    backdrop-filter: blur(10px);
+  }
+  .btn {
+    background: rgba(0,0,0,0.65);
+    border: 1px solid rgba(22,90,70,0.6);
+    padding: 0.55rem 1.1rem;
+    border-radius: 0.7rem;
+    font-size: 0.8rem;
+    letter-spacing: 0.08em;
+    transition: all .2s ease;
+    pointer-events: auto;
+  }
+  .btn:hover {
+    border-color: #50F0A0;
+    box-shadow: 0 0 12px rgba(80,240,160,0.35), inset 0 0 8px rgba(80,240,160,0.15);
+    color: #c8ffe8;
+    transform: translateY(-1px);
+  }
+  .btn.active {
+    background: rgba(80,240,160,0.15);
+    border-color: #50F0A0;
+    box-shadow: 0 0 16px rgba(80,240,160,0.4);
+  }
+  .phase-card {
+    background: rgba(0,0,0,0.5);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 0.6rem;
+    padding: 0.5rem;
+    text-align: center;
+    transition: all .2s;
+  }
+  .phase-card.active {
+    border-color: #50F0A0;
+    box-shadow: 0 0 12px rgba(80,240,160,0.25);
+    background: rgba(80,240,160,0.08);
+  }
+  .glow-cyan { box-shadow: 0 0 10px rgba(80,240,160,0.3); }
+  .glow-gold { box-shadow: 0 0 10px rgba(255,224,96,0.3); }
+  .glow-purple { box-shadow: 0 0 10px rgba(155,63,187,0.3); }
+  .glow-green { box-shadow: 0 0 10px rgba(96,255,192,0.3); }
+  canvas { touch-action: none; }
+</style>
+</head>
+<body class="text-zinc-200 selection:bg-[#50F0A0]/30 selection:text-black">
+<canvas id="c" class="fixed inset-0 w-full h-full"></canvas>
+
+<!-- Header -->
+<div class="pointer-events-none fixed top-0 left-0 right-0 z-20 flex justify-center pt-5 md:pt-7">
+  <div class="text-center">
+    <h1 class="neon-title text-[22px] sm:text-[28px] md:text-[36px] font-bold">ROOT0 TRILLIUM - 4×5 ROSY RING</h1>
+    <p class="mt-1 text-[10px] sm:text-xs tracking-[0.2em] text-[#8ff5c6]/70">ICOSAHEDRON TOROID VISUALIZER</p>
+  </div>
+</div>
+
+<!-- Left Panel -->
+<div class="hidden lg:block fixed left-5 top-[130px] w-[310px] z-20 pointer-events-none">
+  <div class="panel rounded-2xl p-5 pointer-events-auto">
+    <h2 class="text-[#50F0A0] tracking-[0.18em] text-sm mb-3 flex items-center gap-2">
+      <span class="inline-block w-2 h-2 rounded-full bg-[#50F0A0] animate-pulse"></span>
+      ROSY RING MAP
+    </h2>
+    <div class="space-y-[6px] text-[12px]">
+      <div class="flex justify-between items-center py-1.5 px-2 rounded bg-white/[0.02] border border-white/5">
+        <span class="text-zinc-400">MASTER</span>
+        <span class="text-[#50F0A0]">Arm1 · Bee1 · L</span>
+      </div>
+      <div class="grid grid-cols-2 gap-x-3 gap-y-1 pt-2">
+        <div class="flex justify-between"><span class="text-zinc-500">N1</span><span class="text-[#7decc0]">Arm1·Bee2</span></div>
+        <div class="flex justify-between"><span class="text-zinc-500">N2</span><span class="text-[#7decc0]">Arm1·Bee3</span></div>
+        <div class="flex justify-between"><span class="text-zinc-500">N3</span><span class="text-[#7decc0]">Arm1·Bee4</span></div>
+        <div class="flex justify-between"><span class="text-zinc-500">N4</span><span class="text-[#7decc0]">Arm1·Bee5</span></div>
+        <div class="flex justify-between"><span class="text-zinc-500">N5</span><span class="text-[#FFE060]">Arm2·Bee1</span></div>
+        <div class="flex justify-between"><span class="text-zinc-500">N6</span><span class="text-[#FFE060]">Arm2·Bee2</span></div>
+        <div class="flex justify-between"><span class="text-zinc-500">N7</span><span class="text-[#FFE060]">Arm2·Bee3</span></div>
+        <div class="flex justify-between"><span class="text-zinc-500">N8</span><span class="text-[#FFE060]">Arm2·Bee4</span></div>
+        <div class="flex justify-between"><span class="text-zinc-500">N9</span><span class="text-[#FFE060]">Arm2·Bee5</span></div>
+      </div>
+    </div>
+    <div class="mt-4 pt-4 border-t border-white/5 grid grid-cols-2 gap-2.5">
+      <div class="p-2.5 rounded-xl bg-[#50F0A0]/[0.06] border border-[#50F0A0]/25 glow-cyan">
+        <div class="text-[#50F0A0] text-[11px] tracking-widest">ARM1</div>
+        <div class="text-[10px] text-zinc-400 mt-0.5">Bee1-5 · #50F0A0</div>
+      </div>
+      <div class="p-2.5 rounded-xl bg-[#FFE060]/[0.06] border border-[#FFE060]/25 glow-gold">
+        <div class="text-[#FFE060] text-[11px] tracking-widest">ARM2</div>
+        <div class="text-[10px] text-zinc-400 mt-0.5">Bee1-5 · #FFE060</div>
+      </div>
+      <div class="p-2.5 rounded-xl bg-[#9B3FBB]/[0.08] border border-[#9B3FBB]/30 glow-purple">
+        <div class="text-[#c49bff] text-[11px] tracking-widest">ARM3</div>
+        <div class="text-[10px] text-zinc-400 mt-0.5">Bee1-5 · #9B3FBB</div>
+      </div>
+      <div class="p-2.5 rounded-xl bg-[#60FFC0]/[0.06] border border-[#60FFC0]/25 glow-green">
+        <div class="text-[#60FFC0] text-[11px] tracking-widest">ARM4</div>
+        <div class="text-[10px] text-zinc-400 mt-0.5">Bee1-5 · #60FFC0</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Right Panel -->
+<div class="hidden lg:block fixed right-5 top-[130px] w-[310px] z-20 pointer-events-none">
+  <div class="panel rounded-2xl p-5 pointer-events-auto">
+    <div class="flex items-center justify-between mb-2">
+      <h2 class="text-[#60FFC0] tracking-[0.18em] text-sm">CURRENT BEE</h2>
+      <span id="stateCounter" class="text-[11px] px-2 py-0.5 rounded bg-white/5 border border-white/10 text-zinc-400">1 / 60</span>
+    </div>
+    <div id="currentLabel" class="text-[26px] leading-tight text-[#eafff6]" style="text-shadow:0 0 10px rgba(80,240,160,0.5)">Arm1_Bee1</div>
+    <div id="currentPhase" class="text-xs text-zinc-400 tracking-widest mt-1">PHASE L · LEARN</div>
+    
+    <div class="grid grid-cols-3 gap-2 mt-4">
+      <div id="cardL" class="phase-card active">
+        <div class="text-[10px] text-zinc-500">L</div>
+        <div id="hashL" class="text-[13px] mt-1 text-[#9effd4] tracking-wider">C0736803</div>
+      </div>
+      <div id="cardG" class="phase-card">
+        <div class="text-[10px] text-zinc-500">G</div>
+        <div id="hashG" class="text-[13px] mt-1 text-zinc-300 tracking-wider">83DCFF10</div>
+      </div>
+      <div id="cardD" class="phase-card">
+        <div class="text-[10px] text-zinc-500">D</div>
+        <div id="hashD" class="text-[13px] mt-1 text-zinc-300 tracking-wider">91DA6432</div>
+      </div>
+    </div>
+
+    <div class="mt-5 pt-4 border-t border-white/5">
+      <div class="text-[11px] text-zinc-500 uppercase tracking-widest mb-2">Walk Sequence</div>
+      <div class="text-[11px] leading-relaxed text-zinc-400 font-mono bg-black/40 rounded-lg p-2.5 border border-white/5">
+        Arm1_Bee1_L → G → D →<br>Arm1_Bee2_L → … → Arm4_Bee5_D
+      </div>
+      <div class="mt-3 text-[10px] text-zinc-500">Sample hashes cycle through dataset: C0736803, 83DCFF10, 91DA6432, 45EA4A0A, B6EF0A6E…</div>
+    </div>
+  </div>
+</div>
+
+<!-- Bottom Controls -->
+<div class="fixed bottom-5 left-1/2 -translate-x-1/2 z-20 w-[calc(100%-2rem)] max-w-[720px]">
+  <div class="panel rounded-2xl px-4 py-3 flex flex-wrap items-center justify-center gap-3">
+    <button id="walk" class="btn">WALK ▸</button>
+    <button id="auto" class="btn">AUTO</button>
+    <button id="reset" class="btn">RESET</button>
+    <div class="hidden sm:block h-6 w-px bg-white/10 mx-1"></div>
+    <div class="text-[11px] sm:text-[12px] text-zinc-400 tracking-wide text-center">
+      <span class="text-[#a7ffda]">4 arms</span> × <span class="text-[#ffe69c]">5 bees</span> × <span class="text-[#d2b0ff]">3 phases</span> = <span class="text-white">60 states</span>
+    </div>
+  </div>
+</div>
+
+<!-- Mobile current -->
+<div class="lg:hidden fixed top-[84px] left-1/2 -translate-x-1/2 z-20 pointer-events-none">
+  <div class="panel rounded-xl px-4 py-2 text-center">
+    <div id="mobileLabel" class="text-sm text-[#d4fff0]">Arm1_Bee1_L</div>
+    <div id="mobileHash" class="text-[11px] text-zinc-400 tracking-wider">C0736803</div>
+  </div>
+</div>
+
+<!-- Tooltip -->
+<div id="tooltip" class="hidden fixed z-50 pointer-events-none px-3 py-2 rounded-lg bg-black/90 border border-[#50F0A0]/40 text-[11px] leading-snug shadow-[0_0_24px_rgba(80,240,160,0.25)] backdrop-blur-md"></div>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+const canvas = document.getElementById('c');
+const scene = new THREE.Scene();
+scene.fog = new THREE.FogExp2(0x030806, 0.028);
+
+const camera = new THREE.PerspectiveCamera(45, innerWidth/innerHeight, 0.1, 100);
+camera.position.set(0, 0.2, 6.2);
+
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+renderer.setSize(innerWidth, innerHeight);
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.1;
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.05;
+controls.autoRotate = true;
+controls.autoRotateSpeed = 0.4;
+controls.minDistance = 3.8;
+controls.maxDistance = 9;
+controls.target.set(0,0,0);
+
+// lights
+scene.add(new THREE.AmbientLight(0x0c1f17, 0.9));
+const dir = new THREE.DirectionalLight(0xb8ffdf, 0.6); dir.position.set(3,4,5); scene.add(dir);
+const pl1 = new THREE.PointLight(0x50F0A0, 1.2, 20); pl1.position.set(-4,3,2); scene.add(pl1);
+const pl2 = new THREE.PointLight(0xFFE060, 0.9, 20); pl2.position.set(4,-2,3); scene.add(pl2);
+const pl3 = new THREE.PointLight(0x9B3FBB, 1.0, 20); pl3.position.set(0,4,-3); scene.add(pl3);
+
+// forest stars
+const starGeo = new THREE.BufferGeometry();
+const starCount = 900;
+const starPos = new Float32Array(starCount*3);
+for(let i=0;i<starCount;i++){
+  const r = 14 + Math.random()*22;
+  const t = Math.random()*Math.PI*2;
+  const y = (Math.random()-0.5)*18;
+  starPos[i*3] = Math.cos(t)*r*0.6;
+  starPos[i*3+1] = y;
+  starPos[i*3+2] = Math.sin(t)*r*0.6;
+}
+starGeo.setAttribute('position', new THREE.BufferAttribute(starPos,3));
+const stars = new THREE.Points(starGeo, new THREE.PointsMaterial({color:0x0f3d2a,size:0.025,transparent:true,opacity:0.7}));
+scene.add(stars);
+
+// icosahedron
+const icosaGroup = new THREE.Group();
+scene.add(icosaGroup);
+
+const sampleHashes = ['C0736803','83DCFF10','91DA6432','45EA4A0A','B6EF0A6E','E5DDE098','B8B2ACD2','160EC66D','34D1AE06','9C2A0DD0','9AA5BC2D','98E0F5F4','48CA18C4','7AAB3716','7AE99E97','80B0171E','26A9B6AB','13EDF69D','DACCFD96','8E90CAB1','5B0B6E14','30F2BD5B','0C31BD01','A4EA4F27'];
+const phases = ['L','G','D'];
+const phaseNames = {L:'LEARN', G:'GROW', D:'DISTRIBUTE'};
+const armCols = {1:'#50F0A0',2:'#FFE060',3:'#9B3FBB',4:'#60FFC0'};
+
+const baseGeo = new THREE.IcosahedronGeometry(2.2, 0).toNonIndexed();
+const pos = baseGeo.attributes.position;
+const subMeshes = [];
+
+for(let f=0; f<20; f++){
+  const a = new THREE.Vector3().fromBufferAttribute(pos, f*3+0);
+  const b = new THREE.Vector3().fromBufferAttribute(pos, f*3+1);
+  const c = new THREE.Vector3().fromBufferAttribute(pos, f*3+2);
+  
+  const arm = Math.floor(f/5)+1;
+  const bee = (f%5)+1;
+  
+  const centroid = new THREE.Vector3().addVectors(a,b).add(c).divideScalar(3);
+  const normal = new THREE.Vector3().crossVectors(
+    new THREE.Vector3().subVectors(b,a),
+    new THREE.Vector3().subVectors(c,a)
+  ).normalize();
+  const centerPt = centroid.clone().addScaledVector(normal, 0.065);
+  
+  const pairs = [[a,b],[b,c],[c,a]];
+  
+  for(let p=0;p<3;p++){
+    const v0 = pairs[p][0];
+    const v1 = pairs[p][1];
+    
+    const g = new THREE.BufferGeometry();
+    const verts = new Float32Array([
+      v0.x, v0.y, v0.z,
+      v1.x, v1.y, v1.z,
+      centerPt.x, centerPt.y, centerPt.z
+    ]);
+    g.setAttribute('position', new THREE.BufferAttribute(verts,3));
+    g.computeVertexNormals();
+    
+    const mat = new THREE.MeshPhysicalMaterial({
+      color: armCols[arm],
+      transparent: true,
+      opacity: 0.24,
+      roughness: 0.28,
+      metalness: 0.12,
+      side: THREE.DoubleSide,
+      emissive: 0x000000,
+      emissiveIntensity: 0,
+      clearcoat: 0.6,
+      clearcoatRoughness: 0.3
+    });
+    
+    const mesh = new THREE.Mesh(g, mat);
+    const stateIndex = ((arm-1)*5 + (bee-1))*3 + p;
+    mesh.userData = {
+      arm, bee, face:f, phase: phases[p],
+      stateIndex,
+      label: `Arm${arm}_Bee${bee}`,
+      full: `Arm${arm}_Bee${bee}_${phases[p]}`,
+      hash: sampleHashes[stateIndex % sampleHashes.length],
+      baseColor: new THREE.Color(armCols[arm])
+    };
+    subMeshes.push(mesh);
+    icosaGroup.add(mesh);
+  }
+}
+
+// wireframe
+const wire = new THREE.LineSegments(
+  new THREE.EdgesGeometry(new THREE.IcosahedronGeometry(2.235,0)),
+  new THREE.LineBasicMaterial({color:0x0e3a27, transparent:true, opacity:0.55})
+);
+icosaGroup.add(wire);
+
+const innerGlow = new THREE.Mesh(
+  new THREE.IcosahedronGeometry(2.15, 1),
+  new THREE.MeshBasicMaterial({color:0x042016, transparent:true, opacity:0.15, wireframe:true})
+);
+icosaGroup.add(innerGlow);
+
+// interaction
+const raycaster = new THREE.Raycaster();
+const mouse = new THREE.Vector2();
+let hovered = null;
+let activeState = 0;
+let activeMesh = null;
+
+const tooltip = document.getElementById('tooltip');
+const stateCounter = document.getElementById('stateCounter');
+const currentLabel = document.getElementById('currentLabel');
+const currentPhase = document.getElementById('currentPhase');
+const hashL = document.getElementById('hashL');
+const hashG = document.getElementById('hashG');
+const hashD = document.getElementById('hashD');
+const cardL = document.getElementById('cardL');
+const cardG = document.getElementById('cardG');
+const cardD = document.getElementById('cardD');
+const mobileLabel = document.getElementById('mobileLabel');
+const mobileHash = document.getElementById('mobileHash');
+
+function setActive(state){
+  activeState = (state+60)%60;
+  const mesh = subMeshes[activeState];
+  if(!mesh) return;
+  
+  // reset all
+  subMeshes.forEach(m=>{
+    m.material.opacity = 0.18;
+    m.material.emissive.setHex(0);
+    m.material.emissiveIntensity = 0;
+  });
+  
+  const {arm, bee, phase} = mesh.userData;
+  const sameBee = subMeshes.filter(m=>m.userData.arm===arm && m.userData.bee===bee);
+  sameBee.forEach(m=> m.material.opacity = 0.38);
+  
+  activeMesh = mesh;
+  activeMesh.material.opacity = 0.95;
+  activeMesh.material.emissive.copy(activeMesh.userData.baseColor);
+  activeMesh.material.emissiveIntensity = 0.35;
+  
+  // update UI
+  stateCounter.textContent = `${activeState+1} / 60`;
+  currentLabel.textContent = `Arm${arm}_Bee${bee}`;
+  currentPhase.textContent = `PHASE ${phase} · ${phaseNames[phase]}`;
+  
+  const hL = sameBee.find(m=>m.userData.phase==='L').userData.hash;
+  const hG = sameBee.find(m=>m.userData.phase==='G').userData.hash;
+  const hD = sameBee.find(m=>m.userData.phase==='D').userData.hash;
+  hashL.textContent = hL;
+  hashG.textContent = hG;
+  hashD.textContent = hD;
+  
+  [cardL,cardG,cardD].forEach(c=>c.classList.remove('active','ring-1','ring-[#50F0A0]/50'));
+  ({L:cardL,G:cardG,D:cardD}[phase]).classList.add('active');
+  
+  mobileLabel.textContent = `Arm${arm}_Bee${bee}_${phase}`;
+  mobileHash.textContent = mesh.userData.hash;
+  
+  // color the label by arm
+  currentLabel.style.color = armCols[arm];
+  currentLabel.style.textShadow = `0 0 12px ${armCols[arm]}66`;
+}
+
+function walk(step=1){ setActive(activeState + step); }
+
+setActive(0);
+
+// events
+renderer.domElement.addEventListener('mousemove', e=>{
+  mouse.x = (e.clientX / innerWidth)*2 -1;
+  mouse.y = -(e.clientY / innerHeight)*2 +1;
+  
+  raycaster.setFromCamera(mouse, camera);
+  const hits = raycaster.intersectObjects(subMeshes, false);
+  
+  if(hits.length){
+    const m = hits[0].object;
+    if(hovered !== m){
+      if(hovered && hovered !== activeMesh){
+        hovered.material.emissive.setHex(0);
+        hovered.material.emissiveIntensity = 0;
+        if(!subMeshes.filter(x=>x.userData.arm===hovered.userData.arm && x.userData.bee===hovered.userData.bee).includes(activeMesh)){
+          hovered.material.opacity = 0.18;
+        }
+      }
+      hovered = m;
+      if(hovered !== activeMesh){
+        hovered.material.emissive.copy(hovered.userData.baseColor);
+        hovered.material.emissiveIntensity = 0.18;
+        hovered.material.opacity = 0.55;
+      }
+    }
+    const d = m.userData;
+    tooltip.innerHTML = `
+      <div class="text-[11px] uppercase tracking-widest" style="color:${armCols[d.arm]}">${d.label}</div>
+      <div class="mt-1 flex items-center gap-2">
+        <span class="px-1.5 py-0.5 rounded bg-white/10 border border-white/10">${d.phase}</span>
+        <span class="text-zinc-300">${phaseNames[d.phase]}</span>
+      </div>
+      <div class="mt-1.5 text-zinc-400">hash <span class="text-[#b8ffe1]">${d.hash}</span></div>
+      <div class="mt-1 text-[10px] text-zinc-500">Face ${d.face+1}/20 · State ${d.stateIndex+1}</div>
+    `;
+    tooltip.style.left = Math.min(e.clientX+14, innerWidth-220) + 'px';
+    tooltip.style.top = Math.max(10, e.clientY-10) + 'px';
+    tooltip.classList.remove('hidden');
+    document.body.style.cursor = 'pointer';
+  } else {
+    if(hovered && hovered !== activeMesh){
+      hovered.material.emissive.setHex(0);
+      hovered.material.emissiveIntensity = 0;
+      hovered.material.opacity = 0.18;
+    }
+    hovered = null;
+    tooltip.classList.add('hidden');
+    document.body.style.cursor = 'default';
+  }
+});
+
+renderer.domElement.addEventListener('click', e=>{
+  raycaster.setFromCamera(mouse, camera);
+  const hits = raycaster.intersectObjects(subMeshes, false);
+  if(hits.length){
+    setActive(hits[0].object.userData.stateIndex);
+    controls.autoRotate = false;
+    setTimeout(()=>controls.autoRotate=true, 3000);
+  }
+});
+
+// controls
+document.getElementById('walk').onclick = ()=>walk(1);
+document.getElementById('reset').onclick = ()=>{ setActive(0); };
+const autoBtn = document.getElementById('auto');
+let autoTimer = null;
+autoBtn.onclick = ()=>{
+  if(autoTimer){
+    clearInterval(autoTimer); autoTimer=null;
+    autoBtn.classList.remove('active'); autoBtn.textContent='AUTO';
+  } else {
+    autoTimer = setInterval(()=>walk(1), 1100);
+    autoBtn.classList.add('active'); autoBtn.textContent='AUTO •';
+  }
+};
+window.addEventListener('keydown', e=>{
+  if(e.code==='Space' || e.code==='ArrowRight'){ e.preventDefault(); walk(1); }
+  if(e.code==='ArrowLeft'){ e.preventDefault(); walk(-1); }
+});
+
+// animate
+let t0 = performance.now();
+function animate(){
+  requestAnimationFrame(animate);
+  const t = (performance.now()-t0)*0.001;
+  
+  controls.update();
+  icosaGroup.rotation.y += 0.002;
+  innerGlow.rotation.y -= 0.001;
+  innerGlow.rotation.x = Math.sin(t*0.3)*0.1;
+  stars.rotation.y += 0.0003;
+  
+  if(activeMesh){
+    const pulse = 0.38 + Math.sin(t*2.8)*0.22;
+    activeMesh.material.emissiveIntensity = pulse;
+  }
+  
+  wire.material.opacity = 0.45 + Math.sin(t*1.2)*0.1;
+  
+  renderer.render(scene, camera);
+}
+animate();
+
+addEventListener('resize', ()=>{
+  camera.aspect = innerWidth/innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+</script>
+</body>
+</html>

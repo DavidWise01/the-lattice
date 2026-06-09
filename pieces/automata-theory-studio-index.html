@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; frame-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none';">
+  <title>Automata Theory Studio</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar" aria-label="Course navigation">
+      <div class="brand">
+        <div class="brand-mark">AT</div>
+        <div>
+          <div class="eyebrow">Automata & Formal Languages</div>
+          <h1>Theory Studio</h1>
+        </div>
+      </div>
+
+      <div class="progress-card">
+        <div class="progress-top">
+          <span>Series progress</span>
+          <strong id="progressText">0 / 7</strong>
+        </div>
+        <div class="progress-track"><span id="progressFill"></span></div>
+      </div>
+
+      <nav class="module-list" id="moduleList"></nav>
+    </aside>
+
+    <main class="stage">
+      <header class="topbar">
+        <div>
+          <div class="eyebrow" id="moduleNumber">Instrument 00</div>
+          <div class="top-title" id="moduleTitle">Primer</div>
+        </div>
+        <div class="top-actions">
+          <button type="button" class="ghost" id="prevButton">Previous</button>
+          <button type="button" class="ghost" id="doneButton">Mark done</button>
+          <button type="button" id="nextButton">Next</button>
+        </div>
+      </header>
+
+      <section class="module-head">
+        <div class="kicker" id="moduleKicker">Automata & Formal Languages</div>
+        <h2 id="moduleHeading">Machines that read</h2>
+        <p id="moduleSummary"></p>
+        <div class="chip-row" id="chipRow"></div>
+      </section>
+
+      <section class="content-shell">
+        <div class="frame-bar">
+          <span id="frameLabel">loading</span>
+          <span id="frameStatus">local content</span>
+        </div>
+        <iframe id="lessonFrame" title="Automata lesson content"></iframe>
+      </section>
+    </main>
+  </div>
+
+  <script src="app.js" defer></script>
+</body>
+</html>

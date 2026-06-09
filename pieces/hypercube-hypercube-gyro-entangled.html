@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hypercube · Gyro · Two Entangled Dots</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{--paper:#0a0a12;--cardsolid:#13131f;--ink:#ece8f5;--dim:#8a85a3;--glow:#6de0d0;--violet:#9b6cff;--blue:#6d8cff;--orange:#ffb347;--line:rgba(155,108,255,0.2);}
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0;color:var(--ink);background-color:var(--paper);background-image:radial-gradient(circle at 50% -10%, #1a1430 0%, #08080f 65%);background-attachment:fixed;font-family:"Newsreader",Georgia,serif;line-height:1.55;}
+  .wrap{max-width:1040px;margin:0 auto;padding:26px 20px 60px;}
+  ::selection{background:var(--violet);color:#0a0a12;}
+  .kick{font-family:"Space Mono",monospace;font-size:11px;letter-spacing:0.24em;text-transform:uppercase;color:var(--violet);}
+  h1{font-family:"Cinzel";font-weight:800;font-size:clamp(26px,5vw,46px);line-height:1.02;letter-spacing:0.01em;text-transform:uppercase;margin:8px 0 0;}
+  h1 em{font-style:normal;color:var(--glow);text-shadow:0 0 16px rgba(109,224,208,0.5);}
+  .stamp{display:inline-block;font-family:"Space Mono",monospace;font-size:10.5px;letter-spacing:0.09em;text-transform:uppercase;color:var(--orange);border:1px dashed var(--orange);padding:4px 11px;margin-top:12px;}
+  .dek{font-size:clamp(15px,2vw,17px);max-width:680px;margin:14px 0 0;color:#cfc9e0;}
+  .dek b{color:var(--glow);}
+  .stage{display:grid;grid-template-columns:1.25fr 1fr;gap:16px;margin-top:20px;}
+  @media (max-width:780px){.stage{grid-template-columns:1fr;}}
+  .panel{border:1px solid var(--line);background:var(--cardsolid);padding:15px 16px;}
+  .panel h2{font-family:"Cinzel";font-weight:700;font-size:13px;letter-spacing:0.08em;text-transform:uppercase;color:var(--glow);margin:0 0 6px;}
+  .panel .sub{font-family:"Space Mono",monospace;font-size:10.5px;color:var(--dim);margin-bottom:8px;}
+  .svgbox{display:flex;justify-content:center;align-items:center;}
+  .controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px;}
+  .btn{font-family:"Space Mono",monospace;font-size:12.5px;font-weight:700;color:var(--ink);background:#1d1730;border:1px solid var(--line);padding:7px 11px;cursor:pointer;border-radius:3px;transition:all .12s ease;}
+  .btn:hover{background:var(--violet);color:#0a0a12;}
+  .btn.go{border-color:var(--glow);} .btn.go:hover{background:var(--glow);}
+  .btn.on{background:var(--glow);color:#0a0a12;}
+  .slab{font-family:"Space Mono",monospace;font-size:10.5px;letter-spacing:0.06em;text-transform:uppercase;color:var(--dim);}
+  .slider{accent-color:var(--orange);width:96px;vertical-align:middle;}
+  .blochmini{display:flex;gap:8px;justify-content:space-around;}
+  .bc{text-align:center;flex:1;}
+  .bc .cap{font-family:"Cinzel";font-weight:700;font-size:12px;color:var(--violet);}
+  .bc .len{font-family:"Space Mono",monospace;font-size:10px;color:var(--dim);margin-top:1px;}
+  .lbl{font-family:"Space Mono",monospace;font-size:10.5px;letter-spacing:0.07em;text-transform:uppercase;color:var(--dim);margin:13px 0 6px;}
+  .probrow{display:flex;align-items:center;gap:8px;margin:5px 0;}
+  .probrow .ket{font-family:"Space Mono",monospace;font-size:11.5px;color:var(--ink);width:38px;}
+  .bar{flex:1;height:12px;background:#0e0a18;border:1px solid var(--line);position:relative;overflow:hidden;}
+  .bar .fill{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,var(--glow),var(--orange));width:0%;transition:width .25s ease;}
+  .probrow .pct{font-family:"Space Mono",monospace;font-size:10.5px;color:var(--dim);width:42px;text-align:right;}
+  .ketdisp{font-family:"Space Mono",monospace;font-size:13.5px;color:var(--glow);background:#0e0a18;border:1px solid var(--line);padding:9px 11px;margin-top:2px;min-height:38px;}
+  .readout{font-family:"Space Mono",monospace;font-size:12px;line-height:1.7;color:#b3acc7;margin-top:8px;}
+  .readout b{color:var(--ink);} .readout .e{color:var(--violet);} .readout .ok{color:var(--glow);}
+  .cols{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px;}
+  @media (max-width:680px){.cols{grid-template-columns:1fr;}}
+  .mini{border:1px solid var(--line);background:var(--cardsolid);padding:14px 16px;}
+  .mini h3{font-family:"Cinzel";font-weight:700;font-size:14px;color:var(--violet);margin:0 0 8px;}
+  .mini p{font-size:13.5px;margin:0 0 8px;color:#c8c2da;} .mini p:last-child{margin-bottom:0;} .mini b{color:var(--glow);}
+  .foot{border-top:1px dashed var(--line);margin-top:22px;padding-top:14px;font-family:"Space Mono",monospace;font-size:11.5px;color:var(--dim);line-height:1.7;}
+  .foot b{color:var(--orange);}
+  .leg{font-family:"Space Mono",monospace;font-size:10px;}
+  .status{font-family:"Space Mono",monospace;font-size:11.5px;color:var(--orange);margin-top:8px;min-height:18px;text-align:center;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <span class="kick">the full stack · hypercube ⊃ gyro ⊃ two dots · entangled</span>
+  <h1>Two Dots, <em>Entangled</em></h1>
+  <div class="stamp">three real layers, one honest claim — the entanglement is genuine; the nesting is the stage</div>
+  <div class="dek">A <b>tesseract</b> as the outer shell (its inner cube is the 4D shadow), a <b>3-axis gyro</b> precessing inside it, and the <b>two dots</b> riding its axle. The dots are two real qubits — press <b>Entangle</b> and watch the true signature: neither dot keeps a state of its own, yet they stay perfectly linked.</div>
+
+  <div class="stage">
+    <div class="panel">
+      <h2>The scene</h2>
+      <div class="sub">tesseract shell · gyro triad · two dots on the axle</div>
+      <div class="svgbox">
+        <svg id="scene" width="100%" viewBox="0 0 460 420" style="max-width:520px" aria-label="a tesseract containing a gyroscope whose two axle dots can entangle">
+          <g id="tess"></g>
+          <path id="disk" fill="rgba(109,224,208,0.07)" stroke="rgba(109,224,208,0.4)" stroke-width="1.1"/>
+          <g id="axes"></g>
+          <path id="bond" fill="none" stroke="#9b6cff" stroke-width="2.2" opacity="0"/>
+          <circle id="dotA" r="8" fill="#9b6cff"/>
+          <circle id="haloA" r="14" fill="none" stroke="#9b6cff" stroke-width="1" opacity="0.6"/>
+          <circle id="dotB" r="8" fill="#9b6cff"/>
+          <circle id="haloB" r="14" fill="none" stroke="#9b6cff" stroke-width="1" opacity="0.6"/>
+          <text id="lblA" class="leg" fill="#b9aef0"></text>
+          <text id="lblB" class="leg" fill="#b9aef0"></text>
+        </svg>
+      </div>
+      <div class="controls">
+        <button class="btn" id="playBtn">⏸ motion</button>
+        <button class="btn" id="resetBtn">Reset |00⟩</button>
+        <button class="btn" id="superBtn">Superpose A</button>
+        <button class="btn go" id="entBtn">⟲ Entangle</button>
+        <button class="btn" id="measBtn">Measure</button>
+      </div>
+      <div class="status" id="status"></div>
+    </div>
+
+    <div class="panel">
+      <h2>What's really happening to the qubits</h2>
+      <div class="sub">each dot's own state — from the real 2-qubit density matrix</div>
+      <div class="blochmini">
+        <div class="bc">
+          <div class="cap">Dot A</div>
+          <svg width="120" height="132" viewBox="0 0 120 132" aria-label="Bloch sphere dot A">
+            <circle cx="60" cy="64" r="46" fill="none" stroke="#33304d" stroke-width="1"/>
+            <ellipse cx="60" cy="64" rx="46" ry="16" fill="none" stroke="#33304d" stroke-width="0.7" stroke-dasharray="3 3"/>
+            <line x1="60" y1="18" x2="60" y2="110" stroke="#33304d" stroke-width="0.6"/>
+            <line id="avec" x1="60" y1="64" x2="60" y2="18" stroke="#9b6cff" stroke-width="2.4"/>
+            <circle id="atip" cx="60" cy="18" r="4.5" fill="#9b6cff"/>
+            <circle id="amix" cx="60" cy="64" r="9" fill="none" stroke="#9b6cff" stroke-width="1.4" stroke-dasharray="2 3" opacity="0"/>
+          </svg>
+          <div class="len" id="alen">|r| = 1.00</div>
+        </div>
+        <div class="bc">
+          <div class="cap">Dot B</div>
+          <svg width="120" height="132" viewBox="0 0 120 132" aria-label="Bloch sphere dot B">
+            <circle cx="60" cy="64" r="46" fill="none" stroke="#33304d" stroke-width="1"/>
+            <ellipse cx="60" cy="64" rx="46" ry="16" fill="none" stroke="#33304d" stroke-width="0.7" stroke-dasharray="3 3"/>
+            <line x1="60" y1="18" x2="60" y2="110" stroke="#33304d" stroke-width="0.6"/>
+            <line id="bvec" x1="60" y1="64" x2="60" y2="18" stroke="#6d8cff" stroke-width="2.4"/>
+            <circle id="btip" cx="60" cy="18" r="4.5" fill="#6d8cff"/>
+            <circle id="bmix" cx="60" cy="64" r="9" fill="none" stroke="#6d8cff" stroke-width="1.4" stroke-dasharray="2 3" opacity="0"/>
+          </svg>
+          <div class="len" id="blen">|r| = 1.00</div>
+        </div>
+      </div>
+      <div class="lbl">Joint measurement probabilities</div>
+      <div id="probs"></div>
+      <div class="lbl">Joint state</div>
+      <div class="ketdisp" id="ket">|00⟩</div>
+      <div class="readout" id="readout"></div>
+    </div>
+  </div>
+
+  <div class="cols">
+    <div class="mini">
+      <h3>The entanglement is the real part</h3>
+      <p>The dots run an actual two-qubit state. <b>Entangle</b> applies H to A then a CNOT — the standard recipe for the Bell state (|00⟩+|11⟩)/√2.</p>
+      <p>Its true signature, shown live: each dot's own Bloch vector <b>collapses to zero</b> — neither has a state of its own — while global <b>purity stays 1.00</b>. That combination means <b>entanglement, not noise</b>. Measure one and the other matches instantly.</p>
+    </div>
+    <div class="mini">
+      <h3>The nesting is the stage</h3>
+      <p>Three real things — a tesseract (a 4D shadow), a gyro (real precession), two qubits (real entanglement) — composed inside one another.</p>
+      <p>But it's <b>composition, not causation</b>: the dots don't entangle <em>because</em> they sit in a gyro in a hypercube. They entangle because of the gate. The geometry stages them; the physics is independent of the stage. Honest to keep those apart.</p>
+    </div>
+  </div>
+
+  <div class="foot">
+    <b>Honest footing.</b> The tesseract and its projection, the gyro's precession, and the two-qubit entanglement are each real and correctly computed — the Bell state, the vanishing single-dot vectors, the unit concurrence, and the correlated collapse are genuine quantum mechanics, not decoration. What's a <b>staging choice</b> is the nesting and the dots' placement on the axle. The dots inherit no physics from the cube or the gyro; their entanglement is theirs alone.
+  </div>
+</div>
+
+<script>
+// ===== complex + 4x4 density matrix (real 2-qubit engine) =====
+const C=(re=0,im=0)=>({re,im});
+const cadd=(a,b)=>({re:a.re+b.re,im:a.im+b.im});
+const cmul=(a,b)=>({re:a.re*b.re-a.im*b.im,im:a.re*b.im+a.im*b.re});
+const cconj=a=>({re:a.re,im:-a.im});
+const csc=(a,s)=>({re:a.re*s,im:a.im*s});
+const cab2=a=>a.re*a.re+a.im*a.im;
+function z4(){const M=[];for(let i=0;i<4;i++)M.push([C(),C(),C(),C()]);return M;}
+function mm(A,B){const R=z4();for(let i=0;i<4;i++)for(let j=0;j<4;j++){let s=C();for(let k=0;k<4;k++)s=cadd(s,cmul(A[i][k],B[k][j]));R[i][j]=s;}return R;}
+function dag(A){const D=z4();for(let i=0;i<4;i++)for(let j=0;j<4;j++)D[i][j]=cconj(A[j][i]);return D;}
+const h=1/Math.SQRT2;
+const Hd=[[C(h),C(h)],[C(h),C(-h)]];
+function on0(U){const M=z4();for(let a=0;a<2;a++)for(let c=0;c<2;c++)for(let b=0;b<2;b++)M[2*a+b][2*c+b]=U[a][c];return M;}
+const CN01=(()=>{const M=z4();const map=[0,1,3,2];for(let j=0;j<4;j++)M[map[j]][j]=C(1);return M;})();
+let rho;
+function reset(){rho=z4();rho[0][0]=C(1);}
+function applyU(U){rho=mm(mm(U,rho),dag(U));}
+function red0(){const r=[[C(),C()],[C(),C()]];for(let a=0;a<2;a++)for(let c=0;c<2;c++){let s=C();for(let b=0;b<2;b++)s=cadd(s,rho[2*a+b][2*c+b]);r[a][c]=s;}return r;}
+function red1(){const r=[[C(),C()],[C(),C()]];for(let b=0;b<2;b++)for(let d=0;d<2;d++){let s=C();for(let a=0;a<2;a++)s=cadd(s,rho[2*a+b][2*a+d]);r[b][d]=s;}return r;}
+function bloch(r){return{x:2*r[0][1].re,y:-2*r[0][1].im,z:r[0][0].re-r[1][1].re,len:Math.sqrt(Math.max(0,(2*r[0][1].re)**2+(2*r[0][1].im)**2+(r[0][0].re-r[1][1].re)**2))};}
+function purity(){let s=0;for(let i=0;i<4;i++)for(let j=0;j<4;j++)s+=cab2(rho[i][j]);return s;}
+function psiPure(){let k=0,best=-1;for(let i=0;i<4;i++)if(rho[i][i].re>best){best=rho[i][i].re;k=i;}if(best<1e-9)return null;const n=Math.sqrt(best);let p=[];for(let i=0;i<4;i++)p.push(csc(rho[i][k],1/n));const pv=p.findIndex(c=>cab2(c)>1e-6);if(pv>=0){const ph=Math.atan2(p[pv].im,p[pv].re),e=C(Math.cos(-ph),Math.sin(-ph));p=p.map(c=>cmul(c,e));}return p;}
+function concurrence(){const p=psiPure();if(!p)return 0;const ad=cadd(cmul(p[0],p[3]),csc(cmul(p[1],p[2]),-1));return 2*Math.sqrt(cab2(ad));}
+function measureBoth(){const pr=[rho[0][0].re,rho[1][1].re,rho[2][2].re,rho[3][3].re];const r=Math.random();let acc=0,o=3;for(let i=0;i<4;i++){acc+=pr[i];if(r<=acc){o=i;break;}}rho=z4();rho[o][o]=C(1);return o;}
+
+// ===== geometry: 3D + 4D =====
+function rotX(p,a){const c=Math.cos(a),s=Math.sin(a);return[p[0],c*p[1]-s*p[2],s*p[1]+c*p[2]];}
+function rotY(p,a){const c=Math.cos(a),s=Math.sin(a);return[c*p[0]+s*p[2],p[1],-s*p[0]+c*p[2]];}
+function rotZ(p,a){const c=Math.cos(a),s=Math.sin(a);return[c*p[0]-s*p[1],s*p[0]+c*p[1],p[2]];}
+function Rg(p,a,b,g){return rotY(rotX(rotZ(p,g),b),a);}
+function rot4(p,i,j,a){const c=Math.cos(a),s=Math.sin(a);const q=p.slice();q[i]=c*p[i]-s*p[j];q[j]=s*p[i]+c*p[j];return q;}
+const CX=230,CY=200,S2=66;
+function proj3(p){let q=rotY(p,0.55);q=rotX(q,0.42);return[CX+q[0]*S2, CY-q[1]*S2];}
+
+// tesseract
+const TV=[];for(let k=0;k<16;k++)TV.push([(k&1)?1:-1,(k&2)?1:-1,(k&4)?1:-1,(k&8)?1:-1]);
+const TE=[];for(let i=0;i<16;i++)for(let j=i+1;j<16;j++){let x=i^j;if(x&&(x&(x-1))===0)TE.push([i,j]);}
+
+const $=id=>document.getElementById(id);
+const ST={ta:0,tb:0,a:0,b:0.42,g:0,persp:2.5,playing:true,measured:null};
+const GS=0.6; // gyro scale (nested inside tesseract)
+
+function lerp(a,b,t){return a+(b-a)*t;}
+
+function drawTess(){
+  let e='';
+  const P=TV.map(v=>{let p=rot4(v,0,3,ST.ta);p=rot4(p,1,2,ST.tb);const f=ST.persp/(ST.persp-p[3]);return{s:proj3([p[0]*f,p[1]*f,p[2]*f]),w:p[3]};});
+  for(const[i,j]of TE){const wa=(P[i].w+P[j].w)/2;const t=Math.max(0,Math.min(1,(wa+1.5)/3));const op=lerp(0.08,0.34,t);const r=Math.round(lerp(50,90,t)),g=Math.round(lerp(70,150,t)),b=Math.round(lerp(120,170,t));e+=`<line x1="${P[i].s[0].toFixed(1)}" y1="${P[i].s[1].toFixed(1)}" x2="${P[j].s[0].toFixed(1)}" y2="${P[j].s[1].toFixed(1)}" stroke="rgb(${r},${g},${b})" stroke-width="${lerp(0.8,1.6,t).toFixed(2)}" opacity="${op.toFixed(2)}"/>`;}
+  $('tess').innerHTML=e;
+}
+function diskPath(a1,a2,r){const N=42;let d='';for(let i=0;i<=N;i++){const t=2*Math.PI*i/N;const p=[(a1[0]*Math.cos(t)+a2[0]*Math.sin(t))*r,(a1[1]*Math.cos(t)+a2[1]*Math.sin(t))*r,(a1[2]*Math.cos(t)+a2[2]*Math.sin(t))*r];const w=proj3(p);d+=(i===0?'M':'L')+w[0].toFixed(1)+' '+w[1].toFixed(1)+' ';}return d+'Z';}
+
+let pulse=0, conc=0, pur=1;
+function drawGyro(){
+  const a1=Rg([1,0,0],ST.a,ST.b,ST.g), a2=Rg([0,1,0],ST.a,ST.b,ST.g), a3=Rg([0,0,1],ST.a,ST.b,ST.g);
+  const cols=['#ffb347','#6de0d0','#6d8cff'];const axes=[a3,a1,a2];const L=0.92*GS;
+  $('disk').setAttribute('d',diskPath(a1,a2,0.55*GS));
+  let ax='';for(let i=0;i<3;i++){const v=axes[i];const p1=proj3([v[0]*L,v[1]*L,v[2]*L]),p2=proj3([-v[0]*L,-v[1]*L,-v[2]*L]);ax+=`<line x1="${p1[0].toFixed(1)}" y1="${p1[1].toFixed(1)}" x2="${p2[0].toFixed(1)}" y2="${p2[1].toFixed(1)}" stroke="${cols[i]}" stroke-width="${i===0?2.6:2.1}" stroke-linecap="round" opacity="${i===0?0.5:0.9}"/>`;}
+  $('axes').innerHTML=ax;
+  // two dots at the spin-axle poles (a3 tips)
+  const dpos=0.86*GS;
+  const A=proj3([a3[0]*dpos,a3[1]*dpos,a3[2]*dpos]);
+  const B=proj3([-a3[0]*dpos,-a3[1]*dpos,-a3[2]*dpos]);
+  const entangled=conc>0.5;
+  // dot colors: by outcome if measured, else violet
+  let colA='#9b6cff',colB='#9b6cff';
+  if(ST.measured!==null){const o=ST.measured;const a=(o>>1)&1,b=o&1;colA=a?'#ffb347':'#6de0d0';colB=b?'#ffb347':'#6de0d0';}
+  const r=8+(entangled?Math.sin(pulse)*1.8:0);
+  $('dotA').setAttribute('cx',A[0]);$('dotA').setAttribute('cy',A[1]);$('dotA').setAttribute('r',r.toFixed(1));$('dotA').setAttribute('fill',colA);
+  $('dotB').setAttribute('cx',B[0]);$('dotB').setAttribute('cy',B[1]);$('dotB').setAttribute('r',r.toFixed(1));$('dotB').setAttribute('fill',colB);
+  $('haloA').setAttribute('cx',A[0]);$('haloA').setAttribute('cy',A[1]);$('haloB').setAttribute('cx',B[0]);$('haloB').setAttribute('cy',B[1]);
+  $('haloA').setAttribute('opacity',entangled?(0.4+0.4*Math.abs(Math.sin(pulse))):0.55);
+  $('haloB').setAttribute('opacity',entangled?(0.4+0.4*Math.abs(Math.sin(pulse))):0.55);
+  $('lblA').setAttribute('x',A[0]+11);$('lblA').setAttribute('y',A[1]-9);$('lblA').textContent='A';
+  $('lblB').setAttribute('x',B[0]+11);$('lblB').setAttribute('y',B[1]-9);$('lblB').textContent='B';
+  // entanglement bond: a glowing sine strand bowed off the axle
+  if(entangled){
+    const mx=(A[0]+B[0])/2,my=(A[1]+B[1])/2;const dx=B[0]-A[0],dy=B[1]-A[1];const len=Math.hypot(dx,dy)||1;const nx=-dy/len,ny=dx/len;
+    const bow=22+8*Math.sin(pulse);
+    const c1x=A[0]+dx*0.33+nx*bow, c1y=A[1]+dy*0.33+ny*bow;
+    const c2x=A[0]+dx*0.66-nx*bow, c2y=A[1]+dy*0.66-ny*bow;
+    $('bond').setAttribute('d',`M${A[0].toFixed(1)} ${A[1].toFixed(1)} C ${c1x.toFixed(1)} ${c1y.toFixed(1)}, ${c2x.toFixed(1)} ${c2y.toFixed(1)}, ${B[0].toFixed(1)} ${B[1].toFixed(1)}`);
+    $('bond').setAttribute('opacity',(0.5+0.4*Math.abs(Math.sin(pulse))).toFixed(2));
+  } else $('bond').setAttribute('opacity',0);
+}
+
+// Bloch mini draw
+function drawMini(id,b){
+  const cx=60,cy=64,R=46,A=0.55,TILT=0.34;
+  const ex=cx+R*(b.x*Math.cos(A)+b.y*Math.sin(A));
+  const ey=cy-R*b.z+R*(b.x*Math.sin(A)-b.y*Math.cos(A))*TILT;
+  $(id+'vec').setAttribute('x2',ex);$(id+'vec').setAttribute('y2',ey);
+  $(id+'tip').setAttribute('cx',ex);$(id+'tip').setAttribute('cy',ey);
+  const mixed=b.len<0.05;
+  $(id+'vec').style.opacity=mixed?0.15:1;$(id+'tip').style.opacity=mixed?0:1;
+  $(id+'mix').setAttribute('opacity',mixed?0.9:0);
+  $(id+'len').textContent='|r| = '+b.len.toFixed(2);
+}
+
+function updatePanel(){
+  const b0=bloch(red0()),b1=bloch(red1());
+  drawMini('a',b0);drawMini('b',b1);
+  const pr=[rho[0][0].re,rho[1][1].re,rho[2][2].re,rho[3][3].re];const labs=['00','01','10','11'];
+  $('probs').innerHTML=labs.map((l,i)=>`<div class="probrow"><span class="ket">|${l}⟩</span><div class="bar"><div class="fill" style="width:${(Math.max(0,pr[i])*100).toFixed(1)}%"></div></div><span class="pct">${(Math.max(0,pr[i])*100).toFixed(0)}%</span></div>`).join('');
+  pur=purity();conc=concurrence();
+  const p=psiPure();let ket='—';if(p){const terms=[];for(let i=0;i<4;i++)if(cab2(p[i])>4e-4){const c=p[i];const amp=Math.abs(c.im)<5e-3?c.re.toFixed(2):(Math.abs(c.re)<5e-3?c.im.toFixed(2)+'i':'('+c.re.toFixed(2)+(c.im>=0?'+':'')+c.im.toFixed(2)+'i)');terms.push(amp+'|'+labs[i]+'⟩');}ket=terms.join('  +  ');}
+  $('ket').textContent=ket;
+  let r=`global purity = <b>${pur.toFixed(2)}</b> &nbsp;`;
+  if(conc>0.5)r+=`<span class="e">● entangled · concurrence ${conc.toFixed(2)}</span><br><span class="ok">neither dot has its own state — yet purity is 1.00 ⇒ entanglement, not noise</span>`;
+  else if(ST.measured!==null)r+=`<span style="color:#8a85a3">● measured · collapsed to a definite outcome</span><br><span class="ok">both dots show the SAME result — the correlation entanglement left behind</span>`;
+  else r+=`<span style="color:#8a85a3">● product state · concurrence ${conc.toFixed(2)}</span><br>each dot has its own definite state`;
+  $('readout').innerHTML=r;
+}
+
+// ===== actions =====
+function setStatus(s){$('status').textContent=s;}
+function doReset(){reset();ST.measured=null;updatePanel();setStatus('reset → |00⟩ · both dots point up, independent');}
+function doSuper(){reset();applyU(on0(Hd));ST.measured=null;updatePanel();setStatus('H on A → A in superposition, B definite · NOT entangled (concurrence 0)');}
+function doEntangle(){reset();applyU(on0(Hd));applyU(CN01);ST.measured=null;updatePanel();setStatus('H then CNOT → Bell (|00⟩+|11⟩)/√2 · entangled');}
+function doMeasure(){const o=measureBoth();ST.measured=o;updatePanel();const lab=['00','01','10','11'][o];setStatus('measured → |'+lab+'⟩ · one fixed the other instantly');}
+
+$('resetBtn').onclick=doReset;
+$('superBtn').onclick=doSuper;
+$('entBtn').onclick=doEntangle;
+$('measBtn').onclick=doMeasure;
+$('playBtn').onclick=()=>{ST.playing=!ST.playing;$('playBtn').textContent=ST.playing?'⏸ motion':'▸ motion';$('playBtn').classList.toggle('on',ST.playing);};
+
+// ===== loop =====
+const reduced=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+function frame(){
+  if(ST.playing){ST.ta+=0.006;ST.tb+=0.009;ST.g+=0.07;ST.a+=0.01;pulse+=0.07;}
+  drawTess();drawGyro();
+  if(!reduced)requestAnimationFrame(frame);
+}
+reset();updatePanel();setStatus('two independent dots in |00⟩ · press Entangle');
+if(reduced){ST.ta=0.5;ST.tb=0.7;ST.a=0.5;ST.g=0.6;ST.playing=false;$('playBtn').textContent='▸ motion';$('playBtn').classList.remove('on');drawTess();drawGyro();}
+else{drawTess();drawGyro();requestAnimationFrame(frame);}
+</script>
+</body>
+</html>

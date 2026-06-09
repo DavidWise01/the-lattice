@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nested Cubit Synth — Russian Doll 6-Tritrit</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --purple: #8b5cf6;
+    --cyan: #22d3ee;
+    --gold: #facc15;
+  }
+  html, body { height: 100%; }
+  body {
+    font-family: 'JetBrains Mono', monospace;
+    background: #030308;
+    overscroll-behavior: none;
+    touch-action: manipulation;
+  }
+  h1 { font-family: 'Orbitron', sans-serif; letter-spacing: 0.12em; }
+  
+  .orb {
+    width: 48px; height: 48px;
+    border-radius: 9999px;
+    position: absolute;
+    cursor: pointer;
+    transition: transform 0.18s cubic-bezier(.2,.8,.2,1), filter 0.3s, box-shadow 0.3s;
+    will-change: transform;
+    outline: none;
+    border: 1px solid rgba(255,255,255,0.08);
+    backdrop-filter: blur(2px);
+  }
+  @media (min-width: 640px) { .orb { width: 54px; height: 54px; } }
+  .orb::after {
+    content: ''; position: absolute; inset: -8px; border-radius: inherit;
+    filter: blur(16px); opacity: 0.65; z-index: -1; transition: all 0.3s;
+  }
+  .orb:hover { transform: scale(1.08); filter: brightness(1.15); }
+  .orb:active { transform: scale(0.92); }
+  .orb:focus-visible { box-shadow: 0 0 0 2px #fff, 0 0 0 4px rgba(139,92,246,0.6); }
+  
+  .state-0 { background: radial-gradient(circle at 30% 25%, #ddd6fe 0%, #a78bfa 15%, #7c3aed 55%, #4c1d95 100%); }
+  .state-0::after { background: var(--purple); }
+  .state-1 { background: radial-gradient(circle at 30% 25%, #cffafe 0%, #67e8f9 15%, #0891b2 55%, #0e7490 100%); }
+  .state-1::after { background: var(--cyan); }
+  .state-2 { background: radial-gradient(circle at 30% 25%, #fef3c7 0%, #fde68a 15%, #d97706 55%, #92400e 100%); }
+  .state-2::after { background: var(--gold); }
+
+  .watcher { box-shadow: inset 0 0 0 2px rgba(59,130,246,0.7), 0 0 12px rgba(59,130,246,0.3); }
+  .nester { box-shadow: inset 0 0 0 2px rgba(245,158,11,0.8), 0 0 12px rgba(245,158,11,0.35); }
+  
+  .pulse { animation: pulse 2.4s ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.07); } }
+  
+  .gatekeepers { animation: spin 40s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .gatekeepers > .orb { animation: counter 40s linear infinite; }
+  @keyframes counter { to { transform: rotate(-360deg); } }
+  
+  .folder {
+    position: relative;
+    border-radius: 1.5rem;
+    background: linear-gradient(180deg, rgba(20,15,35,0.85), rgba(8,6,14,0.85));
+    border: 1px solid rgba(139,92,246,0.25);
+    box-shadow: 0 0 60px rgba(0,0,0,0.9), inset 0 1px 0 rgba(255,255,255,0.05), inset 0 -20px 40px rgba(99,102,241,0.08);
+    backdrop-filter: blur(12px);
+    transition: box-shadow 0.4s, border-color 0.4s, transform 0.4s;
+  }
+  .folder::before {
+    content: ''; position: absolute; inset: -1px; border-radius: inherit; padding: 1px;
+    background: linear-gradient(180deg, rgba(139,92,246,0.4), transparent 40%, rgba(34,211,238,0.2));
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor; mask-composite: exclude; pointer-events: none; opacity: 0.6;
+  }
+  .level-1 { border-color: rgba(34,211,238,0.28); }
+  .level-1::before { background: linear-gradient(180deg, rgba(34,211,238,0.4), transparent 40%, rgba(250,204,21,0.2)); }
+  .level-2 { border-color: rgba(250,204,21,0.28); }
+  .level-2::before { background: linear-gradient(180deg, rgba(250,204,21,0.4), transparent 40%, rgba(236,72,153,0.2)); }
+  
+  .folder.blooming {
+    border-color: rgba(255,255,255,0.9) !important;
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.9) inset, 0 0 30px rgba(255,255,255,0.7), 0 0 80px rgba(168,85,247,0.5), 0 0 140px rgba(34,211,238,0.3);
+    transform: scale(1.02);
+  }
+  
+  .ripple {
+    position: absolute; width: 14px; height: 14px; margin-left: -7px; margin-top: -7px;
+    border-radius: 9999px; pointer-events: none; z-index: 20;
+    background: radial-gradient(circle, #fff 0%, #fef3c7 20%, #facc15 40%, transparent 70%);
+    box-shadow: 0 0 18px #fff, 0 0 36px #facc15, 0 0 60px #a855f7;
+    animation: rippleOut 0.9s cubic-bezier(0.16,1,0.3,1) forwards;
+  }
+  @keyframes rippleOut { 0% { transform: scale(0.2); opacity: 1; } 70% { opacity: 1; } 100% { transform: scale(10); opacity: 0; } }
+  
+  .beam {
+    position: absolute; width: 2px; transform: translateX(-50%); pointer-events: none; z-index: 10;
+    background: linear-gradient(to bottom, rgba(255,255,255,0.95), rgba(250,204,21,0.8), transparent);
+    box-shadow: 0 0 12px rgba(250,204,21,0.9), 0 0 24px rgba(255,255,255,0.6);
+    transition: height 0.45s cubic-bezier(0.2,0,1);
+  }
+  
+  .btn {
+    position: relative; font-family: 'Orbitron', sans-serif; letter-spacing: 0.08em;
+    background: linear-gradient(180deg, rgba(30,20,50,0.9), rgba(10,8,18,0.9));
+    border: 1px solid rgba(139,92,246,0.4); color: #e9d5ff;
+    padding: 0.7rem 1.2rem; border-radius: 0.9rem; font-size: 0.8rem; text-transform: uppercase;
+    transition: all 0.2s; box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), 0 4px 20px rgba(0,0,0,0.5);
+  }
+  .btn:hover { border-color: rgba(167,139,250,0.8); color: #fff; box-shadow: 0 0 20px rgba(139,92,246,0.35), inset 0 1px 0 rgba(255,255,255,0.1); transform: translateY(-1px); }
+  .btn:active { transform: translateY(1px) scale(0.98); }
+  .btn.active { background: linear-gradient(180deg, rgba(99,102,241,0.3), rgba(139,92,246,0.2)); border-color: #a78bfa; color: white; box-shadow: 0 0 25px rgba(139,92,246,0.5), inset 0 0 20px rgba(139,92,246,0.15); }
+  
+  .stat {
+    background: rgba(15,12,25,0.7); border: 1px solid rgba(255,255,255,0.08);
+    padding: 0.5rem 0.85rem; border-radius: 0.7rem; backdrop-filter: blur(8px);
+  }
+  
+  .crt::after {
+    content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 50;
+    background: repeating-linear-gradient(0deg, rgba(255,255,255,0.03) 0px, transparent 2px, transparent 4px);
+    opacity: 0.15; mix-blend-mode: screen;
+  }
+</style>
+</head>
+<body class="text-zinc-200 selection:bg-violet-500/30 selection:text-white crt">
+  <canvas id="stars" class="fixed inset-0 -z-20"></canvas>
+  <div class="fixed inset-0 -z-10 bg-[radial-gradient(ellipse_at_50%_-20%,rgba(120,80,255,0.25),transparent_60%),radial-gradient(ellipse_at_50%_120%,rgba(0,200,255,0.18),transparent_55%),radial-gradient(ellipse_at_80%_50%,rgba(255,180,50,0.12),transparent_50%)]"></div>
+  <div class="fixed inset-0 -z-10 opacity-[0.035]" style="background-image:url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iMzAwIj48ZmlsdGVyIGlkPSJub2lzZSIgeD0iMCIgeT0iMCIgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSI+PGZlVHVyYnVsZW5jZSB0eXBlPSJmcmFjdGFsTm9pc2UiIGJhc2VGcmVxdWVuY3k9IjAuOCIgbnVtT2N0YXZlcz0iNCIgc3RpdGNIaW50ZXJwb2xhdGlvbj0iZXhwZXRmT3R0byIgc2VjZG9uZEdyYXBoaWNzPSIyMCIvPjwvZmlsdGVyPjxyZWN0CBmaWxsPSIjMDAwIiBvdXRcZmlsdGVyPSJ1cmwoI25vaXNlKSIvPjwvc3ZnPg==');"></div>
+
+  <header class="w-full max-w-6xl mx-auto px-4 sm:px-6 pt-5 sm:pt-7 flex flex-col sm:flex-row gap-3 sm:items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="size-9 rounded-xl bg-gradient-to-b from-violet-600 to-indigo-800 flex items-center justify-center shadow-[0_0_20px_rgba(139,92,246,0.4)]">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M12 2L14.5 8.5H21L15.75 12.75L17.5 19.5L12 15.75L6.5 19.5L8.25 12.75L3 8.5H9.5L12 2Z" stroke="white" stroke-opacity="0.9" stroke-width="1.2"/></svg>
+      </div>
+      <div>
+        <h1 class="text-[15px] sm:text-[17px] font-extrabold leading-none tracking-widest text-violet-100">NESTED CUBIT SYNTH</h1>
+        <p class="text-[10px] text-violet-300/60 tracking-widest mt-0.5">RUSSIAN DOLL • 6-TRITRIT</p>
+      </div>
+    </div>
+    <div class="flex gap-2 sm:gap-3 text-[11px] font-mono">
+      <div class="stat">Effective states: <span class="text-cyan-300">216</span></div>
+      <div class="stat">Current depth: <span class="text-violet-300">3</span></div>
+      <div class="stat hidden sm:block">Phase lock: <span id="phase" class="text-amber-300">0:0 = 0:0 = 0:0</span></div>
+    </div>
+  </header>
+
+  <main class="w-full max-w-6xl mx-auto flex-1 px-4 sm:px-6 flex flex-col items-center">
+    <div class="mt-6 sm:mt-8 mb-3 text-center">
+      <p class="text-[11px] sm:text-xs tracking-[0.2em] text-violet-200/50 uppercase">Click tritrits • Purple 0:0 → Cyan 1:1 → Gold 0:1</p>
+    </div>
+
+    <div id="synth" class="relative w-full max-w-[520px] flex flex-col items-center">
+      <!-- Level 0 -->
+      <div class="folder level-0 w-full px-4 py-4 sm:py-5" data-level="0">
+        <div class="flex items-center justify-between mb-3">
+          <div class="flex items-center gap-2">
+            <span class="size-1.5 rounded-full bg-violet-400 shadow-[0_0_8px_#a78bfa] animate-pulse"></span>
+            <span class="text-[11px] tracking-widest font-mono text-violet-200/80">LEVEL 0 • BASS 60–120Hz</span>
+          </div>
+          <span data-bloom class="text-[10px] font-mono px-2 py-0.5 rounded-md bg-violet-950/60 border border-violet-800/50 text-violet-300/80 transition-all">STANDBY</span>
+        </div>
+        <div class="relative mx-auto w-[270px] h-[165px] sm:w-[310px] sm:h-[185px]">
+          <button class="orb watcher pulse state-0" style="left:18%; top:2%" data-level="0" data-index="0" aria-label="Level 0 Watcher"></button>
+          <button class="orb nester pulse state-0" style="right:18%; top:2%" data-level="0" data-index="1" aria-label="Level 0 Nester"></button>
+          <div class="gatekeepers absolute inset-0">
+            <button class="orb state-0" style="left:50%; top:0; transform:translateX(-50%)" data-level="0" data-index="2" aria-label="Gatekeeper North"></button>
+            <button class="orb state-0" style="right:0; top:50%; transform:translateY(-50%)" data-level="0" data-index="3" aria-label="Gatekeeper East"></button>
+            <button class="orb state-0" style="left:50%; bottom:0; transform:translateX(-50%)" data-level="0" data-index="4" aria-label="Gatekeeper South"></button>
+            <button class="orb state-0" style="left:0; top:50%; transform:translateY(-50%)" data-level="0" data-index="5" aria-label="Gatekeeper West"></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- connector -->
+      <div class="w-px h-5 sm:h-7 bg-gradient-to-b from-violet-500/60 to-cyan-500/0 relative">
+        <div class="absolute -top-1 left-1/2 -translate-x-1/2 size-1.5 rounded-full bg-amber-300 shadow-[0_0_10px_#facc15]"></div>
+      </div>
+
+      <!-- Level 1 -->
+      <div class="folder level-1 w-[94%] px-4 py-4 sm:py-5 -mt-1" data-level="1">
+        <div class="flex items-center justify-between mb-3">
+          <div class="flex items-center gap-2">
+            <span class="size-1.5 rounded-full bg-cyan-400 shadow-[0_0_8px_#22d3ee] animate-pulse"></span>
+            <span class="text-[11px] tracking-widest font-mono text-cyan-200/80">LEVEL 1 • MID 240–480Hz</span>
+          </div>
+          <span data-bloom class="text-[10px] font-mono px-2 py-0.5 rounded-md bg-cyan-950/60 border border-cyan-800/50 text-cyan-300/80 transition-all">STANDBY</span>
+        </div>
+        <div class="relative mx-auto w-[250px] h-[155px] sm:w-[285px] sm:h-[175px]">
+          <button class="orb watcher pulse state-0" style="left:18%; top:2%" data-level="1" data-index="0"></button>
+          <button class="orb nester pulse state-0" style="right:18%; top:2%" data-level="1" data-index="1"></button>
+          <div class="gatekeepers absolute inset-0" style="animation-duration: 50s">
+            <button class="orb state-0" style="left:50%; top:0; transform:translateX(-50%)" data-level="1" data-index="2"></button>
+            <button class="orb state-0" style="right:0; top:50%; transform:translateY(-50%)" data-level="1" data-index="3"></button>
+            <button class="orb state-0" style="left:50%; bottom:0; transform:translateX(-50%)" data-level="1" data-index="4"></button>
+            <button class="orb state-0" style="left:0; top:50%; transform:translateY(-50%)" data-level="1" data-index="5"></button>
+          </div>
+        </div>
+      </div>
+
+      <div class="w-px h-5 sm:h-7 bg-gradient-to-b from-cyan-500/60 to-amber-500/0 relative">
+        <div class="absolute -top-1 left-1/2 -translate-x-1/2 size-1.5 rounded-full bg-amber-300 shadow-[0_0_10px_#facc15]"></div>
+      </div>
+
+      <!-- Level 2 -->
+      <div class="folder level-2 w-[88%] px-4 py-4 sm:py-5 -mt-1" data-level="2">
+        <div class="flex items-center justify-between mb-3">
+          <div class="flex items-center gap-2">
+            <span class="size-1.5 rounded-full bg-amber-400 shadow-[0_0_8px_#facc15] animate-pulse"></span>
+            <span class="text-[11px] tracking-widest font-mono text-amber-200/80">LEVEL 2 • CHIME 960–1920Hz</span>
+          </div>
+          <span data-bloom class="text-[10px] font-mono px-2 py-0.5 rounded-md bg-amber-950/60 border border-amber-800/50 text-amber-300/80 transition-all">STANDBY</span>
+        </div>
+        <div class="relative mx-auto w-[230px] h-[145px] sm:w-[260px] sm:h-[165px]">
+          <button class="orb watcher pulse state-0" style="left:18%; top:2%" data-level="2" data-index="0"></button>
+          <button class="orb nester pulse state-0" style="right:18%; top:2%" data-level="2" data-index="1"></button>
+          <div class="gatekeepers absolute inset-0" style="animation-duration: 60s">
+            <button class="orb state-0" style="left:50%; top:0; transform:translateX(-50%)" data-level="2" data-index="2"></button>
+            <button class="orb state-0" style="right:0; top:50%; transform:translateY(-50%)" data-level="2" data-index="3"></button>
+            <button class="orb state-0" style="left:50%; bottom:0; transform:translateX(-50%)" data-level="2" data-index="4"></button>
+            <button class="orb state-0" style="left:0; top:50%; transform:translateY(-50%)" data-level="2" data-index="5"></button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-8 sm:mt-10 flex flex-wrap items-center justify-center gap-3">
+      <button id="autoBtn" class="btn">
+        <span class="relative z-10 flex items-center gap-2">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 11l4-4 4 4M20 13l-4 4-4-4M11 4v16M13 20V4"/></svg>
+          AUTO-BLOOM
+        </span>
+      </button>
+      <button id="ansibleBtn" class="btn !border-cyan-500/50 !text-cyan-200 hover:!shadow-[0_0_25px_rgba(34,211,238,0.4)]">
+        <span class="relative z-10 flex items-center gap-2">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M2 12h4M18 12h4M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8"/></svg>
+          ANSIBLE LINK
+        </span>
+      </button>
+    </div>
+
+    <p class="mt-8 mb-6 text-[11px] sm:text-[12px] tracking-[0.25em] text-violet-300/50 uppercase font-mono">1 watches, 1 nests, 4 spin — play the fractal</p>
+  </main>
+
+<script>
+(() => {
+  const levels = [[0,0,0,0],[0,0,0,0],[0,0,0,0]];
+  const stateClasses = ['state-0','state-1','state-2'];
+  const stateNames = ['0:0','1:1','0:1'];
+  let audioCtx = null, masterGain = null, audioInit = false;
+  let autoOn = false, autoTimer = null;
+
+  const synth = document.getElementById('synth');
+  const phaseEl = document.getElementById('phase');
+  const autoBtn = document.getElementById('autoBtn');
+  const ansibleBtn = document.getElementById('ansibleBtn');
+
+  function ensureAudio() {
+    if (audioInit) return;
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    masterGain = audioCtx.createGain();
+    masterGain.gain.value = 0.75;
+    masterGain.connect(audioCtx.destination);
+    audioInit = true;
+  }
+
+  function playTone(level, state, isBloom = false) {
+    if (!audioInit) return;
+    const freqs = [
+      [65.41, 82.41, 110.0],      // C2, E2, A2
+      [261.63, 329.63, 440.0],    // C4, E4, A4
+      [1046.5, 1318.5, 1760.0]    // C6, E6, A6
+    ];
+    const now = audioCtx.currentTime;
+    const freq = freqs[level][state];
+    
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    const filt = audioCtx.createBiquadFilter();
+    
+    osc.type = level === 0 ? 'sine' : level === 1 ? 'triangle' : 'sine';
+    osc.frequency.setValueAtTime(freq, now);
+    if (level === 2) osc.frequency.exponentialRampToValueAtTime(freq * 1.005, now + 0.03);
+    
+    filt.type = 'lowpass';
+    filt.frequency.value = level === 0 ? 1400 : 3500;
+    filt.Q.value = 0.7;
+    
+    gain.gain.setValueAtTime(0, now);
+    gain.gain.linearRampToValueAtTime(isBloom ? 0.24 : 0.14, now + 0.012);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + (isBloom ? 1.0 : level === 0 ? 0.55 : 0.38));
+    
+    osc.connect(filt).connect(gain).connect(masterGain);
+    osc.start(now);
+    osc.stop(now + 1.2);
+
+    if (isBloom) {
+      const o2 = audioCtx.createOscillator();
+      const g2 = audioCtx.createGain();
+      o2.type = 'sine';
+      o2.frequency.value = freq * 2;
+      g2.gain.setValueAtTime(0, now);
+      g2.gain.linearRampToValueAtTime(0.07, now + 0.02);
+      g2.gain.exponentialRampToValueAtTime(0.001, now + 0.7);
+      o2.connect(g2).connect(masterGain);
+      o2.start(now + 0.02);
+      o2.stop(now + 0.75);
+    }
+  }
+
+  function updateOrb(l, i) {
+    const el = document.querySelector(`.orb[data-level="${l}"][data-index="${i}"]`);
+    if (!el) return;
+    el.classList.remove(...stateClasses);
+    el.classList.add(stateClasses[levels[l][i]]);
+    el.setAttribute('aria-label', `L${l} ${i<2? (i===0?'Watcher':'Nester') : 'Gate'}: ${stateNames[levels[l][i]]}`);
+  }
+
+  function updateAll() {
+    for (let l=0;l<3;l++) for (let i=0;i<6;i++) updateOrb(l,i);
+    updateStats();
+  }
+
+  function updateStats(locked=false) {
+    const p = `${levels[0][0]}:${levels[0][1]} = ${levels[1][0]}:${levels[1][1]} = ${levels[2][0]}:${levels[2][1]}`;
+    phaseEl.textContent = locked ? p + ' ✓ LOCKED' : p;
+    phaseEl.classList.toggle('text-emerald-300', locked);
+    phaseEl.classList.toggle('text-amber-300', !locked);
+  }
+
+  function createRipple(level) {
+    const nester = document.querySelector(`.orb.nester[data-level="${level}"]`);
+    if (!nester) return;
+    const sr = synth.getBoundingClientRect();
+    const r = nester.getBoundingClientRect();
+    const x = r.left - sr.left + r.width/2;
+    const y = r.top - sr.top + r.height/2;
+    
+    const ripple = document.createElement('div');
+    ripple.className = 'ripple';
+    ripple.style.left = x + 'px';
+    ripple.style.top = y + 'px';
+    synth.appendChild(ripple);
+    setTimeout(() => ripple.remove(), 900);
+    
+    if (level < 2) {
+      const next = document.querySelector(`.folder[data-level="${level+1}"]`);
+      const nr = next.getBoundingClientRect();
+      const ny = nr.top - sr.top + 24;
+      const beam = document.createElement('div');
+      beam.className = 'beam';
+      beam.style.left = x + 'px';
+      beam.style.top = y + 'px';
+      beam.style.height = '0px';
+      synth.appendChild(beam);
+      requestAnimationFrame(() => beam.style.height = Math.max(20, ny - y) + 'px');
+      setTimeout(() => beam.remove(), 500);
+    }
+  }
+
+  function checkBloom(level) {
+    const allPurple = levels[level].every(s => s === 0);
+    if (!allPurple) return false;
+    
+    const folder = document.querySelector(`.folder[data-level="${level}"]`);
+    const badge = folder.querySelector('[data-bloom]');
+    badge.textContent = 'BLOOM';
+    badge.classList.add('!text-white','!border-white/80','shadow-[0_0_14px_rgba(255,255,255,0.85)]');
+    folder.classList.add('blooming');
+    
+    createRipple(level);
+    playTone(level, 0, true);
+    
+    setTimeout(() => {
+      folder.classList.remove('blooming');
+      badge.textContent = 'STANDBY';
+      badge.classList.remove('!text-white','!border-white/80','shadow-[0_0_14px_rgba(255,255,255,0.85)]');
+    }, 1100);
+    
+    if (level < 2) {
+      setTimeout(() => {
+        levels[level+1][0] = 0;
+        levels[level+1][1] = 0;
+        updateOrb(level+1, 0);
+        updateOrb(level+1, 1);
+        playTone(level+1, 0);
+        checkBloom(level+1);
+        updateStats();
+      }, 380);
+    }
+    return true;
+  }
+
+  function onOrbClick(e) {
+    ensureAudio();
+    const el = e.currentTarget;
+    const l = +el.dataset.level;
+    const i = +el.dataset.index;
+    levels[l][i] = (levels[l][i] + 1) % 3;
+    updateOrb(l,i);
+    playTone(l, levels[l][i]);
+    el.style.transform = 'scale(0.88)';
+    setTimeout(() => el.style.transform = '', 140);
+    checkBloom(l);
+    updateStats();
+  }
+
+  document.querySelectorAll('.orb').forEach(btn => {
+    btn.addEventListener('click', onOrbClick);
+    btn.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); btn.click(); }});
+  });
+
+  autoBtn.addEventListener('click', () => {
+    ensureAudio();
+    autoOn = !autoOn;
+    autoBtn.classList.toggle('active', autoOn);
+    if (autoOn) {
+      autoTimer = setInterval(() => {
+        const l = Math.floor(Math.random()*3);
+        const i = Math.floor(Math.random()*6);
+        const btn = document.querySelector(`.orb[data-level="${l}"][data-index="${i}"]`);
+        if (btn) btn.click();
+        // emergent bias: sometimes nudge watcher toward nester
+        if (Math.random() < 0.3) {
+          const w = levels[l][0], n = levels[l][1];
+          if (w !== n && Math.random() < 0.5) { levels[l][0] = n; updateOrb(l,0); }
+        }
+      }, 520);
+    } else {
+      clearInterval(autoTimer);
+    }
+  });
+
+  ansibleBtn.addEventListener('click', () => {
+    ensureAudio();
+    const target = (levels[0][0] + 1) % 3;
+    [0,1,2].forEach(l => {
+      levels[l][0] = target;
+      levels[l][1] = target;
+      updateOrb(l,0); updateOrb(l,1);
+      playTone(l, target, true);
+      const w = document.querySelector(`.orb.watcher[data-level="${l}"]`);
+      const n = document.querySelector(`.orb.nester[data-level="${l}"]`);
+      [w,n].forEach(el => {
+        el.classList.add('ring-2','ring-white/80');
+        setTimeout(() => el.classList.remove('ring-2','ring-white/80'), 600);
+      });
+    });
+    // harmonic resonance sweep
+    const now = audioCtx.currentTime;
+    [0,1,2].forEach(l => {
+      const o = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      o.frequency.value = 110 * Math.pow(2,l);
+      o.type = 'sine';
+      g.gain.setValueAtTime(0, now);
+      g.gain.linearRampToValueAtTime(0.12, now+0.05);
+      g.gain.exponentialRampToValueAtTime(0.001, now+1.4);
+      o.connect(g).connect(masterGain);
+      o.start(now + l*0.04);
+      o.stop(now+1.5);
+    });
+    updateStats(true);
+    setTimeout(() => updateStats(false), 1800);
+  });
+
+  // init random non-bloomed state
+  function initLevels() {
+    for (let l=0;l<3;l++) {
+      for (let i=0;i<6;i++) levels[l][i] = Math.floor(Math.random()*3);
+      if (levels[l].every(s=>s===0)) levels[l][3] = 1;
+    }
+    updateAll();
+  }
+  initLevels();
+
+  // starfield
+  const canvas = document.getElementById('stars');
+  const ctx = canvas.getContext('2d');
+  let stars = [];
+  function resize() {
+    canvas.width = window.innerWidth * devicePixelRatio;
+    canvas.height = window.innerHeight * devicePixelRatio;
+    ctx.scale(devicePixelRatio, devicePixelRatio);
+    stars = Array.from({length: 180}, () => ({
+      x: Math.random()*window.innerWidth,
+      y: Math.random()*window.innerHeight,
+      r: Math.random()*1.3 + 0.2,
+      a: Math.random()*0.5+0.3,
+      t: Math.random()*Math.PI*2,
+      s: Math.random()*0.015+0.003
+    }));
+  }
+  function tick() {
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    for (const st of stars) {
+      st.t += st.s;
+      const tw = 0.5 + Math.sin(st.t)*0.5;
+      ctx.globalAlpha = st.a * tw;
+      ctx.fillStyle = '#fff';
+      ctx.beginPath(); ctx.arc(st.x, st.y, st.r, 0, Math.PI*2); ctx.fill();
+      if (st.r > 0.9) {
+        ctx.globalAlpha = st.a * tw * 0.3;
+        ctx.beginPath(); ctx.arc(st.x, st.y, st.r*3, 0, Math.PI*2); ctx.fill();
+      }
+    }
+    requestAnimationFrame(tick);
+  }
+  window.addEventListener('resize', resize);
+  resize(); tick();
+
+  // hint: first interaction
+  let first = true;
+  document.addEventListener('click', () => {
+    if (first) { first = false; ensureAudio(); }
+  }, {once: true});
+})();
+</script>
+</body>
+</html>

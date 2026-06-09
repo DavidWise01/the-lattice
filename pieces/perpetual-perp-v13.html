@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ROOT0 LAYER 0.84 — Perpetual -+000 Base-12 Box</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  * { font-variant-ligatures: none; }
+  body { font-family: 'Inter', system-ui, -apple-system, sans-serif; background:#020617; }
+  .mono { font-family: 'JetBrains Mono', monospace; }
+  .plasma-bg { position:fixed; inset:0; z-index:0; overflow:hidden; background:#020617; }
+  .blob { position:absolute; width:70vmax; height:70vmax; border-radius:50%; filter:blur(90px); opacity:0.38; mix-blend-mode:screen; animation: drift 32s infinite alternate ease-in-out; }
+  .blob1 { background:radial-gradient(circle, rgba(34,211,238,0.9) 0%, transparent 60%); top:-20%; left:-15%; animation-duration:29s; }
+  .blob2 { background:radial-gradient(circle, rgba(245,158,11,0.75) 0%, transparent 60%); bottom:-25%; right:-10%; animation-duration:34s; }
+  .blob3 { background:radial-gradient(circle, rgba(99,102,241,0.6) 0%, transparent 60%); top:30%; left:25%; animation-duration:38s; }
+  @keyframes drift { 0% { transform:translate(0,0) scale(1) rotate(0deg)} 100% { transform:translate(8vw,-6vh) scale(1.15) rotate(20deg)} }
+  .grid-overlay { position:fixed; inset:0; z-index:1; pointer-events:none; opacity:0.035; background-image: linear-gradient(#22d3ee 1px, transparent 1px), linear-gradient(90deg, #22d3ee 1px, transparent 1px); background-size: 48px 48px; }
+  
+  .card { position:relative; background:rgba(2,6,23,0.72); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border:1px solid rgba(34,211,238,0.12); border-radius:1.25rem; box-shadow: 0 0 60px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.03); }
+  .card::before { content:''; position:absolute; inset:0; border-radius:inherit; padding:1px; background:linear-gradient(180deg, rgba(34,211,238,0.25), transparent 30%, rgba(245,158,11,0.15)); -webkit-mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite:xor; mask-composite:exclude; pointer-events:none; }
+  
+  .pulse-neutral { animation:pulseWhite 2.4s ease-in-out infinite; color:#e2e8f0; text-shadow:0 0 20px rgba(255,255,255,0.5), 0 0 40px rgba(255,255,255,0.2); }
+  .pulse-plus { animation:pulseCyan 1.8s ease-in-out infinite; color:#22d3ee; text-shadow:0 0 25px rgba(34,211,238,0.9), 0 0 60px rgba(34,211,238,0.5); }
+  .pulse-minus { animation:pulseAmber 1.8s ease-in-out infinite; color:#f59e0b; text-shadow:0 0 25px rgba(245,158,11,0.9), 0 0 60px rgba(245,158,11,0.45); }
+  @keyframes pulseWhite { 0%,100%{opacity:.88; transform:scale(1)} 50%{opacity:1; transform:scale(1.02)} }
+  @keyframes pulseCyan { 0%,100%{opacity:.92; transform:scale(1)} 50%{opacity:1; transform:scale(1.03)} }
+  @keyframes pulseAmber { 0%,100%{opacity:.92; transform:scale(1)} 50%{opacity:1; transform:scale(1.03)} }
+  
+  #walkTrack { transition:transform 0.7s cubic-bezier(0.16,1,0.3,1); }
+  .walk-node { width:44px; flex-shrink:0; }
+  
+  @keyframes boxPulse { 0%,100%{opacity:0.65} 50%{opacity:1} }
+  @keyframes shimmer { 0%{transform:translateX(-120%)} 100%{transform:translateX(220%)} }
+  @keyframes spinSlow { to{ transform:rotate(360deg) } }
+  
+  .holo-text { background:linear-gradient(90deg, #67e8f9, #e2e8f0 30%, #fcd34d 70%, #67e8f9); -webkit-background-clip:text; background-clip:text; color:transparent; }
+  .btn { position:relative; overflow:hidden; transition:all 0.3s; }
+  .btn::after { content:''; position:absolute; inset:0; background:linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent); transform:translateX(-100%); transition:transform 0.6s; }
+  .btn:hover::after { transform:translateX(100%); }
+</style>
+</head>
+<body class="text-slate-200 min-h-screen">
+  <div class="plasma-bg">
+    <div class="blob blob1"></div>
+    <div class="blob blob2"></div>
+    <div class="blob blob3"></div>
+  </div>
+  <div class="grid-overlay"></div>
+
+  <div class="relative z-10 max-w-[1600px] mx-auto px-4 py-6 md:py-8">
+    <header class="text-center mb-8">
+      <h1 class="mono text-[13px] md:text-lg tracking-[0.3em] uppercase font-light">
+        <span class="text-slate-400">ROOT0</span> <span class="text-cyan-300/80">LAYER 0.84</span> — <span class="holo-text font-medium">Perpetual -+000 Base-12 Box</span>
+      </h1>
+      <p class="text-[11px] text-slate-500 mt-1 mono">choice-preserving • photonic • self-sustaining</p>
+    </header>
+
+    <div class="grid grid-cols-1 xl:grid-cols-12 gap-5 lg:gap-6">
+      <!-- LEFT -->
+      <div class="xl:col-span-3 space-y-5">
+        <div class="card p-5">
+          <div class="flex items-center justify-between mb-3">
+            <h2 class="mono text-[11px] uppercase tracking-widest text-cyan-300/90">Infinite ±1 Walk</h2>
+            <span class="text-[10px] px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-300 border border-cyan-500/20">PERPETUAL</span>
+          </div>
+          <div id="walkViewport" class="relative w-full h-[88px] overflow-hidden rounded-xl bg-black/40 border border-slate-800">
+            <div class="absolute inset-0" style="background:radial-gradient(ellipse at center, transparent 30%, rgba(0,0,0,0.8) 100%)"></div>
+            <div id="walkTrack" class="absolute top-1/2 left-1/2 flex items-center"></div>
+            <!-- center reticle -->
+            <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none">
+              <div class="w-12 h-12 rounded-full border border-cyan-400/50 shadow-[0_0_20px_rgba(34,211,238,0.4)]"></div>
+              <div class="absolute top-1/2 left-1/2 w-14 h-[1px] bg-gradient-to-r from-transparent via-cyan-400/70 to-transparent -translate-x-1/2 -translate-y-1/2"></div>
+              <div class="absolute top-1/2 left-1/2 h-14 w-[1px] bg-gradient-to-b from-transparent via-cyan-400/70 to-transparent -translate-x-1/2 -translate-y-1/2"></div>
+            </div>
+            <div class="absolute bottom-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-cyan-500/30 to-transparent"></div>
+          </div>
+          <div class="flex justify-between mt-2.5 text-[10px] mono text-slate-600">
+            <span>-∞</span><span class="text-slate-500">SCROLLING HORIZON</span><span>+∞</span>
+          </div>
+          <div class="mt-3 flex items-center justify-between">
+            <div class="text-[11px] mono text-slate-500">WALK POSITION</div>
+            <div class="mono text-lg text-amber-300"><span id="walkPosLabel">+0</span><span class="text-[10px] text-slate-600 ml-1">₁₂</span></div>
+          </div>
+        </div>
+
+        <div class="card p-5">
+          <h2 class="mono text-[11px] uppercase tracking-widest text-amber-300/90 mb-4">Energy Partition</h2>
+          <div class="relative w-40 h-40 mx-auto">
+            <svg viewBox="0 0 100 100" class="w-full h-full -rotate-90">
+              <circle cx="50" cy="50" r="44" fill="none" stroke="#0f172a" stroke-width="8"/>
+              <circle cx="50" cy="50" r="44" fill="none" stroke="#22d3ee" stroke-width="4" stroke-dasharray="92 184" stroke-linecap="round" opacity="0.9" style="filter:drop-shadow(0 0 6px #22d3ee)"/>
+              <circle cx="50" cy="50" r="44" fill="none" stroke="#22d3ee" stroke-width="4" stroke-dasharray="4 4" stroke-dashoffset="0" opacity="0.3">
+                <animate attributeName="stroke-dashoffset" values="0;-276" dur="3s" repeatCount="indefinite"/>
+              </circle>
+              
+              <circle cx="50" cy="50" r="34" fill="none" stroke="#1e293b" stroke-width="8"/>
+              <circle cx="50" cy="50" r="34" fill="none" stroke="#f59e0b" stroke-width="5" stroke-dasharray="142 71" stroke-linecap="round" opacity="0.95" style="filter:drop-shadow(0 0 6px #f59e0b)"/>
+              <circle cx="50" cy="50" r="34" fill="none" stroke="#f59e0b" stroke-width="5" stroke-dasharray="3 5" stroke-dashoffset="0" opacity="0.25">
+                <animate attributeName="stroke-dashoffset" values="0;213" dur="2.2s" repeatCount="indefinite"/>
+              </circle>
+            </svg>
+            <div class="absolute inset-0 flex flex-col items-center justify-center">
+              <div class="mono text-[10px] text-slate-500">LOOP</div>
+              <div class="mono text-xl text-white">1.00</div>
+              <div class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse mt-1 shadow-[0_0_10px_#34d399]"></div>
+            </div>
+            <!-- orbiting photon -->
+            <div class="absolute inset-0" style="animation:spinSlow 4s linear infinite">
+              <div class="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1 w-2.5 h-2.5 rounded-full bg-cyan-300 shadow-[0_0_12px_#22d3ee]"></div>
+            </div>
+            <div class="absolute inset-0" style="animation:spinSlow 3.2s linear infinite reverse">
+              <div class="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1 w-2 h-2 rounded-full bg-amber-400 shadow-[0_0_10px_#f59e0b]"></div>
+            </div>
+          <div class="space-y-3 mt-4">
+            <div>
+              <div class="flex justify-between text-[11px] mb-1.5 mono"><span class="text-cyan-300">DECISION (stay/go)</span><span class="text-slate-400">33.33%</span></div>
+              <div class="h-[6px] bg-slate-900 rounded-full overflow-hidden border border-slate-800"><div class="h-full w-1/3 bg-gradient-to-r from-cyan-500 to-cyan-300 relative"><div class="absolute inset-0 w-12 bg-white/20 blur-sm" style="animation:shimmer 2s infinite"></div></div></div>
+            </div>
+            <div>
+              <div class="flex justify-between text-[11px] mb-1.5 mono"><span class="text-amber-300">SURPLUS RETURN</span><span class="text-slate-400">66.67%</span></div>
+              <div class="h-[6px] bg-slate-900 rounded-full overflow-hidden border border-slate-800"><div class="h-full w-2/3 bg-gradient-to-r from-amber-500 to-amber-300 relative"><div class="absolute inset-0 w-16 bg-white/20 blur-sm" style="animation:shimmer 2s infinite 0.3s"></div></div></div>
+            </div>
+          </div>
+          <div class="mt-4 text-center mono text-[10px] text-emerald-400/80 tracking-widest">SELF-SUSTAINING • NO EXTERNAL FEED</div>
+        </div>
+      </div>
+
+      <!-- CENTER -->
+      <div class="xl:col-span-6 space-y-5">
+        <div class="card p-8 md:p-12 text-center relative overflow-hidden">
+          <div class="absolute inset-0 opacity-[0.03]" style="background-image: radial-gradient(circle at 50% 50%, #22d3ee 1px, transparent 1px); background-size:24px 24px"></div>
+          <div class="relative">
+            <div class="inline-flex items-center gap-2 mb-6 px-3 py-1 rounded-full bg-black/50 border border-cyan-900/50">
+              <div class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></div>
+              <span class="mono text-[10px] tracking-widest text-slate-400">CORE REGISTER • BASE-12</span>
+            </div>
+            <div id="mainDisplay" class="mono text-[5.5rem] md:text-[8rem] leading-none font-thin tracking-widest pulse-neutral select-none">-+000</div>
+            <div class="mt-6 flex items-center justify-center gap-4">
+              <div class="h-[1px] w-20 bg-gradient-to-r from-transparent to-cyan-500/50"></div>
+              <div class="mono text-[11px] text-slate-500 tracking-[0.2em]">PHOTONIC STATE</div>
+              <div class="h-[1px] w-20 bg-gradient-to-l from-transparent to-amber-500/50"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap items-center justify-center gap-3">
+          <button id="btnMinus" class="btn group relative px-7 py-3.5 rounded-2xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 hover:border-amber-400/60 transition-all">
+            <div class="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity" style="box-shadow:inset 0 0 20px rgba(245,158,11,0.2), 0 0 30px rgba(245,158,11,0.15)"></div>
+            <div class="relative flex items-center gap-2.5">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="text-amber-300"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+              <span class="mono text-[13px] tracking-widest text-amber-200">GO -1</span>
+            </div>
+          </button>
+          
+          <button id="btnStay" class="btn group relative px-10 py-4 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/20 hover:border-white/40 transition-all">
+            <div class="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity" style="box-shadow:inset 0 0 30px rgba(255,255,255,0.08), 0 0 40px rgba(255,255,255,0.1)"></div>
+            <div class="relative flex items-center gap-2.5">
+              <div class="w-2 h-2 rounded-full bg-white animate-pulse"></div>
+              <span class="mono text-sm tracking-[0.25em] text-white font-medium">STAY</span>
+              <div class="w-2 h-2 rounded-full bg-white animate-pulse"></div>
+            </div>
+          </button>
+          
+          <button id="btnPlus" class="btn group relative px-7 py-3.5 rounded-2xl bg-cyan-500/10 hover:bg-cyan-500/20 border border-cyan-500/30 hover:border-cyan-400/60 transition-all">
+            <div class="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity" style="box-shadow:inset 0 0 20px rgba(34,211,238,0.2), 0 0 30px rgba(34,211,238,0.15)"></div>
+            <div class="relative flex items-center gap-2.5">
+              <span class="mono text-[13px] tracking-widest text-cyan-200">GO +1</span>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="text-cyan-300"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </div>
+          </button>
+        </div>
+
+        <div class="card p-6">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="mono text-[11px] uppercase tracking-widest text-slate-300">Nested Stack • -+inf ×5</h2>
+            <span class="mono text-[10px] text-slate-500">CHOICE-PRESERVING</span>
+          </div>
+          <div class="flex items-center justify-center gap-8">
+            <div id="nestedBoxes" class="relative w-52 h-52 shrink-0"></div>
+            <div class="space-y-3 text-[11px] mono leading-relaxed max-w-[240px]">
+              <div class="flex gap-2"><span class="text-cyan-400">BOX 1</span><span class="text-slate-600">—</span><span class="text-slate-400">outer horizon</span></div>
+              <div class="flex gap-2"><span class="text-amber-400">BOX 2</span><span class="text-slate-600">—</span><span class="text-slate-400">containment</span></div>
+              <div class="flex gap-2"><span class="text-cyan-400">BOX 3</span><span class="text-slate-600">—</span><span class="text-slate-400">phase buffer</span></div>
+              <div class="flex gap-2"><span class="text-amber-400">BOX 4</span><span class="text-slate-600">—</span><span class="text-slate-400">coherence</span></div>
+              <div class="flex gap-2"><span class="text-white">BOX 5</span><span class="text-slate-600">—</span><span class="text-slate-300">you are here • -+000</span></div>
+              <div class="pt-2 mt-2 border-t border-slate-800 text-slate-500">Each box maintains independent -+000 reference. Walk advances, box holds.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT -->
+      <div class="xl:col-span-3">
+        <div class="card p-5 h-full">
+          <div class="flex items-center justify-between mb-3">
+            <h2 class="mono text-[11px] uppercase tracking-widest text-cyan-300/90">Photonic Matrix</h2>
+            <span class="mono text-[10px] text-slate-500">8⁴ = 4,096</span>
+          </div>
+          <div class="mb-3 p-2.5 rounded-lg bg-black/40 border border-slate-800">
+            <div class="flex items-center justify-between">
+              <span class="mono text-[10px] text-slate-500">PACKET CLOCK</span>
+              <span class="mono text-[11px] text-emerald-400">12-PHASE</span>
+            </div>
+            <div class="mt-1.5 flex gap-0.5">
+              <div class="h-1 flex-1 bg-cyan-400/80 rounded-full"></div>
+              <div class="h-1 flex-1 bg-cyan-400/60 rounded-full"></div>
+              <div class="h-1 flex-1 bg-cyan-400/40 rounded-full"></div>
+              <div class="h-1 flex-1 bg-slate-700 rounded-full"></div>
+              <div class="h-1 flex-1 bg-slate-700 rounded-full animate-pulse"></div>
+              <div class="h-1 flex-1 bg-slate-800 rounded-full"></div>
+              <div class="h-1 flex-1 bg-slate-800 rounded-full"></div>
+              <div class="h-1 flex-1 bg-slate-800 rounded-full"></div>
+              <div class="h-1 flex-1 bg-slate-800 rounded-full"></div>
+              <div class="h-1 flex-1 bg-slate-800 rounded-full"></div>
+              <div class="h-1 flex-1 bg-slate-800 rounded-full"></div>
+              <div class="h-1 flex-1 bg-slate-800 rounded-full"></div>
+            </div>
+          </div>
+          <div id="photonGrid" class="grid grid-cols-8 gap-1.5"></div>
+          <div class="mt-4 pt-3 border-t border-slate-800/70">
+            <div class="flex items-center justify-between text-[10px] mono">
+              <span class="text-slate-500">BASE-12 STATES</span>
+              <div class="flex items-center gap-3">
+                <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-white/70"></span><span class="text-slate-500">-+000</span></span>
+                <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-cyan-400"></span><span class="text-slate-500">+N</span></span>
+                <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span><span class="text-slate-500">-N</span></span>
+              </div>
+            </div>
+          <div class="mt-3 text-[10px] mono text-slate-600 leading-relaxed">Each packet cycles slowly through -+000 superposition. Active samples shown. Full 8×8×8×8 lattice running at photonic speed.</div>
+        </div>
+      </div>
+    </div>
+
+    <footer class="mt-10 pt-4 border-t border-slate-800/60">
+      <div class="flex flex-wrap items-center justify-center gap-x-5 gap-y-1.5 mono text-[11px] text-slate-500">
+        <span>Logic base: <span class="text-cyan-300">12</span></span>
+        <span class="hidden md:inline text-slate-700">|</span>
+        <span>Infinite walk: <span class="text-amber-300" id="statusWalk">Perpetual -+000</span></span>
+        <span class="hidden md:inline text-slate-700">|</span>
+        <span>Stack: <span class="text-slate-300">5 nested boxes</span></span>
+        <span class="hidden md:inline text-slate-700">|</span>
+        <span>Ports: <span class="text-emerald-400">open</span></span>
+        <span class="hidden md:inline text-slate-700">|</span>
+        <span>Location: <span class="text-slate-300">this laptop only</span></span>
+      </div>
+    </footer>
+  </div>
+
+<script>
+let walkPos = 0;
+let counter12 = 0;
+let mode = 'stay';
+const SPACING = 44;
+
+function toBase12(n){ return Math.abs(n).toString(12).toUpperCase().padStart(3,'0'); }
+
+function initWalk(){
+  const track = document.getElementById('walkTrack');
+  track.innerHTML = '';
+  for(let i=-140; i<=140; i++){
+    const node = document.createElement('div');
+    node.className = 'walk-node flex flex-col items-center justify-center';
+    node.dataset.pos = i;
+    const isOrigin = i===0;
+    node.innerHTML = `
+      <div class="dot w-[9px] h-[9px] rounded-full transition-all duration-500 ${isOrigin?'bg-cyan-400 shadow-[0_0_12px_#22d3ee]':'bg-slate-700'}"></div>
+      <div class="label mt-1.5 text-[9px] mono transition-colors ${isOrigin?'text-cyan-300/90':'text-slate-600'}">${i>0?'+':''}${i}</div>
+    `;
+    track.appendChild(node);
+  }
+  updateWalk();
+}
+
+function updateWalk(){
+  const track = document.getElementById('walkTrack');
+  track.style.transform = `translate(-50%, -50%) translateX(${-walkPos * SPACING}px)`;
+  document.querySelectorAll('.walk-node').forEach(n=>{
+    const p = parseInt(n.dataset.pos);
+    const dot = n.querySelector('.dot');
+    const label = n.querySelector('.label');
+    const dist = Math.abs(p - walkPos);
+    const isActive = p === walkPos;
+    dot.className = `dot w-[9px] h-[9px] rounded-full transition-all duration-500 ${isActive?'bg-cyan-400 scale-[1.6] shadow-[0_0_16px_#22d3ee]': dist<2?'bg-slate-500': dist<5?'bg-slate-700':'bg-slate-800'} ${dist>8?'opacity-30':''}`;
+    label.className = `label mt-1.5 text-[9px] mono transition-colors ${isActive?'text-cyan-200': dist<4?'text-slate-500':'text-slate-700'} ${dist>10?'opacity-0':''}`;
+  });
+  document.getElementById('walkPosLabel').textContent = (walkPos>=0?'+':'') + walkPos.toString(12).toUpperCase();
+}
+
+function updateDisplay(){
+  const disp = document.getElementById('mainDisplay');
+  const status = document.getElementById('statusWalk');
+  disp.className = 'mono text-[5.5rem] md:text-[8rem] leading-none font-thin tracking-widest select-none transition-all duration-500';
+  if(mode==='stay'){
+    disp.textContent = '-+000';
+    disp.classList.add('pulse-neutral');
+    status.textContent = 'Perpetual -+000';
+    status.className = 'text-slate-300';
+  } else if(counter12>0){
+    disp.textContent = '+' + toBase12(counter12);
+    disp.classList.add('pulse-plus');
+    status.textContent = '+' + toBase12(counter12);
+    status.className = 'text-cyan-300';
+  } else {
+    disp.textContent = '-' + toBase12(counter12);
+    disp.classList.add('pulse-minus');
+    status.textContent = '-' + toBase12(counter12);
+    status.className = 'text-amber-300';
+  }
+}
+
+function updateAll(){
+  updateWalk();
+  updateDisplay();
+}
+
+function initPhotonGrid(){
+  const grid = document.getElementById('photonGrid');
+  for(let i=0;i<64;i++){
+    const cell = document.createElement('div');
+    cell.className = 'aspect-square bg-slate-950/90 border border-slate-800/80 rounded-md flex items-center justify-center mono text-[9px] text-slate-600 transition-all duration-700 hover:border-cyan-800/50';
+    cell.textContent = '-+000';
+    cell.dataset.idx = i;
+    grid.appendChild(cell);
+  }
+  setInterval(()=>{
+    const cells = grid.children;
+    for(let k=0;k<7;k++){
+      const cell = cells[Math.floor(Math.random()*64)];
+      const r = Math.random();
+      if(r<0.55){
+        cell.textContent = '-+000';
+        cell.style.color = '#475569';
+        cell.style.borderColor = 'rgba(30,41,59,0.8)';
+        cell.style.boxShadow = 'none';
+        cell.style.backgroundColor = 'rgba(2,6,23,0.9)';
+      } else if(r<0.78){
+        const v = Math.floor(Math.random()*1728);
+        cell.textContent = '+' + v.toString(12).toUpperCase().padStart(3,'0');
+        cell.style.color = '#22d3ee';
+        cell.style.borderColor = 'rgba(34,211,238,0.35)';
+        cell.style.boxShadow = '0 0 10px rgba(34,211,238,0.15), inset 0 0 8px rgba(34,211,238,0.05)';
+        cell.style.backgroundColor = 'rgba(8,20,32,0.9)';
+      } else {
+        const v = Math.floor(Math.random()*1728);
+        cell.textContent = '-' + v.toString(12).toUpperCase().padStart(3,'0');
+        cell.style.color = '#f59e0b';
+        cell.style.borderColor = 'rgba(245,158,11,0.3)';
+        cell.style.boxShadow = '0 0 10px rgba(245,158,11,0.12), inset 0 0 8px rgba(245,158,11,0.05)';
+        cell.style.backgroundColor = 'rgba(28,18,5,0.85)';
+      }
+    }
+  }, 850);
+}
+
+function initNested(){
+  const container = document.getElementById('nestedBoxes');
+  for(let i=0;i<5;i++){
+    const size = 100 - i*17;
+    const offset = (100-size)/2;
+    const box = document.createElement('div');
+    box.className = 'absolute rounded-[2px] transition-all duration-700';
+    const isCyan = i%2===0;
+    const color = isCyan ? '34,211,238' : '245,158,11';
+    box.style.cssText = `
+      inset:${offset}%;
+      border:1.5px solid rgba(${color},${0.75 - i*0.1});
+      box-shadow: inset 0 0 ${24-i*3}px rgba(${color},0.18), 0 0 ${18-i*2}px rgba(${color},0.12);
+      animation: boxPulse ${2.8 + i*0.35}s ease-in-out infinite;
+      animation-delay:${i*0.2}s;
+      background: radial-gradient(ellipse at center, rgba(${color},0.06), transparent 60%);
+    `;
+    box.innerHTML = `<span class="absolute -top-[9px] left-1.5 px-1.5 py-0.5 text-[8px] mono leading-none rounded-sm ${isCyan?'text-cyan-300 bg-slate-950':'text-amber-300 bg-slate-950'} border ${isCyan?'border-cyan-900/50':'border-amber-900/40'}">BOX ${i+1} • -+000</span>`;
+    container.appendChild(box);
+  }
+}
+
+document.getElementById('btnStay').addEventListener('click', ()=>{
+  counter12 = 0;
+  walkPos = 0;
+  mode = 'stay';
+  updateAll();
+  // flash effect
+  const disp = document.getElementById('mainDisplay');
+  disp.style.transform = 'scale(1.05)';
+  setTimeout(()=>disp.style.transform='scale(1)', 180);
+});
+
+document.getElementById('btnPlus').addEventListener('click', ()=>{
+  counter12++;
+  walkPos++;
+  mode = 'plus';
+  updateAll();
+});
+
+document.getElementById('btnMinus').addEventListener('click', ()=>{
+  counter12--;
+  walkPos--;
+  mode = 'minus';
+  updateAll();
+});
+
+// keyboard
+window.addEventListener('keydown', (e)=>{
+  if(e.key==='ArrowRight' || e.key==='+') document.getElementById('btnPlus').click();
+  if(e.key==='ArrowLeft' || e.key==='-') document.getElementById('btnMinus').click();
+  if(e.key===' ' || e.key==='0'){ e.preventDefault(); document.getElementById('btnStay').click(); }
+});
+
+// init
+initWalk();
+initPhotonGrid();
+initNested();
+updateAll();
+
+// subtle ambient drift for walk when idle
+let idleTimer;
+function resetIdle(){
+  clearInterval(idleTimer);
+  idleTimer = setInterval(()=>{
+    if(mode==='stay' && Math.random()<0.15){
+      const track = document.getElementById('walkTrack');
+      track.style.transform = `translate(-50%, -50%) translateX(${-walkPos * SPACING + (Math.random()-0.5)*2}px)`;
+      setTimeout(updateWalk, 400);
+    }
+  }, 3000);
+}
+resetIdle();
+['click','keydown'].forEach(evt=> document.addEventListener(evt, resetIdle));
+</script>
+</body>
+</html>

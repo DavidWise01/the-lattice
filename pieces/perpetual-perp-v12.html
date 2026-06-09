@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fractal Synthesizer • Perpetual Memory Engine</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600&family=Outfit:wght@300;500;700&display=swap" rel="stylesheet">
+<style>
+  :root { color-scheme: dark; }
+  body { font-family: 'Outfit', system-ui, -apple-system, sans-serif; background: #020208; }
+  .mono { font-family: 'JetBrains Mono', monospace; }
+  .glass { backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
+  .neon-cyan { box-shadow: 0 0 20px rgba(0,229,255,0.35), inset 0 0 20px rgba(0,229,255,0.05); }
+  .neon-mag { box-shadow: 0 0 20px rgba(255,42,212,0.35), inset 0 0 20px rgba(255,42,212,0.05); }
+  .text-glow-cyan { text-shadow: 0 0 12px rgba(0,229,255,0.8), 0 0 24px rgba(0,229,255,0.4); }
+  .text-glow-mag { text-shadow: 0 0 12px rgba(255,42,212,0.8), 0 0 24px rgba(255,42,212,0.4); }
+  .grid-bg { background-image: radial-gradient(rgba(0,229,255,0.08) 1px, transparent 1px); background-size: 24px 24px; }
+  button { transition: all 0.2s; }
+  button:active { transform: scale(0.97); }
+  input[type=range] { -webkit-appearance: none; appearance: none; height: 6px; background: #0a0f1a; border-radius: 3px; outline: none; }
+  input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: #00e5ff; box-shadow: 0 0 10px #00e5ff; cursor: pointer; border: 2px solid #00141a; }
+</style>
+</head>
+<body class="min-h-screen text-white overflow-x-hidden">
+<div class="fixed inset-0 grid-bg opacity-40 pointer-events-none"></div>
+<div class="fixed inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(0,229,255,0.08),transparent_60%),radial-gradient(ellipse_at_bottom,_rgba(255,42,212,0.08),transparent_60%)] pointer-events-none"></div>
+
+<div class="relative z-10 max-w-[1600px] mx-auto px-4 py-6">
+  <!-- Header -->
+  <div class="text-center mb-5">
+    <h1 class="mono text-[11px] md:text-sm tracking-[0.2em] text-cyan-300/80 uppercase mb-2">Fractal Synthesizer + Perpetual Memory Engine</h1>
+    <div class="mono text-sm md:text-[17px] leading-relaxed text-glow-cyan">
+      1,070 pieces = 8 cores × 134 voices <span class="mx-2 text-white/30">|</span> 
+      <span class="text-white">1/16</span> <span class="text-cyan-400">light</span> - 0 - <span class="text-[#ff2ad4]">shadow</span> <span class="text-white">1/16</span> <span class="mx-2 text-white/30">|</span> 
+      life <span class="text-[#ff2ad4] text-glow-mag">&lt; 11 &gt;</span> death
+    </div>
+  </div>
+
+  <div class="grid lg:grid-cols-5 gap-4 lg:gap-5">
+    <!-- LEFT: Perpetual Memory Engine -->
+    <div class="lg:col-span-2 glass bg-black/50 rounded-[24px] border border-cyan-500/20 p-5 neon-cyan">
+      <div class="flex items-center justify-between mb-3">
+        <h2 class="mono text-xs tracking-widest text-cyan-300">PERPETUAL MEMORY ENGINE</h2>
+        <div class="mono text-[10px] px-2 py-1 rounded bg-cyan-500/10 text-cyan-300 border border-cyan-500/20">8-CORE RING</div>
+      </div>
+      
+      <div class="relative aspect-square max-w-[420px] mx-auto">
+        <svg viewBox="0 0 400 400" class="w-full h-full">
+          <defs>
+            <radialGradient id="coreGrad" cx="50%" cy="50%">
+              <stop offset="0%" stop-color="#00e5ff" stop-opacity="0.9"/>
+              <stop offset="60%" stop-color="#00e5ff" stop-opacity="0.3"/>
+              <stop offset="100%" stop-color="#00e5ff" stop-opacity="0"/>
+            </radialGradient>
+            <filter id="softGlow" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="8" result="blur"/>
+              <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+            </filter>
+          </defs>
+          <g transform="translate(200,200)">
+            <!-- Outer rings -->
+            <circle r="178" fill="none" stroke="#00e5ff15" stroke-width="1" stroke-dasharray="2 6"/>
+            <circle r="158" fill="none" stroke="#ff2ad415" stroke-width="1" stroke-dasharray="2 6"/>
+            <!-- Upper 64 -->
+            <g id="upperRegs" opacity="0.9"></g>
+            <!-- Lower 64 -->
+            <g id="lowerRegs" opacity="0.9"></g>
+            <!-- Core ring path -->
+            <circle r="118" fill="none" stroke="#ffffff08" stroke-width="24"/>
+            <circle r="118" fill="none" stroke="url(#coreGrad)" stroke-width="1.5" stroke-opacity="0.5"/>
+            <!-- Cores -->
+            <g id="cores" filter="url(#softGlow)"></g>
+            <!-- Central 11 -->
+            <g id="centerGroup">
+              <circle r="42" fill="#020208" stroke="#ff2ad4" stroke-width="1.5" opacity="0.9"/>
+              <circle r="38" fill="#020208" stroke="#00e5ff" stroke-width="1" stroke-opacity="0.6"/>
+              <circle r="34" fill="#000" opacity="0.8"/>
+              <text id="center11" x="0" y="7" text-anchor="middle" class="mono" font-size="22" fill="#fff" style="filter: drop-shadow(0 0 8px #ff2ad4)">11</text>
+              <circle id="pulseRing" r="34" fill="none" stroke="#00e5ff" stroke-width="1" opacity="0"/>
+            </g>
+            <!-- Life Death arc -->
+            <g id="lifeDeathArc" transform="rotate(-90)">
+              <path d="M -68 0 A 68 68 0 0 1 68 0" fill="none" stroke="#0a1625" stroke-width="6" stroke-linecap="round"/>
+              <path id="lifeArc" d="M -68 0 A 68 68 0 0 1 0 0" fill="none" stroke="#00e5ff" stroke-width="6" stroke-linecap="round" style="filter: drop-shadow(0 0 6px #00e5ff)"/>
+              <path id="deathArc" d="M 0 0 A 68 68 0 0 1 68 0" fill="none" stroke="#ff2ad4" stroke-width="6" stroke-linecap="round" style="filter: drop-shadow(0 0 6px #ff2ad4)"/>
+            </g>
+          </g>
+        </svg>
+        
+        <!-- Life <> Death -->
+        <div class="absolute -bottom-1 left-0 right-0">
+          <div class="flex items-center gap-3 mono text-[10px]">
+            <span class="text-cyan-400 w-10 text-right">LIFE</span>
+            <div class="flex-1 h-[22px] relative">
+              <div class="absolute inset-0 bg-black/80 rounded-full border border-white/10 overflow-hidden flex">
+                <div id="lifeBar" class="h-full bg-gradient-to-r from-cyan-500 to-cyan-300 transition-all duration-500" style="width:50%"></div>
+                <div id="deathBar" class="h-full bg-gradient-to-l from-[#ff2ad4] to-[#c01090] transition-all duration-500" style="width:50%"></div>
+              </div>
+              <div class="absolute inset-0 flex items-center justify-center">
+                <div class="w-0.5 h-5 bg-white/80" style="box-shadow: 0 0 8px white"></div>
+              </div>
+            <span class="text-[#ff2ad4] w-10">DEATH</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-3 gap-2 mt-6 mono text-[11px]">
+        <div class="bg-white/5 rounded-lg p-2.5 border border-white/5">
+          <div class="text-white/40">PHASE</div>
+          <div id="phaseRead" class="text-cyan-300 text-glow-cyan text-[15px]">1-0-1</div>
+        </div>
+        <div class="bg-white/5 rounded-lg p-2.5 border border-white/5">
+          <div class="text-white/40">UPPER 64</div>
+          <div id="upperRead" class="text-white text-[15px]">0.00</div>
+        </div>
+        <div class="bg-white/5 rounded-lg p-2.5 border border-white/5">
+          <div class="text-white/40">LOWER 64</div>
+          <div id="lowerRead" class="text-white text-[15px]">0.00</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: Synthesizer -->
+    <div class="lg:col-span-3 glass bg-black/50 rounded-[24px] border border-[#ff2ad4]/20 p-5 neon-mag">
+      <div class="flex items-center justify-between mb-3">
+        <h2 class="mono text-xs tracking-widest text-[#ff9ae5]">1,070-PIECE FRACTAL SYNTHESIZER</h2>
+        <div class="flex items-center gap-3">
+          <div class="mono text-[11px] px-2.5 py-1 rounded bg-[#ff2ad4]/10 text-[#ff9ae5] border border-[#ff2ad4]/20">
+            PIECES: <span id="pieces" class="text-white">0</span>/1070
+          </div>
+          <div class="w-2 h-2 rounded-full bg-[#ff2ad4] animate-pulse" id="activeDot" style="opacity:0.3"></div>
+        </div>
+      </div>
+      
+      <div class="relative rounded-xl overflow-hidden bg-[#050711] border border-white/5">
+        <canvas id="fractal" width="960" height="520" class="w-full h-[340px] md:h-[420px] block"></canvas>
+        <div class="absolute top-3 left-3 mono text-[10px] px-2 py-1 rounded bg-black/70 border border-cyan-500/30 text-cyan-300">8 × 134 VOICE BANKS</div>
+        <div class="absolute bottom-3 right-3 mono text-[10px] px-2 py-1 rounded bg-black/70 border border-[#ff2ad4]/30 text-[#ff9ae5]">FRACTAL TREE</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOTTOM: Controls -->
+  <div class="mt-5 glass bg-black/60 rounded-[24px] border border-white/10 p-4 md:p-5">
+    <div class="grid lg:grid-cols-12 gap-4 items-center">
+      <div class="lg:col-span-5 flex flex-wrap gap-2">
+        <button id="play" class="px-5 py-2.5 rounded-xl bg-cyan-500/20 hover:bg-cyan-500/30 border border-cyan-400/40 text-cyan-200 mono text-xs tracking-widest">ACTIVATE ENGINE</button>
+        <button id="waveUp" class="px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 mono text-xs">WAVE UP ↑</button>
+        <button id="bloom" class="px-4 py-2.5 rounded-xl bg-[#ff2ad4]/20 hover:bg-[#ff2ad4]/30 border border-[#ff2ad4]/40 text-[#ffb8ec] mono text-xs">BLOOM BALANCED</button>
+        <button id="stop" class="px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 mono text-xs">DAMPEN</button>
+        <button id="record" class="px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 mono text-xs flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-red-500/70" id="recDot"></span>RECORD</button>
+      </div>
+      
+      <div class="lg:col-span-4">
+        <div class="flex items-center gap-3">
+          <span class="mono text-[11px] text-white/60 w-20">LAYERS</span>
+          <input id="layers" type="range" min="8" max="60" value="24" class="flex-1">
+          <span id="layersVal" class="mono text-xs text-cyan-300 w-8 text-right">24</span>
+        </div>
+        <div class="flex items-center gap-3 mt-2">
+          <span class="mono text-[11px] text-white/60 w-20">DRONE</span>
+          <div class="flex-1 h-[6px] bg-[#0a0f1a] rounded-full overflow-hidden">
+            <div id="droneLevel" class="h-full w-[30%] bg-gradient-to-r from-cyan-500/50 to-[#ff2ad4]/50 transition-all"></div>
+          </div>
+          <span class="mono text-[10px] text-white/40 w-8 text-right">0.5%</span>
+        </div>
+      </div>
+
+      <div class="lg:col-span-3">
+        <div class="mono text-[10px] text-white/50 mb-1 flex justify-between">
+          <span>1-0-1 WAVEFORM</span>
+          <span id="freqRead">-- Hz</span>
+        </div>
+        <canvas id="wave" width="400" height="80" class="w-full h-[56px] rounded-lg bg-black/70 border border-white/5"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="text-center mt-6 mono text-[10px] text-white/30">Perpetual memory: 0-eats-0 feedback • 30 ds locked • Self-auditing harmonic analysis</div>
+</div>
+
+<script>
+let audioCtx, masterGain, envGain, filter, analyser, delay, feedback, mediaDest, recorder;
+let coreNodes = [], droneNodes = [];
+let freqData, timeData;
+let isActive = false, isRecording = false, recordChunks = [];
+const state = { lifeDeath: 0.5, pieces: 0, layers: 24, phase: 1, phaseT: 0 };
+let points = [], upperLines = [], lowerLines = [], coreEls = [];
+let lastWaveUpdate = 0;
+let upperRegister = new Array(64).fill(0.5);
+let lowerRegister = new Array(64).fill(0.5);
+
+const playBtn = document.getElementById('play');
+const waveUpBtn = document.getElementById('waveUp');
+const bloomBtn = document.getElementById('bloom');
+const stopBtn = document.getElementById('stop');
+const recordBtn = document.getElementById('record');
+const layersSlider = document.getElementById('layers');
+const piecesEl = document.getElementById('pieces');
+const layersVal = document.getElementById('layersVal');
+const phaseRead = document.getElementById('phaseRead');
+const lifeBar = document.getElementById('lifeBar');
+const deathBar = document.getElementById('deathBar');
+const activeDot = document.getElementById('activeDot');
+const recDot = document.getElementById('recDot');
+const freqRead = document.getElementById('freqRead');
+
+function initVisuals() {
+  // Upper/Lower registers
+  const upperG = document.getElementById('upperRegs');
+  const lowerG = document.getElementById('lowerRegs');
+  for(let i=0;i<64;i++){
+    const a1 = Math.PI + (i/63)*Math.PI;
+    const x1 = Math.cos(a1)*159, y1 = Math.sin(a1)*159;
+    const x2 = Math.cos(a1)*175, y2 = Math.sin(a1)*175;
+    const l = document.createElementNS('http://www.w3.org/2000/svg','line');
+    l.setAttribute('x1',x1); l.setAttribute('y1',y1); l.setAttribute('x2',x2); l.setAttribute('y2',y2);
+    l.setAttribute('stroke','#00e5ff'); l.setAttribute('stroke-width','1.6'); l.setAttribute('stroke-linecap','round'); l.setAttribute('opacity','0.25');
+    upperG.appendChild(l); upperLines.push(l);
+  }
+  for(let i=0;i<64;i++){
+    const a1 = (i/63)*Math.PI;
+    const x1 = Math.cos(a1)*159, y1 = Math.sin(a1)*159;
+    const x2 = Math.cos(a1)*175, y2 = Math.sin(a1)*175;
+    const l = document.createElementNS('http://www.w3.org/2000/svg','line');
+    l.setAttribute('x1',x1); l.setAttribute('y1',y1); l.setAttribute('x2',x2); l.setAttribute('y2',y2);
+    l.setAttribute('stroke','#ff2ad4'); l.setAttribute('stroke-width','1.6'); l.setAttribute('stroke-linecap','round'); l.setAttribute('opacity','0.25');
+    lowerG.appendChild(l); lowerLines.push(l);
+  }
+  // Cores
+  const coresG = document.getElementById('cores');
+  for(let i=0;i<8;i++){
+    const ang = (i/8)*Math.PI*2 - Math.PI/2;
+    const x = Math.cos(ang)*118, y = Math.sin(ang)*118;
+    const g = document.createElementNS('http://www.w3.org/2000/svg','g');
+    g.setAttribute('transform',`translate(${x},${y})`);
+    const c = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    c.setAttribute('r','9'); c.setAttribute('fill','#020208'); c.setAttribute('stroke','#00e5ff'); c.setAttribute('stroke-width','1.5');
+    c.setAttribute('opacity','0.85'); c.style.filter='drop-shadow(0 0 6px #00e5ff)';
+    const t = document.createElementNS('http://www.w3.org/2000/svg','text');
+    t.setAttribute('y','3'); t.setAttribute('text-anchor','middle'); t.setAttribute('font-size','8'); t.setAttribute('fill','#9df'); t.classList.add('mono'); t.textContent = i+1;
+    g.appendChild(c); g.appendChild(t); coresG.appendChild(g); coreEls.push({g,c,t});
+  }
+  // Fractal points
+  points = generateFractal();
+}
+
+function generateFractal(){
+  const pts=[];
+  function branch(x,y,len,ang,depth){
+    if(pts.length>=1070 || depth>12) return;
+    pts.push({x,y,active:0,life:Math.random()});
+    if(depth>10) return;
+    const nl=len*0.73;
+    const s=0.38+Math.random()*0.12;
+    branch(x+Math.cos(ang-s)*nl, y+Math.sin(ang-s)*nl, nl, ang-s, depth+1);
+    branch(x+Math.cos(ang+s)*nl, y+Math.sin(ang+s)*nl, nl, ang+s, depth+1);
+    if(depth%2===0) branch(x+Math.cos(ang)*nl*0.85, y+Math.sin(ang)*nl*0.85, nl*0.85, ang+(Math.random()-0.5)*0.2, depth+1);
+  }
+  branch(480,500,110,-Math.PI/2,0);
+  while(pts.length<1070){
+    const a=Math.random()*Math.PI*2, r=Math.pow(Math.random(),0.7)*420;
+    pts.push({x:480+Math.cos(a)*r*0.8, y:280+Math.sin(a)*r*0.5+80, active:0, life:Math.random()});
+  }
+  return pts.slice(0,1070);
+}
+
+async function initAudio(){
+  if(audioCtx) return;
+  audioCtx = new (window.AudioContext||window.webkitAudioContext)({latencyHint:'interactive'});
+  masterGain = audioCtx.createGain(); masterGain.gain.value=0.78;
+  envGain = audioCtx.createGain(); envGain.gain.value=0;
+  filter = audioCtx.createBiquadFilter(); filter.type='lowpass'; filter.frequency.value=1800; filter.Q.value=0.7;
+  analyser = audioCtx.createAnalyser(); analyser.fftSize=2048; analyser.smoothingTimeConstant=0.8;
+  delay = audioCtx.createDelay(2.5); delay.delayTime.value=0.618;
+  feedback = audioCtx.createGain(); feedback.gain.value=0.005; // 0.5% perpetual
+
+  filter.connect(envGain); envGain.connect(masterGain);
+  masterGain.connect(analyser); masterGain.connect(audioCtx.destination);
+  // 0-eats-0 loop
+  analyser.connect(delay); delay.connect(feedback); feedback.connect(delay); feedback.connect(filter);
+
+  freqData = new Uint8Array(analyser.frequencyBinCount);
+  timeData = new Uint8Array(analyser.fftSize);
+
+  // Perpetual drone: 0 with nestled 1 (1/16 light/shadow)
+  const base = 55; // A1
+  const freqs = [base*15/16, base, base*17/16]; // shadow, 0, light
+  const droneGain = audioCtx.createGain(); droneGain.gain.value=0.11;
+  freqs.forEach((f,i)=>{
+    const o = audioCtx.createOscillator();
+    o.type = i===1?'sine':'triangle';
+    o.frequency.value = f;
+    const g = audioCtx.createGain(); g.gain.value = i===1?0.6:0.22;
+    o.connect(g); g.connect(droneGain);
+    o.start();
+    droneNodes.push(o);
+  });
+  droneGain.connect(masterGain);
+  const sub = audioCtx.createOscillator(); sub.frequency.value=27.5; const sg = audioCtx.createGain(); sg.gain.value=0.03; sub.connect(sg); sg.connect(masterGain); sub.start();
+
+  // 8 cores × ~134 voices (simulated via 64 partials each)
+  for(let i=0;i<8;i++){
+    const osc = audioCtx.createOscillator();
+    const baseFreq = 110 * Math.pow(2, i/8); // spread
+    const detune = (i%2?1:-1)*(1/16);
+    osc.frequency.value = baseFreq * (1+detune);
+    osc.detune.value = Math.random()*4-2;
+    
+    // 64 partials = upper register
+    const real = new Float32Array(65); const imag = new Float32Array(65);
+    for(let h=1;h<=64;h++) imag[h] = (1/h) * (0.7 + 0.3*Math.sin(i*h*0.3));
+    const wave = audioCtx.createPeriodicWave(real, imag, {disableNormalization:true});
+    osc.setPeriodicWave(wave);
+    
+    const g = audioCtx.createGain(); g.gain.value=0;
+    const panner = audioCtx.createStereoPanner(); panner.pan.value = Math.sin(i/8*Math.PI*2)*0.7;
+    osc.connect(g); g.connect(panner); panner.connect(filter);
+    osc.start();
+    coreNodes.push({osc,g,panner,baseFreq, wave, imag});
+  }
+
+  // Media destination for recording
+  mediaDest = audioCtx.createMediaStreamDestination();
+  masterGain.connect(mediaDest);
+}
+
+function startEngine(){
+  if(!audioCtx) return;
+  isActive = true;
+  playBtn.textContent = 'ENGINE ACTIVE';
+  playBtn.classList.add('bg-cyan-500/40'); activeDot.style.opacity='1';
+  const now = audioCtx.currentTime;
+  envGain.gain.cancelScheduledValues(now);
+  envGain.gain.setTargetAtTime(0.85, now, 0.4);
+}
+
+function stopEngine(){
+  isActive = false;
+  playBtn.textContent = 'ACTIVATE ENGINE';
+  playBtn.classList.remove('bg-cyan-500/40'); activeDot.style.opacity='0.3';
+  if(envGain) envGain.gain.setTargetAtTime(0, audioCtx.currentTime, 0.8);
+}
+
+function waveUp(){
+  state.lifeDeath = Math.min(1, state.lifeDeath + 0.16);
+  updateLifeDeath();
+  if(!audioCtx) return;
+  const now = audioCtx.currentTime;
+  filter.frequency.exponentialRampToValueAtTime(400 + state.lifeDeath*3400, now+0.15);
+  coreNodes.forEach((c,i)=> c.osc.detune.setTargetAtTime(8+Math.random()*4, now, 0.05));
+  setTimeout(()=> coreNodes.forEach(c=>c.osc.detune.setTargetAtTime(0, audioCtx.currentTime, 0.6)), 180);
+  state.pieces = Math.min(1070, state.pieces + 134);
+  activatePoints(180);
+  flashCores('#00e5ff');
+}
+
+function bloomBalanced(){
+  state.lifeDeath = 0.5; updateLifeDeath();
+  if(!audioCtx) return;
+  const now = audioCtx.currentTime;
+  const base = 110;
+  const ratios = [1, 1.5, 2, 3, 4, 4.5, 6, 8]; // perfect fifths
+  coreNodes.forEach((c,i)=>{
+    c.osc.frequency.setTargetAtTime(base * ratios[i] * 0.5, now, 0.7);
+  });
+  filter.frequency.setTargetAtTime(2200, now, 0.5);
+  state.pieces = 1070;
+  piecesEl.textContent = '1070';
+  activatePoints(1070);
+  flashCores('#ff2ad4');
+  // pulse center
+  const pr = document.getElementById('pulseRing');
+  pr.setAttribute('opacity','1'); pr.setAttribute('r','34');
+  setTimeout(()=>{pr.setAttribute('opacity','0'); pr.setAttribute('r','70');}, 600);
+}
+
+function updateLifeDeath(){
+  lifeBar.style.width = (state.lifeDeath*100)+'%';
+  deathBar.style.width = ((1-state.lifeDeath)*100)+'%';
+  document.getElementById('lifeArc').setAttribute('stroke-dasharray', `${214*state.lifeDeath} 300`);
+  document.getElementById('deathArc').setAttribute('stroke-dasharray', `${214*(1-state.lifeDeath)} 300`);
+}
+
+function flashCores(color){
+  coreEls.forEach(el=>{
+    el.c.setAttribute('stroke', color);
+    setTimeout(()=> el.c.setAttribute('stroke','#00e5ff'), 400);
+  });
+}
+
+function activatePoints(n){
+  for(let i=0;i<n;i++){
+    const idx = Math.floor(Math.pow(Math.random(),1.4)*points.length);
+    points[idx].active = 1;
+  }
+}
+
+function toggleRecord(){
+  if(!audioCtx){ alert('Activate engine first'); return; }
+  if(!isRecording){
+    try{
+      recordChunks=[];
+      recorder = new MediaRecorder(mediaDest.stream, {mimeType:'audio/webm;codecs=opus'});
+      recorder.ondataavailable = e=>{ if(e.data.size) recordChunks.push(e.data); };
+      recorder.onstop = ()=>{
+        const blob = new Blob(recordChunks, {type:'audio/webm'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a'); a.href=url; a.download=`fractal-memory-${Date.now()}.webm`; a.click();
+        URL.revokeObjectURL(url);
+      };
+      recorder.start(); isRecording=true;
+      recDot.classList.add('animate-pulse'); recDot.style.background='#ff2a2a';
+      recordBtn.classList.add('bg-red-500/20','border-red-500/40');
+    }catch(e){ console.error(e); }
+  }else{
+    recorder.stop(); isRecording=false;
+    recDot.classList.remove('animate-pulse'); recDot.style.background='';
+    recordBtn.classList.remove('bg-red-500/20','border-red-500/40');
+  }
+}
+
+const fractalCanvas = document.getElementById('fractal');
+const fctx = fractalCanvas.getContext('2d');
+const waveCanvas = document.getElementById('wave');
+const wctx = waveCanvas.getContext('2d');
+
+function drawFractal(time){
+  const ctx = fctx; ctx.clearRect(0,0,960,520);
+  // bg glow
+  const g = ctx.createRadialGradient(480,260,50,480,260,400);
+  g.addColorStop(0,'rgba(0,229,255,0.06)'); g.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle=g; ctx.fillRect(0,0,960,520);
+  
+  points.forEach((p,i)=>{
+    if(p.active>0.01){
+      const intensity = p.active;
+      const hue = p.life > state.lifeDeath ? 185 : 320; // cyan or magenta
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 1.8 + intensity*3.2, 0, Math.PI*2);
+      ctx.fillStyle = `hsla(${hue},100%,${65+intensity*15}%,${0.3+intensity*0.7})`;
+      ctx.shadowColor = hue>200 ? '#ff2ad4' : '#00e5ff';
+      ctx.shadowBlur = 8 + intensity*14;
+      ctx.fill(); ctx.shadowBlur=0;
+      p.active *= 0.92;
+    }else{
+      // dim base
+      if(i%7===0){
+        ctx.beginPath(); ctx.arc(p.x,p.y,0.9,0,Math.PI*2);
+        ctx.fillStyle='rgba(255,255,255,0.04)'; ctx.fill();
+      }
+    }
+  });
+}
+
+function drawWave(){
+  const ctx=wctx; ctx.clearRect(0,0,400,80);
+  ctx.fillStyle='#05070e'; ctx.fillRect(0,0,400,80);
+  // grid
+  ctx.strokeStyle='rgba(255,255,255,0.06)'; ctx.lineWidth=1;
+  for(let y=20;y<80;y+=20){ ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(400,y); ctx.stroke(); }
+  
+  if(!timeData){ 
+    ctx.fillStyle='rgba(255,255,255,0.3)'; ctx.font='11px JetBrains Mono'; ctx.fillText('Awaiting signal…', 12, 44); return;
+  }
+  // waveform
+  ctx.beginPath(); ctx.lineWidth=2; ctx.strokeStyle='#00e5ff';
+  ctx.shadowColor='#00e5ff'; ctx.shadowBlur=8;
+  const slice = timeData.length/400;
+  for(let x=0;x<400;x++){
+    const v = timeData[Math.floor(x*slice)]/128 -1;
+    const y = 40 + v*28;
+    x===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+  }
+  ctx.stroke(); ctx.shadowBlur=0;
+  // 1-0-1 envelope overlay
+  ctx.beginPath(); ctx.setLineDash([4,4]); ctx.strokeStyle='rgba(255,42,212,0.85)'; ctx.lineWidth=1.5;
+  const ph = state.phaseT;
+  for(let x=0;x<400;x++){
+    const t = x/400; let env=0;
+    if(t<0.25) env=t/0.25; else if(t<0.75) env=1; else env=(1-t)/0.25;
+    const y = 72 - env*24;
+    x===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+  }
+  ctx.stroke(); ctx.setLineDash([]);
+  // phase marker
+  const mx = ph*400; ctx.fillStyle='#ff2ad4'; ctx.beginPath(); ctx.arc(mx, 72 - (ph<0.25?ph/0.25:ph<0.75?1:(1-ph)/0.25)*24, 3,0,Math.PI*2); ctx.fill();
+}
+
+function animate(t){
+  requestAnimationFrame(animate);
+  const time = t*0.001;
+  
+  // Phase 1-0-1 (4s cycle: 1s attack, 2s sustain, 1s release)
+  const cycle = 4000;
+  state.phaseT = (performance.now() % cycle)/cycle;
+  let env, phaseStr;
+  if(state.phaseT < 0.25){ env = state.phaseT/0.25; state.phase=0; phaseStr='1-ATTACK'; }
+  else if(state.phaseT < 0.75){ env = 1; state.phase=1; phaseStr='0-SUSTAIN'; }
+  else { env = (1-state.phaseT)/0.25; state.phase=2; phaseStr='1-RELEASE'; }
+  phaseRead.textContent = phaseStr;
+  phaseRead.style.color = state.phase===1 ? '#00e5ff' : '#ff9ae5';
+  
+  // Audio updates
+  if(audioCtx && isActive){
+    analyser.getByteFrequencyData(freqData);
+    analyser.getByteTimeDomainData(timeData);
+    
+    // Update registers from audio
+    let upperSum=0, lowerSum=0;
+    for(let i=0;i<64;i++){
+      const fu = freqData[i*2] /255; const fl = freqData[128+i] /255;
+      upperRegister[i] = upperRegister[i]*0.85 + fu*0.15;
+      lowerRegister[i] = lowerRegister[i]*0.85 + fl*0.15;
+      upperSum+=upperRegister[i]; lowerSum+=lowerRegister[i];
+      if(upperLines[i]) upperLines[i].setAttribute('opacity', 0.15 + upperRegister[i]*0.85);
+      if(lowerLines[i]) lowerLines[i].setAttribute('opacity', 0.15 + lowerRegister[i]*0.85);
+    }
+    document.getElementById('upperRead').textContent = (upperSum/64).toFixed(2);
+    document.getElementById('lowerRead').textContent = (lowerSum/64).toFixed(2);
+    
+    // Drive cores
+    const layerGain = 0.04 + (state.layers/60)*0.11;
+    coreNodes.forEach((c,i)=>{
+      const target = env * layerGain * (0.7 + 0.3*lowerRegister[i*8 %64]);
+      c.gain.gain.value = c.gain.gain.value*0.85 + target*0.15;
+      c.panner.pan.value = Math.sin(time*0.3 + i)*0.8;
+    });
+    // Filter follows life/death
+    const targetFreq = 380 + state.lifeDeath*3200 + env*600;
+    filter.frequency.value = filter.frequency.value*0.9 + targetFreq*0.1;
+    
+    // Self-auditing: update partials every ~1.8s
+    if(performance.now() - lastWaveUpdate > 1800){
+      lastWaveUpdate = performance.now();
+      coreNodes.forEach((c,i)=>{
+        for(let h=1; h<=64; h++){
+          const u = upperRegister[(h+i)%64];
+          c.imag[h] = (0.6 + u*0.7) / Math.pow(h, 0.92 + state.lifeDeath*0.15);
+        }
+        const wave = audioCtx.createPeriodicWave(new Float32Array(65), c.imag, {disableNormalization:true});
+        c.osc.setPeriodicWave(wave);
+      });
+      // estimate fundamental
+      let maxIdx=0; for(let i=1;i<100;i++) if(freqData[i]>freqData[maxIdx]) maxIdx=i;
+      const f = maxIdx * audioCtx.sampleRate / analyser.fftSize;
+      freqRead.textContent = f>20 ? Math.round(f)+' Hz' : '-- Hz';
+    }
+    
+    // Pieces counter
+    state.pieces = Math.min(1070, state.pieces + (state.layers * 0.018 * (0.5+env*0.5)));
+    piecesEl.textContent = Math.floor(state.pieces);
+    if(state.pieces>1000) piecesEl.parentElement.classList.add('text-glow-mag');
+    
+    // Light up fractal
+    if(Math.random() < 0.4 + env*0.3) activatePoints(Math.floor(2 + state.layers*0.12 + env*4));
+  }
+  
+  // Visuals
+  drawFractal(t);
+  drawWave();
+  
+  // Engine visuals
+  const coresG = document.getElementById('cores');
+  coresG.setAttribute('transform', `rotate(${time*4})`);
+  coreEls.forEach((el,i)=>{
+    const scale = 1 + (isActive? env*0.35*Math.sin(time*2+i) : 0);
+    el.g.setAttribute('transform', `translate(${Math.cos((i/8)*Math.PI*2 - Math.PI/2)*118},${Math.sin((i/8)*Math.PI*2 - Math.PI/2)*118}) scale(${scale})`);
+    el.c.setAttribute('opacity', isActive? 0.7+env*0.3 : 0.4);
+  });
+  const center = document.getElementById('center11');
+  const cg = document.getElementById('centerGroup');
+  const s = 1 + env*0.12;
+  cg.setAttribute('transform', `scale(${s})`);
+  center.setAttribute('fill', state.phase===1 ? '#ffffff' : '#ffddf7');
+  document.getElementById('pulseRing').setAttribute('opacity', env*0.5);
+}
+
+document.addEventListener('DOMContentLoaded', ()=>{
+  initVisuals(); updateLifeDeath(); requestAnimationFrame(animate);
+  
+  playBtn.addEventListener('click', async ()=>{
+    await initAudio(); await audioCtx.resume(); startEngine();
+  });
+  stopBtn.addEventListener('click', stopEngine);
+  waveUpBtn.addEventListener('click', waveUp);
+  bloomBtn.addEventListener('click', bloomBalanced);
+  recordBtn.addEventListener('click', toggleRecord);
+  layersSlider.addEventListener('input', e=>{
+    state.layers = parseInt(e.target.value); layersVal.textContent = state.layers;
+    document.getElementById('droneLevel').style.width = (20 + state.layers)+'%';
+  });
+  
+  // Keyboard shortcuts
+  window.addEventListener('keydown', e=>{
+    if(e.code==='Space'){ e.preventDefault(); isActive?stopEngine():playBtn.click(); }
+    if(e.key==='ArrowUp'){ waveUp(); } if(e.key==='b'||e.key==='B'){ bloomBalanced(); }
+  });
+});
+</script>
+</body>
+</html>
